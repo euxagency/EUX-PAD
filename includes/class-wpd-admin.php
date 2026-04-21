@@ -1,0 +1,171 @@
+<?php
+/**
+ * Admin Class
+ * Registers admin menu pages for Pickup & Delivery.
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class WPD_Admin {
+	/**
+	 * Single instance
+	 *
+	 * @var WPD_Admin|null
+	 */
+	private static $instance = null;
+
+	/**
+	 * Get instance
+	 *
+	 * @return WPD_Admin
+	 */
+	public static function get_instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * Constructor
+	 */
+	private function __construct() {
+		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Enqueue admin assets for WPD pages
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 */
+	public function enqueue_assets( $hook_suffix ) {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		$page      = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin ?page= slug for asset loading only.
+		$wpd_pages = array( 'wpd-pickup-delivery', 'wpd-pickup-setting', 'wpd-delivery-setting', 'wpd-rules' );
+		if ( ! in_array( $page, $wpd_pages, true ) ) {
+			return;
+		}
+
+		$css_path = WPD_PLUGIN_DIR . 'assets/css/wpd-admin-app.css';
+		if ( file_exists( $css_path ) ) {
+			$css_ver = (string) filemtime( $css_path );
+			wp_enqueue_style(
+				'wpd-admin-app',
+				WPD_PLUGIN_URL . 'assets/css/wpd-admin-app.css',
+				array( 'wp-components' ),
+				$css_ver
+			);
+		}
+
+		$js_path = WPD_PLUGIN_DIR . 'assets/js/wpd-admin-app.js';
+		$js_ver  = file_exists( $js_path ) ? (string) filemtime( $js_path ) : ( defined( 'WPD_VERSION' ) ? WPD_VERSION : time() );
+		wp_enqueue_script(
+			'wpd-admin-app',
+			WPD_PLUGIN_URL . 'assets/js/wpd-admin-app.js',
+			array( 'wp-element', 'wp-components', 'wp-i18n', 'wp-api-fetch' ),
+			$js_ver,
+			true
+		);
+
+		// Needed for wp.media (icon upload).
+		wp_enqueue_media();
+
+		wp_localize_script(
+			'wpd-admin-app',
+			'wpdAdmin',
+			array(
+				'restUrl'            => esc_url_raw( rest_url() ),
+				'nonce'              => wp_create_nonce( 'wp_rest' ),
+				'pageSlug'           => $page,
+				'colorHelpImageBase' => esc_url_raw( trailingslashit( WPD_PLUGIN_URL ) . 'assets/img/color-help/' ),
+				'rulesPro'           => class_exists( 'WPD_Rules' ) && WPD_Rules::has_pro_features(),
+			)
+		);
+	}
+
+	/**
+	 * Register admin menu and pages
+	 */
+	public function register_menu() {
+		$capability = 'manage_options';
+
+		add_menu_page(
+			__( 'Pickup & Delivery', 'eux-pad' ),
+			__( 'Pickup & Delivery', 'eux-pad' ),
+			$capability,
+			'wpd-pickup-delivery',
+			array( $this, 'render_global_settings_page' ),
+			'dashicons-location-alt',
+			56
+		);
+
+		add_submenu_page(
+			'wpd-pickup-delivery',
+			__( 'Global Settings', 'eux-pad' ),
+			__( 'Global Settings', 'eux-pad' ),
+			$capability,
+			'wpd-pickup-delivery',
+			array( $this, 'render_global_settings_page' )
+		);
+
+		add_submenu_page(
+			'wpd-pickup-delivery',
+			__( 'Pickup Settings', 'eux-pad' ),
+			__( 'Pickup Settings', 'eux-pad' ),
+			$capability,
+			'wpd-pickup-setting',
+			array( $this, 'render_pickup_settings_page' )
+		);
+
+		add_submenu_page(
+			'wpd-pickup-delivery',
+			__( 'Delivery Settings', 'eux-pad' ),
+			__( 'Delivery Settings', 'eux-pad' ),
+			$capability,
+			'wpd-delivery-setting',
+			array( $this, 'render_delivery_settings_page' )
+		);
+
+		add_submenu_page(
+			'wpd-pickup-delivery',
+			__( 'Rules', 'eux-pad' ),
+			__( 'Rules', 'eux-pad' ),
+			$capability,
+			'wpd-rules',
+			array( $this, 'render_rules_page' )
+		);
+	}
+
+	/**
+	 * Blank: Global Setting page
+	 */
+	public function render_global_settings_page() {
+		echo '<div class="wrap"><div id="wpd-admin-global-settings" class="wpd-admin-app"></div></div>';
+	}
+
+	/**
+	 * Blank: Pickup Setting page
+	 */
+	public function render_pickup_settings_page() {
+		echo '<div class="wrap"><div id="wpd-admin-pickup-settings" class="wpd-admin-app"></div></div>';
+	}
+
+	/**
+	 * Blank: Delivery Setting page
+	 */
+	public function render_delivery_settings_page() {
+		echo '<div class="wrap"><div id="wpd-admin-delivery-settings" class="wpd-admin-app"></div></div>';
+	}
+
+	/**
+	 * Blank: Rules page
+	 */
+	public function render_rules_page() {
+		echo '<div class="wrap"><div id="wpd-admin-rules" class="wpd-admin-app"></div></div>';
+	}
+}

@@ -1,0 +1,1652 @@
+/**
+ * Pickup & Delivery – Admin UI
+ *
+ * WordPress-first: uses @wordpress/components; this file only customizes
+ * layout and tokens. Customize via CSS variables (--wpd-admin-*) in your theme
+ * or plugin without editing component code.
+ *
+ * Structure: .wpd-admin (root) → .wpd-admin__header, __content, __actions, etc.
+ * Cards: .wpd-admin-card or .components-card inside .wpd-admin
+ */
+
+/* Main content area: white background on PAD admin pages only (this file is enqueued only there) */
+#wpcontent {
+    background: #fff;
+}
+
+/* -------------------------------------------------------------------------
+   Design tokens (customize these for easy theming)
+   ------------------------------------------------------------------------- */
+.wpd-admin {
+    --wpd-admin-bg: #fff;
+    --wpd-admin-text: #1e1e1e;
+    --wpd-admin-text-muted: #646970;
+    --wpd-admin-border: #c3c4c7;
+    --wpd-admin-border-light: #dcdcde;
+    --wpd-admin-card-bg: #fff;
+    --wpd-admin-card-border: none;
+    --wpd-admin-section-bg: #fafafa;
+    --wpd-admin-input-bg: #fff;
+    --wpd-admin-input-border: #fafafa;
+    --wpd-admin-radius: 14px;
+    --wpd-admin-spacing: 14px;
+    --wpd-admin-spacing-sm: 8px;
+    --wpd-admin-max-width: 980px;
+    /* Matches Rules “select days” trigger – shared by all dropdowns */
+    --wpd-dropdown-bg: #fff;
+    --wpd-dropdown-border: #eceef2;
+    --wpd-dropdown-border-hover: #c3c4c7;
+    --wpd-dropdown-border-focus: #2271b1;
+    --wpd-dropdown-radius: 10px;
+    --wpd-dropdown-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    --wpd-dropdown-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23646970' d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+}
+
+/* -------------------------------------------------------------------------
+   Root & layout
+   ------------------------------------------------------------------------- */
+.wpd-admin {
+    max-width: var(--wpd-admin-max-width);
+    background: var(--wpd-admin-bg);
+    padding-bottom: 24px;
+}
+
+.wpd-admin__header {
+    margin-bottom: var(--wpd-admin-spacing);
+    border-bottom: 0.8px solid rgba(0, 0, 0, 0.08);
+background: #FAFAFA;
+padding: 24px 10px;
+
+}
+
+.wpd-admin__title {
+    margin: 0 0 4px 0;
+    font-size: 23px;
+    font-weight: 400;
+    color: var(--wpd-admin-text);
+    line-height: 1.3;
+}
+
+.wpd-admin__description {
+    margin: 0;
+    font-size: 14px;
+    color: var(--wpd-admin-text-muted);
+}
+
+.wpd-admin__notice {
+    margin-bottom: var(--wpd-admin-spacing);
+}
+
+.wpd-admin__page-title {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--wpd-admin-text);
+    margin-left:10px;
+    margin-top:10px;
+    margin-bottom: 10px;
+}
+
+.wpd-admin__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+}
+
+.wpd-admin__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wpd-admin-spacing);
+}
+
+.wpd-admin__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--wpd-admin-spacing-sm);
+    margin-top: var(--wpd-admin-spacing);
+    padding-top: var(--wpd-admin-spacing-sm);
+}
+
+/* -------------------------------------------------------------------------
+   Cards (WordPress components or plain block)
+   ------------------------------------------------------------------------- */
+.wpd-admin .components-card,
+.wpd-admin-card {
+    padding: 0px;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+}
+
+.wpd-admin .components-card__body,
+.wpd-admin-card__body {
+    /* padding: var(--wpd-admin-spacing); */
+    padding: 0px;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+}
+
+.wpd-admin-card__empty {
+    margin: 0;
+    color: var(--wpd-admin-text-muted);
+    font-size: 14px;
+}
+
+/* Section block (e.g. grey area for Pickup Location)
+   Use .wpd-admin-section for a distinct background block inside a card */
+.wpd-admin-section {
+    background: var(--wpd-admin-section-bg);
+    border-radius: var(--wpd-admin-radius);
+    padding: var(--wpd-admin-spacing);
+border: 0.8px solid #ECEEF2;
+box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.wpd-admin-section__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wpd-admin-text);
+    margin: 0 0 2px 0;
+}
+
+.wpd-admin-section__subtitle {
+    font-size: 12px;
+    color: var(--wpd-admin-text-muted);
+    margin: 0 0 12px 0;
+}
+
+.wpd-pad-setup__loading {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    margin-bottom: 8px;
+}
+
+.wpd-pad-setup__status {
+    margin: 0 0 14px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--wpd-admin-text);
+}
+
+.wpd-pad-setup__status--ok {
+    color: var(--wpd-admin-text);
+}
+
+.wpd-pad-setup__status a {
+    font-weight: 600;
+}
+
+.wpd-pad-setup__slug {
+    color: var(--wpd-admin-text-muted);
+    font-weight: 400;
+}
+
+/* -------------------------------------------------------------------------
+   Form controls (override @wordpress/components inside .wpd-admin)
+   ------------------------------------------------------------------------- */
+.wpd-admin .components-base-control__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wpd-admin-text);
+    margin-bottom: 6px;
+}
+
+.wpd-admin .components-text-control__input,
+.wpd-admin .components-textarea-control__input,
+.wpd-admin input[type="text"],
+.wpd-admin input[type="number"],
+.wpd-admin input[type="time"],
+.wpd-admin textarea {
+    background: var(--wpd-admin-input-bg) !important;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 10px;
+border: 0.8px solid #ECEEF2;
+box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+/* SelectControl: same look as Rules “select days” trigger (pill + chevron) */
+.wpd-admin .components-select-control select {
+    background-color: var(--wpd-dropdown-bg) !important;
+    background-image: var(--wpd-dropdown-chevron) !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 12px 12px !important;
+    min-height: 40px !important;
+    padding: 8px 36px 8px 12px !important;
+    border-radius: var(--wpd-dropdown-radius) !important;
+    border: 0.8px solid var(--wpd-dropdown-border) !important;
+    box-shadow: var(--wpd-dropdown-shadow) !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    color: var(--wpd-admin-text) !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.wpd-admin .components-select-control select:hover {
+    border-color: var(--wpd-dropdown-border-hover) !important;
+}
+
+.wpd-admin .components-select-control select:focus {
+    outline: none !important;
+    border-color: var(--wpd-dropdown-border-focus) !important;
+    box-shadow: var(--wpd-dropdown-shadow) !important;
+}
+
+.wpd-admin .components-select-control select:disabled {
+    cursor: default;
+    opacity: 0.65;
+}
+
+.wpd-admin .components-textarea-control__input,
+.wpd-admin textarea {
+    min-height: 80px;
+}
+
+.wpd-admin .components-text-control__input:focus,
+.wpd-admin input:focus,
+.wpd-admin textarea:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* -------------------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------------------- */
+
+/* Legacy overrides for wp.components buttons (still used in a few places) */
+.wpd-admin .components-button.is-primary,
+.wpd-admin .components-button.is-primary:hover {
+    background: #000;
+    color: #fff;
+    border-radius: 8px;
+    box-shadow: none;
+    border: 1px solid #E0E4EA;
+}
+
+.wpd-admin .components-button.is-secondary,
+.wpd-admin .components-button.is-secondary:hover {
+    color: #000;
+    border-radius: 8px;
+border: 1px solid #E0E4EA;
+background: #FFF;
+box-shadow: none;
+}
+.components-button.is-secondary {
+    box-shadow: none !important;
+
+}
+
+/* Custom action buttons used for Reset / Save controls */
+.wpd-admin-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+        transform 0.12s ease-out,
+        box-shadow 0.12s ease-out,
+        background-color 0.12s ease-out,
+        color 0.12s ease-out,
+        border-color 0.12s ease-out;
+    outline: none;
+}
+
+.wpd-admin-btn:disabled {
+    cursor: default;
+    opacity: 0.55;
+    box-shadow: none;
+    transform: none;
+}
+
+.wpd-admin-btn--primary {
+    border-radius: 8px;
+    background: #15191E;;
+    box-shadow: 0 1px 4px -2px rgba(0, 0, 0, 0.10);
+    color:#fff;
+}
+
+.wpd-admin-btn--primary:hover:not(:disabled) {
+    border-radius: 8px;
+    background: #15191E;
+    box-shadow: 0 1px 4px -2px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+}
+
+.wpd-admin-btn--primary:active:not(:disabled) {
+    border-radius: 8px;
+    background: #15191E;
+    box-shadow: 0 1px 4px -2px rgba(0, 0, 0, 0.10);
+    transform: translateY(1px) scale(0.98);
+}
+
+.wpd-admin-btn--ghost {
+    background: transparent;
+    color: #000;
+
+    border-radius: 8px;
+border: 1px solid #E0E4EA;
+}
+
+.wpd-admin-btn--ghost:hover:not(:disabled) {
+    background: rgba(15, 23, 42, 0.03);
+    transform: translateY(-1px);
+}
+
+.wpd-admin-btn--ghost:active:not(:disabled) {
+    background: rgba(15, 23, 42, 0.06);
+    transform: translateY(1px) scale(0.98);
+}
+
+/* -------------------------------------------------------------------------
+   Grids & rows
+   ------------------------------------------------------------------------- */
+.wpd-admin-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--wpd-admin-spacing);
+    margin-bottom: 10px;
+}
+
+.wpd-admin-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--wpd-admin-spacing);
+}
+
+.wpd-admin-toggle-row .components-base-control {
+    margin-bottom: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Color field & media upload (custom components)
+   ------------------------------------------------------------------------- */
+.wpd-admin .wpd-color-field .wpd-color-label-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.wpd-admin .wpd-color-field .wpd-color-label-row .wpd-color-label {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.wpd-admin .wpd-color-field .wpd-color-label,
+.wpd-admin .wpd-field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wpd-admin-text);
+    margin-bottom: 6px;
+}
+
+.wpd-admin .wpd-color-field__tooltip-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--wpd-admin-text-muted, #646970);
+    cursor: help;
+    line-height: 0;
+}
+
+.wpd-admin .wpd-color-field__tooltip-trigger:hover,
+.wpd-admin .wpd-color-field__tooltip-trigger:focus-visible {
+    color: var(--wpd-admin-text, #1d2327);
+    background: rgba(0, 0, 0, 0.06);
+    outline: none;
+}
+
+.wpd-admin .wpd-color-field__tooltip-trigger:focus-visible {
+    box-shadow: 0 0 0 2px #2271b1;
+}
+
+.wpd-admin .wpd-color-field,
+.wpd-admin .wpd-color-label-row {
+    overflow: visible;
+}
+
+.wpd-admin .wpd-color-help-hover {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+/* Invisible hit area so moving pointer from icon to panel does not dismiss */
+.wpd-admin .wpd-color-help-flyout::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -10px;
+    height: 10px;
+}
+
+.wpd-admin .wpd-color-help-flyout {
+    position: absolute;
+    z-index: 100050;
+    top: calc(100% + 4px);
+    right: 0;
+    width: min(420px, calc(100vw - 40px));
+    padding: 14px 16px 16px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease,
+        visibility 0.15s;
+    pointer-events: none;
+}
+
+.wpd-admin .wpd-color-help-hover:hover .wpd-color-help-flyout,
+.wpd-admin .wpd-color-help-hover:focus-within .wpd-color-help-flyout {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.wpd-admin .wpd-color-help-flyout__img {
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    margin: 0 0 12px;
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid #eceef2;
+}
+
+.wpd-admin .wpd-color-help-flyout__text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--wpd-admin-text, #1d2327);
+}
+
+.wpd-admin .wpd-color-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-radius: var(--radius-10, 10px);
+    border: 0.8px solid var(--stroke-soft-100, #ECEEF2);
+    background: var(--bg-white-0, #FFF);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    padding: 2px 2px 2px 6px;
+}
+
+.wpd-admin .wpd-color-swatch {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    flex: 0 0 auto;
+    box-shadow: none;
+    overflow: hidden;
+    background: repeating-conic-gradient(#e8e8e8 0% 25%, #fff 0% 50%) 50% / 10px 10px;
+}
+
+.wpd-admin .wpd-color-swatch__fill {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.wpd-admin .wpd-color-swatch:focus,
+.wpd-admin .wpd-color-swatch:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 1px;
+}
+
+.wpd-admin .wpd-color-picker-wrap {
+    padding: 4px 8px 8px;
+}
+
+.wpd-admin .wpd-color-dropdown {
+    flex: 0 0 auto;
+    display: flex;
+}
+
+/* Make the text input seamlessly continue the pill around the swatch */
+.wpd-admin .wpd-color-input-row .components-text-control__input {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 999px;
+    padding-left: 10px;
+}
+
+.wpd-admin .wpd-upload-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.wpd-admin .wpd-upload-pill {
+    flex: 1;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top:2px;
+    padding-bottom:2px;
+    padding-left: 5px;
+    /* padding: 8px 12px; */
+    border-radius: 10px;
+    border: 0.8px solid #ECEEF2;
+    background: #FFF;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.wpd-admin .wpd-upload-placeholder {
+    color: var(--wpd-admin-text-muted);
+    font-size: 13px;
+}
+
+.wpd-admin .wpd-upload-filename {
+    color: var(--wpd-admin-text);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wpd-admin .wpd-upload-remove {
+    border: none;
+    background: transparent;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--wpd-admin-text-muted);
+    padding: 0 0 0 8px;
+}
+
+.wpd-admin .wpd-upload-remove:hover {
+    color: var(--wpd-admin-text);
+}
+
+.wpd-admin .wpd-upload-choose {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #111827;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.wpd-admin .wpd-upload-choose:focus,
+.wpd-admin .wpd-upload-choose:focus-visible {
+    outline: none;
+}
+
+.wpd-admin .wpd-upload-choose--empty {
+    background: #F3F4F6;
+    border: 0.8px solid #ECEEF2;
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+.wpd-admin .wpd-upload-placeholder {
+    flex: 1 1 auto;
+    color: var(--wpd-admin-text-muted);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wpd-admin .wpd-upload-chip {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width:100px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0.8px solid #ECEEF2;
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: #FFF;
+}
+
+.wpd-admin .wpd-upload-chip__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #111827;
+}
+
+.wpd-admin .wpd-upload-chip__remove {
+    border: none;
+    background: transparent;
+    padding: 0;
+    line-height: 1;
+    font-size: 16px;
+    cursor: pointer;
+    color: #111827;
+}
+
+.wpd-admin .wpd-upload-chip__remove:focus,
+.wpd-admin .wpd-upload-chip__remove:focus-visible {
+    outline: none;
+}
+
+/* -------------------------------------------------------------------------
+   Opening hours (Pickup settings)
+   ------------------------------------------------------------------------- */
+.wpd-admin .wpd-opening-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr auto;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.wpd-admin .wpd-opening-day.wpd-rules-custom-select,
+.wpd-admin .wpd-opening-time {
+    margin-bottom: 0;
+}
+.wpd-color-field .components-base-control__field{
+    margin-bottom: 0;
+}
+
+.wpd-admin .wpd-opening-time {
+    min-height: 40px !important;
+}
+
+.wpd-admin .wpd-opening-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wpd-admin-text);
+    margin: 18px 0 10px 0;
+}
+
+/* -------------------------------------------------------------------------
+   Delivery settings – suburb chips (WooCommerce attribute–style)
+   ------------------------------------------------------------------------- */
+.wpd-delivery-suburbs-field__label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--wpd-admin-text-muted, #646970);
+    margin-bottom: 6px;
+}
+
+.wpd-delivery-suburbs-field__help {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.wpd-delivery-suburbs-field__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 10px;
+    border-radius: var(--wpd-dropdown-radius, 6px);
+    border: 0.8px solid var(--wpd-dropdown-border, #dcdcde);
+    background: var(--wpd-dropdown-bg, #fff);
+    box-shadow: var(--wpd-dropdown-shadow, none);
+    cursor: text;
+}
+
+.wpd-delivery-suburbs-field__inner:focus-within {
+    border-color: var(--wpd-dropdown-border-focus, #2271b1);
+}
+
+.wpd-delivery-suburb-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    border-radius: var(--wpd-dropdown-radius, 6px);
+    border: 0.8px solid var(--wpd-dropdown-border, #dcdcde);
+    background: var(--wpd-dropdown-bg, #f6f7f7);
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--wpd-admin-text, #1e1e1e);
+}
+
+.wpd-delivery-suburb-chip__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 240px;
+}
+
+.wpd-delivery-suburb-chip__remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 2px;
+    background: transparent;
+    color: #787c82;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.wpd-delivery-suburb-chip__remove:hover {
+    color: #d63638;
+    background: rgba(214, 54, 56, 0.08);
+}
+
+.wpd-delivery-suburbs-field__input {
+    flex: 1 1 160px;
+    min-width: 120px;
+    max-width: min(100%, 320px);
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--wpd-admin-text, #1e1e1e);
+    padding: 4px 2px;
+    margin: 0;
+    box-shadow: none;
+}
+
+.wpd-delivery-suburbs-field__input::placeholder {
+    color: #787c82;
+}
+
+/* Rules: no suburbs – same footprint as condition value / multiselect trigger */
+.wpd-rules-suburb-empty-wrap {
+    width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    border-radius: var(--wpd-dropdown-radius, 6px);
+    border: 0.8px solid var(--wpd-dropdown-border, #dcdcde);
+    background: var(--wpd-dropdown-bg, #fff);
+    box-shadow: var(--wpd-dropdown-shadow, none);
+}
+
+.wpd-rules-suburb-empty {
+    margin: 0;
+    font-size: 13px;
+    color: var(--wpd-admin-text-muted, #646970);
+    line-height: 1.4;
+}
+
+/* -------------------------------------------------------------------------
+   Toggle switches (e.g. Enable Delivery / Pickup)
+   ------------------------------------------------------------------------- */
+.wpd-admin .components-form-toggle.is-checked .components-form-toggle__track {
+    background-color: #000 !important;
+    border-color: #000 !important;
+}
+
+.wpd-admin .components-form-toggle.is-checked .components-form-toggle__thumb {
+    border-color: #000 !important;
+}
+
+.wpd-admin .wpd-opening-remove {
+    padding: 0;
+}
+
+.wpd-admin .wpd-opening-remove svg {
+    display: block;
+}
+
+.wpd-admin-toggle-row{
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* -------------------------------------------------------------------------
+   Rules page (Delivery Rules)
+   ------------------------------------------------------------------------- */
+.wpd-rules-section {
+    padding: var(--wpd-admin-spacing);
+}
+
+.wpd-rules-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.wpd-rules-section-header .wpd-admin-section__subtitle {
+    margin-bottom: 0;
+}
+
+.wpd-rules-section-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.wpd-rules-conditions-help-modal .components-modal__content {
+    max-width: 560px;
+}
+
+.wpd-rules-conditions-help-intro {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--wpd-admin-text-muted, #646970);
+}
+
+.wpd-rules-conditions-help-list {
+    margin: 0;
+}
+
+.wpd-rules-conditions-help-item {
+    margin: 0 0 14px;
+}
+
+.wpd-rules-conditions-help-item:last-child {
+    margin-bottom: 0;
+}
+
+.wpd-rules-conditions-help-item dt {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wpd-admin-text, #1d2327);
+    margin: 0 0 4px;
+}
+
+.wpd-rules-conditions-help-item dd {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--wpd-admin-text-muted, #646970);
+}
+
+.wpd-rules-add-btn {
+    flex-shrink: 0;
+}
+
+.wpd-rules-objective-hint {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: var(--wpd-admin-text-muted, #646970);
+}
+
+.wpd-rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: visible;
+    border-radius: var(--wpd-admin-radius);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wpd-rules-list--sorting {
+    background: linear-gradient(180deg, rgba(34, 113, 177, 0.05) 0%, rgba(34, 113, 177, 0.02) 100%);
+    box-shadow: inset 0 0 0 1px rgba(34, 113, 177, 0.1);
+}
+
+.wpd-rules-sort-item {
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+}
+
+.wpd-rules-sortable-lift-wrap {
+    position: relative;
+    overflow: visible;
+}
+
+/* Padding + negative margin: transformed layers often clip the card’s hairline border at the edges. */
+.wpd-rules-sortable-lift {
+    position: relative;
+    z-index: 25;
+    overflow: visible;
+    padding: 3px;
+    margin: -3px;
+    border-radius: var(--wpd-admin-radius);
+    box-shadow:
+        0 14px 32px rgba(0, 0, 0, 0.14),
+        0 0 0 2px rgba(34, 113, 177, 0.4);
+    cursor: grabbing;
+    box-sizing: border-box;
+}
+
+.wpd-rules-empty {
+    margin: 0;
+    color: var(--wpd-admin-text-muted);
+    font-size: 14px;
+}
+
+.wpd-rules-rule-card {
+    background: #FFF;
+    border: 0.8px solid #ECEEF2;
+    border-radius: var(--wpd-admin-radius);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    /* visible so custom dropdowns are not clipped (was overflow: hidden) */
+    overflow: visible;
+    cursor: default;
+}
+
+.wpd-rules-rule-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #FFF;
+    /* border-bottom: 0.8px solid #ECEEF2; */
+}
+
+.wpd-rules-drag-handle {
+    display: flex;
+    align-items: center;
+    color: var(--wpd-admin-text-muted);
+    cursor: grab;
+    touch-action: none;
+    border-radius: 4px;
+    padding: 2px;
+    margin: -2px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.wpd-rules-drag-handle:active {
+    cursor: grabbing;
+}
+
+.wpd-rules-list--sorting .wpd-rules-drag-handle {
+    color: rgba(34, 113, 177, 0.9);
+}
+
+.wpd-rules-sortable-lift .wpd-rules-drag-handle {
+    color: #2271B1;
+    background: rgba(34, 113, 177, 0.08);
+}
+
+/* Clickable strip between drag handle and delete/toggle (accordion + keyboard). */
+.wpd-rules-rule-header-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 4px 6px;
+    margin-left: -6px;
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    color: var(--wpd-admin-text);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.wpd-rules-rule-header-main:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #2271B1;
+}
+
+.wpd-rules-rule-header-main:focus-visible {
+    outline: 2px solid #2271B1;
+    outline-offset: 1px;
+}
+
+.wpd-rules-rule-header-main__chevron {
+    flex-shrink: 0;
+    display: flex;
+    color: var(--wpd-admin-text-muted);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wpd-rules-rule-header-main--collapsed .wpd-rules-rule-header-main__chevron {
+    transform: rotate(-90deg);
+}
+
+.wpd-rules-rule-header-main__text {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wpd-rules-toggle-wrap {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.wpd-rules-rule-delete {
+    flex-shrink: 0;
+    padding: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--wpd-admin-text-muted);
+}
+
+.wpd-rules-rule-delete:hover {
+    color: #DC2626;
+}
+
+.wpd-rules-rule-delete svg {
+    display: block;
+}
+
+.wpd-rules-toggle .components-base-control__field {
+    margin-bottom: 0;
+}
+
+.wpd-rules-rule-body {
+    padding: 16px;
+    overflow: visible;
+    /* background: var(--wpd-admin-section-bg); */
+}
+
+.wpd-rules-rule-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.wpd-rules-conditions-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wpd-admin-text);
+    margin-bottom: 10px;
+}
+
+.wpd-rules-conditions-hint {
+    font-size: 12px;
+    color: #B91C1C;
+    margin: -4px 0 10px 0;
+}
+
+.wpd-rules-condition-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    overflow: visible;
+}
+
+.wpd-rules-condition-type {
+    flex: 0 0 180px;
+    min-width: 0;
+    overflow: visible;
+}
+
+.wpd-rules-condition-operator {
+    flex: 0 0 160px;
+    min-width: 0;
+    overflow: visible;
+}
+
+.wpd-rules-condition-value {
+    flex: 1;
+    min-width: 0;
+    overflow: visible;
+}
+
+.wpd-rules-condition-value .components-text-control__input,
+.wpd-rules-condition-value .components-select-control__input,
+.wpd-rules-condition-value input {
+    min-height: 40px;
+}
+
+.wpd-rules-condition-remove {
+    flex-shrink: 0;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--wpd-admin-text-muted);
+}
+
+.wpd-rules-condition-remove:hover {
+    color: #DC2626;
+}
+
+.wpd-rules-add-condition {
+    margin-top: 4px;
+    padding: 15px!important;
+}
+
+/* Rules section: allow panels to escape card bounds */
+.wpd-admin-section.wpd-rules-section {
+    overflow: visible;
+}
+
+.wpd-admin .wpd-rules-section .components-card,
+.wpd-admin .wpd-rules-section .components-card__body {
+    overflow: visible;
+}
+
+/* Multi-select dropdown for Days of Week */
+.wpd-rules-multiselect {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+.wpd-rules-multiselect:focus-within {
+    z-index: 100050;
+}
+
+.wpd-rules-multiselect-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: var(--wpd-dropdown-radius);
+    border: 0.8px solid var(--wpd-dropdown-border);
+    background: var(--wpd-dropdown-bg);
+    box-shadow: var(--wpd-dropdown-shadow);
+    font-size: 13px;
+    color: var(--wpd-admin-text);
+    cursor: pointer;
+    text-align: left;
+}
+
+.wpd-rules-multiselect-trigger__text {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.wpd-rules-multiselect-trigger:hover {
+    border-color: var(--wpd-dropdown-border-hover);
+}
+
+.wpd-rules-multiselect-trigger:focus {
+    outline: none;
+    border-color: var(--wpd-dropdown-border-focus);
+}
+
+.wpd-rules-multiselect-placeholder {
+    color: var(--wpd-admin-text-muted);
+}
+
+.wpd-rules-multiselect-arrow {
+    flex-shrink: 0;
+    margin-left: 8px;
+    font-size: 10px;
+    color: var(--wpd-admin-text-muted);
+}
+
+.wpd-rules-multiselect-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    padding: 8px;
+    /*
+     * Solid panel: do NOT use var(--wpd-dropdown-bg) alone — another stylesheet may define
+     * --wpd-dropdown-bg on :root/body (e.g. transparent), which would ignore var(..., #fff).
+     */
+    background-color: #fff;
+    background-image: none;
+    border: 0.8px solid #eceef2;
+    border-radius: var(--wpd-dropdown-radius, 10px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 100051;
+    /* Wider than narrow columns so full labels show; scroll if many items */
+    min-width: 100%;
+    width: max-content;
+    max-width: min(340px, 92vw);
+    max-height: min(280px, 55vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Portaled to body – position/size set inline in JS; beat WP / global role=listbox rules */
+.wpd-rules-multiselect-dropdown--portal {
+    position: fixed;
+    top: auto;
+    left: auto;
+    margin-top: 0;
+    background-color: #fff !important;
+    background-image: none !important;
+    border-color: #eceef2 !important;
+}
+
+.wpd-rules-multiselect-dropdown--portal.wpd-rules-multiselect-dropdown--with-search {
+    padding: 0;
+}
+
+.wpd-rules-multiselect-dropdown__search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 8px 8px 6px;
+    background: #fff;
+    border-bottom: 1px solid #eceef2;
+}
+
+.wpd-rules-multiselect-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.wpd-rules-multiselect-dropdown--with-search .wpd-rules-multiselect-option {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.wpd-rules-multiselect-dropdown__empty {
+    padding: 12px 10px;
+    font-size: 13px;
+    color: var(--wpd-admin-text-muted);
+    text-align: center;
+}
+
+.wpd-rules-multiselect-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    font-size: 13px;
+    color: var(--wpd-admin-text, #1e1e1e);
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.wpd-rules-multiselect-option:hover {
+    background: #f5f5f5;
+}
+
+.wpd-rules-multiselect-option input {
+    margin: 0;
+}
+
+.wpd-rules-multiselect-option input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--wpd-dropdown-border-focus, #2271b1);
+}
+
+/* Single-select options (Type, Operator, Method, Rule Objective) */
+.wpd-rules-custom-select__label {
+    display: block;
+    width: 100%;
+}
+
+.wpd-rules-custom-select .wpd-rules-multiselect-trigger {
+    width: 100%;
+}
+
+.wpd-rules-custom-select-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    margin: 0;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--wpd-admin-text, #1e1e1e);
+    cursor: pointer;
+    border-radius: 6px;
+    font-family: inherit;
+}
+
+.wpd-rules-custom-select-option:hover {
+    background: #f5f5f5;
+}
+
+.wpd-rules-custom-select-option:focus {
+    outline: none;
+}
+
+.wpd-rules-custom-select-option:focus-visible {
+    outline: 2px solid var(--wpd-dropdown-border-focus, #2271b1);
+    outline-offset: 1px;
+}
+
+.wpd-rules-custom-select-option.is-selected {
+    font-weight: 600;
+    background: #f0f0f1;
+}
+
+.wpd-rules-custom-select-option--disabled {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: not-allowed;
+    color: var(--wpd-admin-text-muted, #646970);
+    opacity: 0.92;
+}
+
+.wpd-rules-custom-select-option--disabled:hover {
+    background: transparent;
+}
+
+.wpd-rules-custom-select-option__label {
+    flex: 1;
+    min-width: 0;
+}
+
+.wpd-pro-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-radius: 4px;
+    line-height: 1.2;
+}
+
+.wpd-rules-conditions-help-pro-note {
+    margin: 16px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid #eceef2;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--wpd-admin-text-muted, #646970);
+}
+
+.wpd-rules-value-days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wpd-rules-day-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--wpd-admin-text);
+    cursor: pointer;
+}
+
+.wpd-rules-day-chip input {
+    margin: 0;
+}
+
+.wpd-rules-value-dates {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wpd-rules-value-dates--between {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.wpd-rules-value-dates--between .wpd-rules-input {
+    width: auto;
+    min-width: 140px;
+    flex: 1 1 140px;
+}
+
+.wpd-rules-value-dates__label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--wpd-admin-text-muted, #646970);
+}
+
+.wpd-rules-value-dates__hint {
+    margin: 0 0 4px;
+    font-size: 12px;
+    color: var(--wpd-admin-text-muted, #646970);
+}
+
+/* Specific dates (matches any of): one calendar + chips in one control */
+.wpd-rules-specific-dates-field {
+    width: 100%;
+}
+
+.wpd-rules-specific-dates-field__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 6px 8px 6px 10px;
+    border-radius: 10px;
+    border: 0.8px solid #eceef2;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.wpd-rules-specific-dates-field__inner:focus-within {
+    border-color: var(--wpd-dropdown-border-focus, #2271b1);
+    box-shadow: 0 0 0 1px var(--wpd-dropdown-border-focus, #2271b1);
+}
+
+.wpd-rules-specific-dates-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 4px 6px 4px 10px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--wpd-admin-text, #1e1e1e);
+    background: #f0f0f1;
+    border-radius: 8px;
+    border: 0.8px solid #dcdcde;
+}
+
+.wpd-rules-specific-dates-chip__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.wpd-rules-specific-dates-chip__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--wpd-admin-text-muted, #646970);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.wpd-rules-specific-dates-chip__remove:hover {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.08);
+}
+
+.wpd-rules-specific-dates-field__picker {
+    flex: 1 1 140px;
+    min-width: 130px;
+    max-width: 100%;
+    margin: 0;
+    padding: 6px 4px;
+    border: none!important;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 13px;
+    color: var(--wpd-admin-text, #1e1e1e);
+    cursor: pointer;
+    box-shadow: none;
+    min-height: 0px!important;
+}
+
+.wpd-rules-specific-dates-field__picker:focus {
+    outline: none;
+}
+
+.wpd-rules-date-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wpd-rules-date-row input {
+    flex: 1;
+}
+
+.wpd-rules-remove-date {
+    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--wpd-admin-text-muted);
+}
+
+.wpd-rules-remove-date:hover {
+    color: #DC2626;
+}
+
+.wpd-rules-value-between {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wpd-rules-value-between .wpd-rules-input--small {
+    flex: 1;
+    min-width: 0;
+}
+
+.wpd-rules-between-sep {
+    color: var(--wpd-admin-text-muted);
+    font-size: 13px;
+}
+
+.wpd-rules-input {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 0.8px solid #ECEEF2;
+    background: #FFF;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.wpd-rules-input:focus {
+    outline: none;
+    border-color: #2271B1;
+}
+
+/* -------------------------------------------------------------------------
+   Toast notifications — fixed bottom-left of viewport (clears WP admin menu)
+   ------------------------------------------------------------------------- */
+.wpd-admin-toast {
+    position: fixed;
+    left: 20px;
+    right: auto;
+    bottom: 40px;
+    top: auto;
+    z-index: 1000001;
+    max-width: min(360px, calc(100vw - 40px));
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #000;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.45;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+    margin: 0;
+    pointer-events: auto;
+}
+
+/* Shift right past #adminmenu so the toast stays in the visible content band */
+@media screen and (min-width: 783px) {
+    body:not(.folded) .wpd-admin-toast {
+        left: calc(160px + 20px);
+    }
+
+    body.folded .wpd-admin-toast {
+        left: calc(36px + 20px);
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .wpd-admin-toast {
+        left: 12px;
+        right: 12px;
+        bottom: 24px;
+        max-width: none;
+    }
+}
+
+.wpd-admin-toast--error {
+    background: #B91C1C;
+}

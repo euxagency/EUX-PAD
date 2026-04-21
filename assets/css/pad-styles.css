@@ -1,0 +1,2117 @@
+/* WooCommerce Pickup and Delivery Styles */
+
+.wpd-pad-container {
+  width: 90%;
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.wpd-tabs {
+  margin-bottom: 62px;
+}
+
+.wpd-tab-list {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #000;
+  width: 100%;
+  margin: auto;
+}
+
+
+.wpd-tab-button {
+  background: #fff !important;
+  border: none;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+  display: flex;
+  gap: 16px !important;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 27px !important;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  padding-bottom: 27px !important;
+  color: var(--wpd-tab-text, #262626);
+  font-family: 'TradeGothic LT Bold';
+  font-size: 28px!important;
+  font-style: normal;
+  font-weight: 500 !important;
+  line-height: 38px; /* 190% */
+  letter-spacing: -0.4px;
+  text-transform: uppercase;
+}
+
+/* Tab icons: same size for default SVGs and media-library images */
+.wpd-tab-button .wpd-tab-icon {
+  width: 67px;
+  height: 67px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.wpd-tab-button:hover {
+  color: var(--wpd-tab-text, #000) !important;
+  background: var(--wpd-tab-hover-bg, #fff) !important;
+  border-bottom: 2px solid #000 !important;
+}
+
+.wpd-tab-button.active {
+  color: var(--wpd-tab-selected-text, #2e5f29);
+  background: var(--wpd-tab-selected-bg, #fff) !important;
+  border-bottom: 2px solid #000;
+}
+
+.wpd-content-wrapper {
+  display: flex;
+  margin-bottom: 30px;
+  gap: 30px;
+  transition: opacity 0.3s ease;
+}
+
+.wpd-content-wrapper.wpd-content-transitioning {
+  opacity: 0;
+}
+
+.wpd-content-wrapper > * {
+  min-width: 0; /* Prevent overflow */
+  width: 100%; /* Ensure equal width */
+}
+
+@media (max-width: 768px) {
+  .wpd-pad-container {
+    width: 100%;
+  }
+
+  .wpd-content-wrapper {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Delivery Form Styles */
+.wpd-delivery-form {
+  padding: 37px 40px;
+  flex: 1;
+  border-radius: 8px;
+border: 1px solid #EBEBEB;
+background: #FFF;
+}
+
+.wpd-delivery-form h3 {
+
+  margin-bottom: 0px;
+  color: #232323;
+font-family: "Stack Sans Headline";
+font-size: 30px;
+font-style: normal;
+font-weight: 500;
+line-height: 38px; /* 126.667% */
+}
+
+.wpd-delivery-form p {
+  color: #313635;
+  font-family: Arial;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 26px; /* 144.444% */
+  letter-spacing: -0.36px;
+}
+
+.wpd-form-group {
+  margin-bottom: 20px;
+}
+
+/* Form Label Row with Toggle on Right */
+.wpd-form-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 16px;
+}
+
+.wpd-form-label-row > label:first-child {
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.wpd-form-group label {
+  color: #262626;
+font-family: "Stack Sans Headline";
+font-size: 16px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+}
+
+.wpd-form-group input,
+.wpd-form-group select,
+.wpd-form-group textarea {
+  color: #585858;
+  font-family: Arial;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+
+
+  border-radius: 6px;
+border: 1px solid #000!important;
+
+}
+
+.wpd-form-group input:focus,
+.wpd-form-group select:focus,
+.wpd-form-group textarea:focus {
+  outline: none;
+}
+
+.wpd-form-group textarea {
+  resize: vertical;
+  min-height: 168px;
+}
+
+/* Searchable suburb dropdown (matches other form inputs in this group) */
+.wpd-form-group .wpd-suburb-combobox {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.wpd-form-group .wpd-suburb-combobox input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wpd-suburb-combobox__list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 8px 0;
+  list-style: none;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #000 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.wpd-suburb-combobox__option {
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #585858;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: normal;
+}
+
+.wpd-suburb-combobox__option:hover {
+  background: #f5f5f5;
+}
+
+.wpd-suburb-combobox__empty {
+  padding: 12px 16px;
+  margin: 0;
+  color: #585858;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  list-style: none;
+}
+
+.wpd-get-days-button {
+  background: #000 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 50px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  height: 57px !important;
+  padding: 17px 27px !important;
+  font-family: "Stack Sans Headline" !important;
+  font-size: 18px !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  
+
+}
+.wpd-form-group label .optionaltext {
+  font-weight: normal;
+}
+.wpd-no-dates {
+  display: flex;
+  flex-direction: row;
+  align-items:start;
+  justify-content:flex-start;
+  padding: 40px 20px;
+}
+
+.wpd-no-dates p {
+  color: #000;
+  text-align: left;
+  font-family: "Stack Sans Headline";
+  font-size: 27px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 34px; /* 125.926% */
+  letter-spacing: -0.27px;
+  margin: 0;
+  border-bottom: 1px solid #000;
+}
+
+/* Field Error Styling */
+.wpd-field-error {
+  border-color: #dc3232 !important;
+  box-shadow: 0 0 0 1px #dc3232 !important;
+  animation: shake 0.4s ease-in-out;
+}
+
+.wpd-field-error:focus {
+  border-color: #dc3232 !important;
+  box-shadow: 0 0 0 2px #dc3232 !important;
+}
+
+/* Shake animation for error fields */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Optional: Add error icon or text next to label */
+.wpd-form-group:has(.wpd-field-error) label::after {
+  content: ' - Required';
+  color: #dc3232;
+  font-size: 12px;
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* ========================================
+   ADDRESS TOGGLE STYLES
+======================================== */
+
+.wpd-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 400 !important;
+  margin-bottom: 0 !important;
+  white-space: nowrap;
+}
+
+.wpd-toggle-input {
+  display: none;
+}
+
+.wpd-toggle-slider {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 24px;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+
+.wpd-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s ease;
+}
+
+.wpd-toggle-input:checked + .wpd-toggle-slider {
+  background: #000;
+}
+
+.wpd-toggle-input:checked + .wpd-toggle-slider::before {
+  transform: translateX(24px);
+}
+
+.wpd-toggle-text {
+  color: #313635;
+  font-family: Arial;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+/* Manual Address Fields Container */
+.wpd-manual-address-fields {
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease;
+}
+
+/* When fields are visible */
+.wpd-manual-address-fields.wpd-visible {
+  max-height: 1000px;
+  opacity: 1;
+  margin-top: 0;
+  margin-bottom: 0;
+  /* Base rule uses overflow:hidden for collapse; visible state must not clip the suburb combobox */
+  overflow: visible;
+}
+
+/* When fields are hidden */
+.wpd-manual-address-fields.wpd-hidden {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  pointer-events: none; /* Prevent interaction when hidden */
+}
+
+/* Fallback animations (not used but kept for reference) */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    max-height: 1000px;
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+  }
+}
+
+/* AddressFinder Dropdown Styling */
+.af_list {
+  border: 1px solid rgba(49, 54, 53, 0.5) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  margin-top: 4px !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+  z-index: 9999 !important;
+}
+
+.af_item {
+  padding: 10px 16px !important;
+  font-family: Arial !important;
+  font-size: 14px !important;
+  color: #313635 !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+
+.af_item:hover,
+.af_item.af_selected {
+  background: #f0f5ef !important;
+}
+
+/* Shipping Methods Styles */
+
+.wpd-shipping-methods h4 {
+  color: #262626;
+  font-family: "Stack Sans Headline";
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 38px; /* 158.333% */
+
+}
+
+.wpd-shipping-methods-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 23px;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.wpd-shipping-method {
+  cursor: pointer;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+
+  width: calc(50% - 11.5px);
+  height: 61px;
+
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+.wpd-shipping-method-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wpd-shipping-method:hover {
+  border: 1px solid #000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.wpd-shipping-method.selected {
+  border: 1px solid #000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.wpd-shipping-method:hover .wpd-shipping-method-title {
+  color: #000 !important;
+}
+
+.wpd-shipping-method.selected .wpd-shipping-method-title {
+  color: #000 !important;
+}
+
+.wpd-shipping-method:hover .wpd-shipping-method-cost {
+  color: #000 !important;
+}
+
+.wpd-shipping-method.selected .wpd-shipping-method-cost {
+  color: #000 !important;
+}
+
+.wpd-shipping-method:hover .wpd-shipping-method-title-circle {
+  border: 1px solid #000;
+}
+
+.wpd-shipping-method.selected .wpd-shipping-method-title-circle {
+  border: 1px solid #000;
+  background-color: #000;
+}
+
+.wpd-shipping-method-title {
+  color: #313635;
+  font-family: Arial;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 36px; /* 225% */
+}
+
+.wpd-shipping-method-title-circle {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%; /* Makes it a circle */
+  border: 1px solid #000;
+  background-color: transparent;
+  box-sizing: border-box;
+}
+
+.wpd-shipping-method-cost {
+  color: #000;
+  font-family: Arial;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 36px; /* 200% */
+}
+
+.wpd-shipping-method-display {
+  padding: 15px;
+  background: #f0f5ef;
+  border: 2px solid #2e5f29;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wpd-shipping-method-display .wpd-shipping-method-title {
+  font-weight: 500;
+  color: #2e5f29;
+}
+
+.wpd-shipping-method-display .wpd-shipping-method-cost {
+  font-weight: 600;
+  color: #2e5f29;
+}
+
+/* Store Info Styles */
+.wpd-store-info {
+  flex: 1;
+}
+
+.wpd-store-info h3 {
+  margin: 0;
+  padding: 37px 40px 0 40px;
+  background: #585858;
+  border-radius: 8px 8px 0 0;
+  color: #fff;
+  font-family: 'TradeGothic LT Bold';
+  font-size: 27px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 38px; /* 140.741% */
+  
+}
+
+.wpd-store-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 20px 40px 37px 40px;
+  border-radius: 0 0 8px 8px;
+background: #585858;
+}
+
+.wpd-store-detail-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 0;
+}
+
+.wpd-store-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.wpd-store-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.wpd-store-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.wpd-store-address-text {
+  color: #fff;
+  font-family: Arial;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 26px; /* 130% */
+}
+
+.wpd-store-detail-label {
+  color: #fff;
+  font-family: Arial;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 30px; /* 150% */
+}
+
+.wpd-store-detail-value {
+  color: #fff;
+  font-family: Arial;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 30px;
+}
+
+.wpd-store-detail-divider {
+  margin-left: 40px;
+  width: 249px;
+  height: 2px;
+  opacity: 0.5;
+  background: #e5f2e4;
+}
+
+/* Remove old styles */
+.wpd-store-address,
+.wpd-store-map {
+  overflow: hidden;
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: 30px;
+  border-radius: 8px;
+height: 582px;
+}
+
+.wpd-store-map iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+}
+
+/* Date Selection Styles */
+.wpd-date-selection {
+  padding: 37px 40px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+background: #F0F0F0;
+}
+
+/* Reduced height when showing no dates message for delivery */
+.wpd-date-selection.wpd-no-dates-state {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.wpd-date-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.wpd-date-title {
+ 
+  margin-bottom: 0px !important;
+  color: #232323;
+font-family: "Stack Sans Headline";
+font-size: 30px;
+font-style: normal;
+font-weight: 500;
+line-height: 38px; /* 126.667% */
+}
+
+/* Timer Wrapper and Label Styles */
+.wpd-timer-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wpd-timer-label {
+  color: #313635;
+  text-align: right;
+  font-family: Arial;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 38px; /* 211.111% */
+}
+
+/* Countdown Timer Styles */
+.wpd-countdown-timer {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+}
+
+.wpd-countdown-circle {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.wpd-countdown-bg {
+  fill: none;
+  stroke: #e0e0e0;
+  stroke-width: 2.5;
+}
+
+.wpd-countdown-progress {
+  fill: none;
+  stroke: #000;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.3s ease, stroke 0.3s ease;
+}
+
+/* Warning state when time is running low */
+.wpd-timer-warning .wpd-countdown-text {
+  color: #d63638;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.wpd-countdown-progress.wpd-progress-warning {
+  stroke: #d63638;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.wpd-countdown-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  color: #000;
+  font-family: Arial;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 38px; /* 190% */
+}
+
+.wpd-dates-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Dates Slider Wrapper with Month Navigation */
+.wpd-dates-slider-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.wpd-month-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.wpd-month-title {
+  color: #000;
+  font-family: 'TradeGothic LT Bold';
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 38px;
+  text-transform: uppercase;
+  margin: 0;
+  text-align: center;
+}
+
+/* Month Navigation - Below Dates */
+.wpd-month-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 20px 0 10px 0;
+}
+
+.wpd-slider-arrow {
+  width: 40px !important;
+  height: 40px !important;
+  padding: 10px !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+}
+
+.wpd-slider-arrow:hover:not(:disabled) {
+}
+
+.wpd-slider-arrow:disabled {
+  background: #fff !important;
+}
+
+.wpd-slider-arrow svg {
+}
+
+.wpd-dates-slider {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 22px;
+  padding: 10px 0;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wpd-dates-slider.wpd-dates-transitioning {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.wpd-dates-slider.wpd-dates-entering {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.wpd-date-box {
+  cursor: pointer;
+  display: flex;
+  padding: 12px 30px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex: 1 0 0;
+  border-radius: 12px;
+  background: #fff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+
+}
+
+.wpd-date-box:hover {
+  border-radius: 12px;
+  background: #000;
+  color: #fff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.wpd-date-box.selected {
+  border-radius: 12px;
+  background: var(--wpd-day-selector-bg-selected, #000);
+  color: #fff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.wpd-date-box:hover .wpd-date-day {
+  color: var(--wpd-day-name-selected, #fff) !important;
+  transition: color 0.3s ease;
+}
+
+.wpd-date-box.selected .wpd-date-day {
+  color: var(--wpd-day-name-selected, #fff) !important;
+}
+
+.wpd-date-box:hover .wpd-date-month {
+  color: var(--wpd-day-number-selected, #fff) !important;
+  transition: color 0.3s ease;
+}
+
+.wpd-date-box.selected .wpd-date-month {
+  color: var(--wpd-day-number-selected, #fff) !important;
+}
+
+.wpd-date-day {
+  color: var(--wpd-day-name, #313635);
+  text-align: center;
+  font-family: "Stack Sans Headline";
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 30px; /* 214.286% */
+}
+
+.wpd-date-month {
+  color: var(--wpd-day-number, #000);
+  text-align: center;
+  font-family: "Stack Sans Headline";
+  font-size: 40px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 30px; /* 75% */
+
+}
+
+/* Time Slots Divider - Horizontal line above "Select a pickup time" */
+.wpd-time-slots-divider {
+  position: relative;
+  height: 2px;
+  background: #d9d9d9;
+  margin-top: 42px;
+  margin-bottom: 32px;
+}
+
+.wpd-delivery-slots-divider {
+  position: relative;
+  height: 2px;
+  background: #d9d9d9;
+ margin-bottom: 20px;
+}
+
+/* Time Slots Styles */
+.wpd-time-slots {
+  margin-top: 0;
+}
+
+.wpd-time-slots h4 {
+
+  color: #232323;
+font-family: "Stack Sans Headline";
+font-size: 24px;
+font-style: normal;
+font-weight: 500;
+line-height: 38px; /* 158.333% */
+}
+
+.wpd-time-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 25px;
+}
+
+.wpd-time-slot {
+  border: 1.5px solid #fff;
+  min-width: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+
+  color: var(--wpd-time-text, #000);
+  text-align: center;
+  font-family: Arial;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 26px; /* 173.333% */
+
+  padding: 14px 30px;
+  border-radius: 12px;
+  background: var(--wpd-time-bg, #fff);
+}
+
+.wpd-time-slot:hover {
+  border: 1px solid #000;
+  /* background: var(--wpd-time-bg-selected, #000);
+  color: var(--wpd-time-text-selected, #fff); */
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.wpd-time-slot.selected {
+  border: 1px solid #000;
+  /* background: var(--wpd-time-bg-selected, #000);
+  color: var(--wpd-time-text-selected, #fff); */
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Selected Info Styles */
+.wpd-selected-info-wrapper {
+  position: relative;
+  /* margin-top: 42px;
+  margin-bottom: 32px; */
+}
+
+.wpd-selected-info-wrapper::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  z-index: 0;
+}
+
+.wpd-selected-info {
+  padding: 8px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.wpd-selected-info::before {
+  content: '✓';
+  width: 23px;
+  height: 23px;
+  background: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 17px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.wpd-selected-info p {
+  margin: 0;
+  color: #262626;
+  font-family: "Stack Sans Headline";
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 36px; /* 100% */
+}
+
+.wpd-selected-info strong {
+  color: #000;
+  font-weight: 700;
+}
+
+/* Pickup selected info - shown below time slots */
+.wpd-pickup-selected {
+  margin-top: 30px;
+  margin-bottom: 0;
+}
+
+/* Remove horizontal line for pickup selected info */
+.wpd-pickup-selected::before {
+  display: none;
+}
+
+/* Reduce font size for pickup selected info */
+.wpd-pickup-selected .wpd-selected-info p {
+  color: #000;
+  font-family: Arial;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.wpd-pickup-selected .wpd-selected-info {
+  width: 100%;
+  max-width: 100%;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.wpd-pickup-selected__time-line {
+  white-space: nowrap;
+}
+
+/* Proceed Button Styles */
+.wpd-proceed-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.wpd-proceed-button {
+  background: var(--wpd-continue-bg, #000) !important;
+  color: var(--wpd-continue-text, #fff) !important;
+  border: none !important;
+  border-radius: 50px !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  max-width: 518px !important;
+  height: 57px !important;
+  padding: 17px 27px !important;
+  font-family: 'Stack Sans Headline' !important;
+  font-size: 18px !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.wpd-proceed-button:hover:not(:disabled) {
+  background: var(--wpd-continue-bg-hover, #000) !important;
+  color: var(--wpd-continue-text-hover, #fff) !important;
+}
+
+.wpd-proceed-button:disabled {
+  background: #ccc !important;
+  cursor: not-allowed !important;
+  color: #000 !important;
+}
+
+/* Notice Styles */
+.wpd-notice {
+  padding: 15px;
+  margin-bottom: 20px;
+  border-left: 4px solid #2e5f29;
+  background: #f0f5ef;
+  border-radius: 4px;
+}
+
+.wpd-notice.error {
+  border-left-color: #dc3232;
+  background: #fef0f0;
+  color: #dc3232;
+}
+
+.wpd-notice.success {
+  border-left-color: #46b450;
+  background: #f0fef4;
+  color: #46b450;
+}
+
+/* Loading Spinner */
+.wpd-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Skeleton Loading Styles */
+.wpd-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.wpd-skeleton-date {
+  display: block !important;
+  width: 100%;
+  height: 134px;
+  min-width: 120px;
+  border-radius: 12px !important;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-loading 1.5s ease-in-out infinite !important;
+}
+
+.wpd-skeleton-time {
+  display: block !important;
+  min-width: 0;
+  width: 100%;
+  height: 57px;
+  border-radius: 12px !important;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-loading 1.5s ease-in-out infinite !important;
+}
+
+.wpd-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .wpd-dates-slider {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .wpd-time-slots-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* .wd-checkout-steps: see assets/css/wpd-checkout-steps.css (enqueued on PAD + cart + checkout + thank-you) */
+
+/* WooCommerce Pickup and Delivery - Responsive Styles */
+
+/* ========================================
+   TABLET LANDSCAPE & SMALLER DESKTOPS
+   (max-width: 1200px)
+======================================== */
+@media (max-width: 1200px) {
+  .wpd-tab-list {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  .wpd-form-group input,
+  .wpd-form-group select,
+  .wpd-form-group textarea {
+    width: 100%;
+  }
+
+  .wpd-form-group .wpd-suburb-combobox {
+    width: 100%;
+  }
+
+  .wpd-dates-slider {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* ========================================
+   TABLET PORTRAIT & SMALLER
+   (max-width: 1024px)
+======================================== */
+@media (max-width: 1024px) {
+  .wpd-tab-list {
+    max-width: 100%;
+  }
+
+  .wpd-content-wrapper {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .wpd-delivery-form,
+  .wpd-store-info,
+  .wpd-date-selection {
+    width: 100%;
+  }
+
+  .wpd-dates-slider {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .wpd-shipping-method {
+    width: 100%;
+  }
+
+  .wpd-timer-wrapper {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .wpd-timer-label {
+    color: #313635;
+    text-align: right;
+    font-family: Arial;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 22px; /* 137.5% */
+  }
+}
+
+/* ========================================
+   TABLET & MOBILE
+   (max-width: 768px)
+======================================== */
+@media (max-width: 768px) {
+  /* Keep tabs same as desktop */
+  .wpd-tabs {
+    margin-bottom: 40px;
+  }
+
+  .wpd-tab-list {
+    width: 100%;
+  }
+
+  .wpd-tab-button {
+    flex-direction: column;
+    gap: 16px !important;
+    padding-bottom: 27px !important;
+  }
+
+  .wpd-tab-button .wpd-tab-icon {
+    width: 67px;
+    height: 67px;
+  }
+
+  .wpd-content-wrapper {
+    gap: 15px;
+  }
+
+  .wpd-delivery-form,
+  .wpd-date-selection {
+    padding: 20px;
+  }
+
+  .wpd-delivery-form h3,
+  .wpd-date-title {
+    font-size: 22px;
+    line-height: 30px;
+  }
+
+  .wpd-store-info h3 {
+    padding: 20px 20px 0 20px;
+    font-size: 22px;
+    line-height: 30px;
+    margin-bottom: -1px;
+  }
+
+  .wpd-store-details {
+    padding: 15px 20px 20px 20px;
+  }
+
+  .wpd-form-group label {
+    font-size: 14px;
+  }
+
+  .wpd-form-group input,
+  .wpd-form-group select,
+  .wpd-form-group textarea {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  .wpd-date-header {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .wpd-timer-wrapper {
+    width: 100%;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .wpd-timer-label {
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  .wpd-countdown-timer {
+    width: 60px;
+    height: 60px;
+  }
+
+  .wpd-countdown-text {
+    font-size: 16px;
+  }
+
+  /* Keep dates same as desktop */
+  .wpd-dates-slider {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 22px;
+  }
+
+  .wpd-date-box {
+    padding: 12px 30px;
+  }
+
+  .wpd-date-day {
+    text-align: center;
+    font-family: "Stack Sans Headline";
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 30px; /* 75% */
+  }
+
+  .wpd-date-month {
+    font-size: 40px;
+    line-height: 30px;
+  }
+
+  .wpd-shipping-methods h4,
+  .wpd-time-slots h4 {
+    font-size: 18px;
+    line-height: 28px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+  }
+
+  .wpd-shipping-methods-list {
+    gap: 15px;
+  }
+
+  .wpd-shipping-method {
+    padding: 15px;
+    height: auto;
+    min-height: 55px;
+  }
+
+  .wpd-shipping-method-title,
+  .wpd-shipping-method-cost {
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  /* Time slots: 3 per row on tablet; narrow phones override below */
+  .wpd-time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+  }
+
+  .wpd-time-slot {
+    min-width: auto;
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .wpd-time-slots-divider {
+    margin-top: 30px;
+    margin-bottom: 20px;
+  }
+
+  .wpd-selected-info-wrapper {
+    /* margin-top: 30px;
+    margin-bottom: 20px; */
+  }
+
+  .wpd-selected-info p {
+    font-size: 20px;
+  }
+
+  .wpd-pickup-selected .wpd-selected-info p {
+    font-size: 16px;
+    line-height: 28px;
+  }
+
+  .wpd-proceed-button {
+    height: 50px !important;
+    font-size: 16px !important;
+  }
+
+  .wpd-no-dates p {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  .wpd-store-address-text {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .wpd-store-detail-label,
+  .wpd-store-detail-value {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  /* Month navigation arrows */
+  .wpd-slider-arrow {
+    width: 45px;
+    height: 45px;
+  }
+
+  .wpd-slider-arrow svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .wpd-month-title {
+    font-size: 18px;
+  }
+
+  .wpd-store-detail-divider {
+    margin-left: 30px;
+    width: 200px;
+    height: 2px;
+    opacity: 0.5;
+    background: #e5f2e4;
+  }
+
+  /* Form Label Row - Stack on Mobile */
+  .wpd-form-label-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .wpd-form-label-row > label:first-child {
+    margin-bottom: 0;
+  }
+
+  .wpd-toggle-label {
+    align-self: flex-start;
+  }
+
+  /* Address Toggle - Responsive */
+  .wpd-toggle-slider {
+    width: 44px;
+    height: 22px;
+  }
+
+  .wpd-toggle-slider::before {
+    width: 16px;
+    height: 16px;
+  }
+
+  .wpd-toggle-input:checked + .wpd-toggle-slider::before {
+    transform: translateX(22px);
+  }
+
+  .wpd-toggle-text {
+    font-size: 14px;
+  }
+}
+
+/* ========================================
+   MOBILE LANDSCAPE & SMALLER
+   (max-width: 640px)
+======================================== */
+@media (max-width: 640px) {
+  .wpd-dates-slider {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+
+  .wpd-time-slots-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .wpd-shipping-methods-list {
+    flex-direction: column;
+  }
+
+  .wpd-shipping-method {
+    width: 100%;
+  }
+}
+
+/* ========================================
+   MOBILE PORTRAIT
+   (max-width: 480px)
+======================================== */
+@media (max-width: 480px) {
+  .wpd-tabs {
+    margin-bottom: 30px;
+  }
+
+  .wpd-tab-button {
+    padding: 15px !important;
+    font-size: 16px;
+    gap: 10px !important;
+  }
+
+  .wpd-tab-button .wpd-tab-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .wpd-delivery-form,
+  .wpd-date-selection {
+    padding: 15px;
+  }
+
+  .wpd-delivery-form h3,
+  .wpd-date-title {
+    font-size: 18px;
+    line-height: 26px;
+    margin-bottom: 15px;
+  }
+
+  .wpd-date-title {
+    color: #000;
+    font-family: 'TradeGothic LT Bold';
+    font-size: 27px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 34px; /* 125.926% */
+   
+  }
+
+  .wpd-store-info h3 {
+    padding: 15px 15px 0 15px;
+    font-size: 18px;
+    line-height: 26px;
+  }
+
+  .wpd-store-details {
+    padding: 12px 15px 15px 15px;
+  }
+
+  .wpd-form-group {
+    margin-bottom: 15px;
+  }
+
+  .wpd-form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .wpd-form-group input,
+  .wpd-form-group select,
+  .wpd-form-group textarea {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .wpd-form-group textarea {
+    min-height: 120px;
+  }
+
+  .wpd-get-days-button {
+    font-size: 16px !important;
+    height: 50px !important;
+    padding: 14px 20px !important;
+  }
+
+  .wpd-date-header {
+    gap: 12px;
+  }
+
+  .wpd-timer-label {
+    font-size: 12px;
+  }
+
+  .wpd-countdown-timer {
+    width: 55px;
+    height: 55px;
+  }
+
+  .wpd-countdown-text {
+    font-size: 14px;
+  }
+
+  /* Keep dates same layout on smallest screens */
+  .wpd-dates-slider {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .wpd-date-box {
+    padding: 8px 15px;
+    gap: 6px;
+  }
+
+  .wpd-date-day {
+    font-size: 11px;
+    line-height: 20px;
+  }
+
+  .wpd-date-month {
+    font-size: 28px;
+    line-height: 22px;
+  }
+
+  .wpd-shipping-methods h4,
+  .wpd-time-slots h4 {
+    font-size: 16px;
+    line-height: 24px;
+    margin-top: 15px;
+    margin-bottom: 12px;
+  }
+
+  .wpd-shipping-method {
+    padding: 12px;
+    min-height: 50px;
+    gap: 8px;
+  }
+
+  .wpd-shipping-method-title,
+  .wpd-shipping-method-cost {
+    font-size: 13px;
+    line-height: 22px;
+  }
+
+  .wpd-shipping-method-title-circle {
+    width: 12px;
+    height: 12px;
+  }
+
+  .wpd-time-slots-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .wpd-time-slot {
+    padding: 10px 16px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .wpd-time-slots-divider {
+    margin-top: 20px;
+    margin-bottom: 15px;
+  }
+
+  .wpd-selected-info-wrapper {
+    /* margin-top: 20px;
+    margin-bottom: 15px; */
+  }
+
+  .wpd-pickup-selected__time-line {
+    white-space: normal;
+  }
+
+  .wpd-selected-info {
+    padding: 6px 15px;
+  }
+
+  .wpd-selected-info::before {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+  }
+
+  .wpd-selected-info p {
+    font-size: 16px;
+  }
+
+  .wpd-pickup-selected .wpd-selected-info p {
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  .wpd-proceed-container {
+    margin-top: 20px;
+  }
+
+  .wpd-proceed-button {
+    height: 48px !important;
+    font-size: 15px !important;
+    padding: 14px 20px !important;
+  }
+
+  .wpd-notice {
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 13px;
+  }
+
+  .wpd-no-dates {
+    padding: 30px 15px;
+    gap: 20px;
+  }
+
+  .wpd-no-dates svg {
+    width: 70px;
+    height: 70px;
+  }
+
+  .wpd-no-dates p {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .wpd-date-selection.wpd-no-dates-state {
+    max-height: 250px;
+  }
+
+  .wpd-store-detail-item {
+    padding: 12px 0;
+    gap: 12px;
+  }
+
+  .wpd-store-icon,
+  .wpd-store-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .wpd-store-address-text {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .wpd-store-detail-label,
+  .wpd-store-detail-value {
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .wpd-store-map {
+    height: 100%;
+    margin-top: 15px;
+  }
+
+  /* Slider arrows for mobile */
+  .wpd-slider-arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .wpd-slider-arrow svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .wpd-month-title {
+    font-size: 16px;
+  }
+
+  /* Remove error label text on mobile */
+  .wpd-form-group:has(.wpd-field-error) label::after {
+    content: '';
+  }
+
+  /* Form Label Row - Ensure stacked on small mobile */
+  .wpd-form-label-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* Address Toggle - Mobile */
+  .wpd-address-toggle {
+    margin-bottom: 20px;
+    margin-top: 12px;
+  }
+
+  .wpd-toggle-slider {
+    width: 40px;
+    height: 20px;
+  }
+
+  .wpd-toggle-slider::before {
+    width: 14px;
+    height: 14px;
+  }
+
+  .wpd-toggle-input:checked + .wpd-toggle-slider::before {
+    transform: translateX(20px);
+  }
+
+  .wpd-toggle-text {
+    font-size: 13px;
+  }
+}
+
+/* ========================================
+   SMALL MOBILE
+   (max-width: 375px)
+======================================== */
+@media (max-width: 375px) {
+  .wpd-tab-button {
+    font-size: 14px;
+  }
+
+  .wpd-delivery-form h3,
+  .wpd-date-title,
+  .wpd-store-info h3 {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .wpd-form-group label {
+    font-size: 12px;
+  }
+
+  .wpd-form-group input,
+  .wpd-form-group select,
+  .wpd-form-group textarea {
+    font-size: 12px;
+    padding: 9px 10px;
+  }
+
+  .wpd-date-box {
+    padding: 6px 12px;
+  }
+
+  .wpd-date-day {
+    font-size: 10px;
+    line-height: 18px;
+  }
+
+  .wpd-date-month {
+    font-size: 24px;
+    line-height: 20px;
+  }
+
+  .wpd-shipping-method-title,
+  .wpd-shipping-method-cost,
+  .wpd-time-slot {
+    font-size: 12px;
+  }
+
+  .wpd-selected-info p {
+    font-size: 14px;
+  }
+
+  .wpd-pickup-selected .wpd-selected-info p {
+    font-size: 13px;
+    line-height: 22px;
+  }
+
+  /* Month navigation */
+  .wpd-month-navigation {
+    gap: 10px;
+    padding: 15px 0 5px 0;
+  }
+
+  .wpd-slider-arrow {
+    width: 32px;
+    height: 32px;
+    padding: 8px;
+  }
+
+  .wpd-slider-arrow svg {
+    width: 6px;
+    height: 11px;
+  }
+
+  .wpd-month-title {
+    font-size: 14px;
+  }
+}
+
+/* ========================================
+   LANDSCAPE ORIENTATION FIX
+======================================== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .wpd-delivery-form,
+  .wpd-date-selection {
+    padding: 15px;
+  }
+
+  .wpd-form-group {
+    margin-bottom: 12px;
+  }
+
+  .wpd-form-group textarea {
+    min-height: 80px;
+  }
+
+  .wpd-store-map {
+    height: 100%;
+  }
+
+  .wpd-countdown-timer {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY - TOUCH TARGETS
+======================================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Ensure touch targets are at least 44x44px */
+  .wpd-tab-button {
+    min-height: 60px;
+  }
+
+  .wpd-date-box {
+    min-height: 70px;
+    max-width: 60px;
+  }
+
+  .wpd-time-slot {
+    min-height: 48px;
+  }
+
+  .wpd-shipping-method {
+    min-height: 55px;
+  }
+
+  .wpd-slider-arrow {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ========================================
+   HIGH CONTRAST MODE SUPPORT
+======================================== */
+@media (prefers-contrast: high) {
+  .wpd-tab-button,
+  .wpd-date-box,
+  .wpd-time-slot,
+  .wpd-shipping-method {
+    border-width: 2px;
+  }
+
+  .wpd-tab-button.active,
+  .wpd-date-box.selected,
+  .wpd-time-slot.selected,
+  .wpd-shipping-method.selected {
+    border-width: 3px;
+  }
+}
+
+/* ========================================
+   REDUCED MOTION SUPPORT
+======================================== */
+@media (prefers-reduced-motion: reduce) {
+  .wpd-tab-button,
+  .wpd-date-box,
+  .wpd-time-slot,
+  .wpd-shipping-method,
+  .wpd-dates-slider,
+  .wpd-countdown-progress,
+  .wpd-slider-arrow {
+    transition: none;
+  }
+}
+
+/* Field Error Styling */
+.wpd-field-error {
+  border-color: #dc3232 !important;
+  box-shadow: 0 0 0 1px #dc3232 !important;
+  animation: shake 0.4s ease-in-out;
+}
+
+.wpd-field-error:focus {
+  border-color: #dc3232 !important;
+  box-shadow: 0 0 0 2px #dc3232 !important;
+}
+
+/* Shake animation for error fields */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Optional: Add error icon or text next to label */
+.wpd-form-group:has(.wpd-field-error) label::after {
+  content: ' - Required';
+  color: #dc3232;
+  font-size: 12px;
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* Remove the after content on mobile for cleaner look */
+@media (max-width: 480px) {
+  .wpd-form-group:has(.wpd-field-error) label::after {
+    content: '';
+  }
+}

@@ -1,0 +1,74 @@
+/**
+ * Checkout progress steps (.wd-checkout-steps) — cart, PAD, checkout, order received.
+ * Loaded on those routes; pad-styles.css no longer duplicates this block.
+ * Uses fallbacks when Woodmart theme variables / woodmart-font are not present.
+ */
+
+.wd-checkout-steps {
+	--wd-link-color: initial;
+	--wd-link-color-hover: initial;
+	--wd-link-decor: none;
+	--wd-link-decor-hover: none;
+	--list-mb: 0;
+	--li-pl: 0;
+	--li-mb: 0;
+	/* Theme may set these; safe defaults outside Woodmart */
+	--wd-align: center;
+	--wd-title-color: inherit;
+	--wd-title-font-weight: 600;
+	--wd-title-font-style: normal;
+	--wd-title-font: inherit;
+	--wd-primary-color: currentColor;
+
+	display: flex;
+	justify-content: var(--wd-align);
+	flex-wrap: wrap;
+	gap: 10px 15px;
+	font-size: 22px;
+	text-transform: uppercase;
+	color: var(--wd-title-color);
+	font-weight: var(--wd-title-font-weight);
+	font-style: var(--wd-title-font-style);
+	font-family: var(--wd-title-font);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wd-checkout-steps li {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+}
+
+@media (min-width: 769px) {
+	.wd-checkout-steps li > :is(a, span) {
+		opacity: 0.7;
+	}
+
+	.wd-checkout-steps li a:hover {
+		opacity: 1;
+	}
+
+	/* Separator: Woodmart uses woodmart-font \f120; fallback works without that font */
+	.wd-checkout-steps li:not(:last-child):after {
+		font-weight: 400;
+		font-size: 85%;
+		opacity: 0.7;
+		content: "/";
+		font-family: inherit;
+	}
+
+	/* When Woodmart is active, theme rules may override the separator with an icon font */
+	.wd-checkout-steps .step-active > :is(a, span) {
+		opacity: 1;
+		text-decoration: underline 2px solid var(--wd-primary-color);
+		text-underline-offset: 6px;
+	}
+}
+
+@media (max-width: 768.98px) {
+	.wd-checkout-steps .step-inactive {
+		display: none;
+	}
+}

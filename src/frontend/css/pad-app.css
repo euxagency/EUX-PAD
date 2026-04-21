@@ -1,0 +1,32 @@
+/* Tailwind (same pattern as topsms) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------------------------------------------------------------
+   Frontend variable overrides (from admin color settings)
+   This file is enqueued after pad-styles.css, so it can override defaults.
+   ------------------------------------------------------------------------- */
+
+/* Day selector background (default state) */
+.wpd-app .wpd-date-box {
+    background: var(--wpd-day-selector-bg, #FFF) !important;
+}
+
+/* Day selector background (selected state) */
+.wpd-app .wpd-date-box.selected {
+    background: var(--wpd-day-selector-bg-selected, #000) !important;
+}
+
+/* Day selector hover should match selected styles */
+.wpd-app .wpd-date-box:hover {
+    background: var(--wpd-day-selector-bg-selected, #000) !important;
+    color: var(--wpd-day-name-selected, #FFF) !important;
+}
+
+/* Time selector selected + hover colors */
+.wpd-app .wpd-time-slot:hover,
+.wpd-app .wpd-time-slot.selected {
+    background: var(--wpd-time-bg-selected, #000) !important;
+    color: var(--wpd-time-text-selected, #FFF) !important;
+}
