@@ -3,8 +3,8 @@
  * Handles tabs, state, and API calls; delegates UI to DeliveryForm, StoreInfo, DateSelection.
  */
 
-import { __ } from '@wordpress/i18n';
-import { useState, useEffect, useMemo } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
+import { useState, useEffect, useMemo, useCallback } from '@wordpress/element';
 import DeliveryForm from './DeliveryForm/DeliveryForm';
 import StoreInfo from './StoreInfo/StoreInfo';
 import DateSelection from './DateSelection/DateSelection';
@@ -80,23 +80,59 @@ export default function PADApp() {
         []
     );
 
+    const multiPickupStores = useMemo(
+        () => (Array.isArray(wpdData.multiPickupStores) ? wpdData.multiPickupStores : []),
+        []
+    );
+
+    const [selectedPickupStoreId, setSelectedPickupStoreId] = useState(() =>
+        multiPickupStores[0]?.id ? String(multiPickupStores[0].id) : ''
+    );
+
+    useEffect(() => {
+        if (multiPickupStores.length === 0) {
+            return;
+        }
+        const ok = multiPickupStores.some((s) => String(s.id) === String(selectedPickupStoreId));
+        if (!ok && multiPickupStores[0]?.id) {
+            setSelectedPickupStoreId(String(multiPickupStores[0].id));
+        }
+    }, [multiPickupStores, selectedPickupStoreId]);
+
+    const selectedMultiStore = useMemo(
+        () => multiPickupStores.find((s) => String(s.id) === String(selectedPickupStoreId)) || null,
+        [multiPickupStores, selectedPickupStoreId]
+    );
+
+    const displayPickupSettings = useMemo(() => {
+        if (!selectedMultiStore) {
+            return pickupSettings;
+        }
+        const oh = selectedMultiStore.opening_hours;
+        return {
+            ...pickupSettings,
+            address: selectedMultiStore.address ?? pickupSettings.address,
+            phone: selectedMultiStore.phone ?? pickupSettings.phone,
+            opening_hours: Array.isArray(oh) && oh.length ? oh : pickupSettings.opening_hours,
+            map_iframe: selectedMultiStore.map_iframe ?? pickupSettings.map_iframe,
+        };
+    }, [pickupSettings, selectedMultiStore]);
+
+    const displayStoreHeading = selectedMultiStore?.name
+        ? sprintf(
+              /* translators: %s: store name */
+              __('Pickup: %s', 'eux-pad'),
+              selectedMultiStore.name
+          )
+        : '';
+
     // If tabs are disabled via settings, keep a valid active tab.
     useEffect(() => {
         if (!enabledDelivery && activeTab === 'delivery') setActiveTab('pickup');
         if (!enabledPickup && activeTab === 'pickup') setActiveTab('delivery');
     }, [enabledDelivery, enabledPickup]);
 
-    useEffect(() => {
-        if (activeTab === 'pickup') {
-            setDatesLoading(true);
-            setAvailableDates([]);
-            setTimeSlots({});
-            setTimeRemaining(timerDuration);
-            fetchLocalPickup();
-        }
-    }, [activeTab]);
-
-    const fetchLocalPickup = async () => {
+    const fetchLocalPickup = useCallback(async () => {
         setDatesLoading(true);
         setAvailableDates([]);
         try {
@@ -117,6 +153,9 @@ export default function PADApp() {
                 const datesFormData = new FormData();
                 datesFormData.append('action', 'wpd_get_pickup_dates');
                 datesFormData.append('nonce', wpdData.nonce);
+                if (multiPickupStores.length > 0 && selectedPickupStoreId) {
+                    datesFormData.append('pickup_store_id', String(selectedPickupStoreId));
+                }
                 const datesResponse = await fetch(wpdData.ajaxUrl, { method: 'POST', body: datesFormData });
                 const datesData = await datesResponse.json();
 
@@ -157,7 +196,17 @@ export default function PADApp() {
             setNotice({ type: 'error', message: __('An error occurred. Please try again.', 'eux-pad') });
         }
         setDatesLoading(false);
-    };
+    }, [multiPickupStores, selectedPickupStoreId]);
+
+    useEffect(() => {
+        if (activeTab === 'pickup') {
+            setDatesLoading(true);
+            setAvailableDates([]);
+            setTimeSlots({});
+            setTimeRemaining(timerDuration);
+            fetchLocalPickup();
+        }
+    }, [activeTab, selectedPickupStoreId, fetchLocalPickup, timerDuration]);
 
     useEffect(() => {
         if (customerAddress && customerAddress.street_address) {
@@ -309,7 +358,7 @@ export default function PADApp() {
             });
         }, 1000);
         return () => clearInterval(timer);
-    }, [activeTab, showDeliveryDates, showDateRefreshTimer, timerDuration]);
+    }, [activeTab, showDeliveryDates, showDateRefreshTimer, timerDuration, fetchLocalPickup]);
 
     const handleDateSelect = (date) => {
         setSelectedDate(date);
@@ -359,6 +408,13 @@ export default function PADApp() {
             formData.append('date', selectedDate.date);
             formData.append('time_slot', selectedTimeSlot || '');
             formData.append('shipping_method', selectedShippingMethod || '');
+
+            if (activeTab === 'pickup' && multiPickupStores.length > 0 && selectedPickupStoreId) {
+                formData.append('pickup_store_id', String(selectedPickupStoreId));
+                if (selectedMultiStore?.name) {
+                    formData.append('pickup_store_name', String(selectedMultiStore.name));
+                }
+            }
 
             if (activeTab === 'delivery') {
                 const streetForCheckout = deliveryForm.streetAddressBackend || deliveryForm.streetAddress;
@@ -447,7 +503,46 @@ export default function PADApp() {
                         deliverySuburbs={deliverySuburbs}
                     />
                 ) : (
-                    <StoreInfo address={storeAddress} pickupSettings={pickupSettings} />
+                    <div className="wpd-pickup-main">
+                        {multiPickupStores.length > 0 && (
+                            <div
+                                className="wpd-pickup-store-picker"
+                                role="radiogroup"
+                                aria-label={__('Choose pickup location', 'eux-pad')}
+                            >
+                                {multiPickupStores.map((s) => {
+                                    const sid = String(s.id);
+                                    const selected = String(selectedPickupStoreId) === sid;
+                                    return (
+                                        <button
+                                            key={sid}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={selected}
+                                            className={`wpd-pickup-store-option${selected ? ' is-selected' : ''}`}
+                                            onClick={() => {
+                                                setSelectedPickupStoreId(sid);
+                                                setSelectedDate(null);
+                                                setSelectedTimeSlot(null);
+                                                setNotice(null);
+                                            }}
+                                        >
+                                            <span className="wpd-pickup-store-option__name">
+                                                {(s.name && String(s.name).trim()) ||
+                                                    (s.address && String(s.address).trim().split('\n')[0]) ||
+                                                    __('Store', 'eux-pad')}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        <StoreInfo
+                            address={storeAddress}
+                            pickupSettings={displayPickupSettings}
+                            heading={displayStoreHeading}
+                        />
+                    </div>
                 )}
 
                 <DateSelection

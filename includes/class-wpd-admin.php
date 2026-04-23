@@ -46,8 +46,11 @@ class WPD_Admin {
 		}
 
 		$page      = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin ?page= slug for asset loading only.
-		$wpd_pages = array( 'wpd-pickup-delivery', 'wpd-pickup-setting', 'wpd-delivery-setting', 'wpd-rules' );
-		if ( ! in_array( $page, $wpd_pages, true ) ) {
+		$wpd_pages = apply_filters(
+			'wpd_admin_enqueue_app_slugs',
+			array( 'wpd-pickup-delivery', 'wpd-pickup-setting', 'wpd-delivery-setting', 'wpd-rules' )
+		);
+		if ( ! in_array( $page, (array) $wpd_pages, true ) ) {
 			return;
 		}
 
@@ -75,16 +78,27 @@ class WPD_Admin {
 		// Needed for wp.media (icon upload).
 		wp_enqueue_media();
 
+		$wpd_admin = array(
+			'restUrl'                => esc_url_raw( rest_url() ),
+			'nonce'                  => wp_create_nonce( 'wp_rest' ),
+			'pageSlug'               => $page,
+			'colorHelpImageBase'     => esc_url_raw( trailingslashit( WPD_PLUGIN_URL ) . 'assets/img/color-help/' ),
+			'rulesPro'               => class_exists( 'WPD_Rules' ) && WPD_Rules::has_pro_features(),
+			'multiPickupStoresAddon' => class_exists( 'WPD_Multi_Store' ),
+		);
+
+		/**
+		 * Extend localized `wpdAdmin` for admin React apps.
+		 *
+		 * @param array $wpd_admin Localized data.
+		 * @return array
+		 */
+		$wpd_admin = apply_filters( 'wpd_admin_localize_script', $wpd_admin );
+
 		wp_localize_script(
 			'wpd-admin-app',
 			'wpdAdmin',
-			array(
-				'restUrl'            => esc_url_raw( rest_url() ),
-				'nonce'              => wp_create_nonce( 'wp_rest' ),
-				'pageSlug'           => $page,
-				'colorHelpImageBase' => esc_url_raw( trailingslashit( WPD_PLUGIN_URL ) . 'assets/img/color-help/' ),
-				'rulesPro'           => class_exists( 'WPD_Rules' ) && WPD_Rules::has_pro_features(),
-			)
+			$wpd_admin
 		);
 	}
 

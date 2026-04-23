@@ -99,6 +99,8 @@ class WPD_Order_Meta {
 			'_wpd_type',
 			'_wpd_time_slot',
 			'_wpd_shipping_method',
+			'_wpd_pickup_store_id',
+			'_wpd_pickup_store_name',
 			'_wpd_delivery_address',
 			'_wpd_delivery_instructions',
 		);
@@ -118,6 +120,8 @@ class WPD_Order_Meta {
 			'_wpd_type'                  => 'string',
 			'_wpd_time_slot'             => 'string',
 			'_wpd_shipping_method'       => 'string',
+			'_wpd_pickup_store_id'       => 'string',
+			'_wpd_pickup_store_name'     => 'string',
 			'_wpd_delivery_instructions' => 'string',
 		);
 
@@ -646,6 +650,15 @@ class WPD_Order_Meta {
 			$order->update_meta_data( '_wpd_time_slot', sanitize_text_field( $selection['time_slot'] ) );
 		}
 
+		if ( 'pickup' === $selection['type'] ) {
+			if ( ! empty( $selection['pickup_store_id'] ) ) {
+				$order->update_meta_data( '_wpd_pickup_store_id', sanitize_text_field( (string) $selection['pickup_store_id'] ) );
+			}
+			if ( ! empty( $selection['pickup_store_name'] ) ) {
+				$order->update_meta_data( '_wpd_pickup_store_name', sanitize_text_field( (string) $selection['pickup_store_name'] ) );
+			}
+		}
+
 		if ( ! empty( $selection['shipping_method'] ) ) {
 			$order->update_meta_data( '_wpd_shipping_method', sanitize_text_field( $selection['shipping_method'] ) );
 		}
@@ -677,6 +690,7 @@ class WPD_Order_Meta {
 		$date_raw     = (string) $order->get_meta( '_wpd_date', true );
 		$time_slot    = (string) $order->get_meta( '_wpd_time_slot', true );
 		$instructions = (string) $order->get_meta( '_wpd_delivery_instructions', true );
+		$pickup_store = (string) $order->get_meta( '_wpd_pickup_store_name', true );
 
 		// Prepare date value for <input type="date">.
 		$date_value = '';
@@ -722,6 +736,9 @@ class WPD_Order_Meta {
 		echo '<p><strong>' . esc_html__( 'Type:', 'eux-pad' ) . '</strong> ' . ( $type ? esc_html( ucfirst( $type ) ) : '&mdash;' ) . '</p>';
 		echo '<p><strong>' . esc_html__( 'Date:', 'eux-pad' ) . '</strong> ' . ( $date_raw ? esc_html( $date_raw ) : '&mdash;' ) . '</p>';
 		if ( 'pickup' === $type ) {
+			if ( '' !== $pickup_store ) {
+				echo '<p><strong>' . esc_html__( 'Pickup store:', 'eux-pad' ) . '</strong> ' . esc_html( $pickup_store ) . '</p>';
+			}
 			echo '<p><strong>' . esc_html__( 'Time Slot:', 'eux-pad' ) . '</strong> ' . ( $time_slot ? esc_html( $time_slot ) : '&mdash;' ) . '</p>';
 		}
 		if ( ! empty( $instructions ) ) {

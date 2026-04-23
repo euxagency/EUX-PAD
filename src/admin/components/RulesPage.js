@@ -479,16 +479,8 @@ function useRuleFormSelectOptions(rulesPro) {
             { value: 'lead_time', label: __('Preparation Time', 'eux-pad') },
             { value: 'cutoff_time', label: __('Cutoff Time', 'eux-pad') },
         ];
-        const conditionTypes = rulesPro
-            ? [...freeConditionTypes, ...proOnlyTypes]
-            : [
-                  ...freeConditionTypes,
-                  ...proOnlyTypes.map((o) => ({
-                      ...o,
-                      disabled: true,
-                      isPro: true,
-                  })),
-              ];
+        // Free plugin: do not list Pro-only types (Pro add-on adds them when active).
+        const conditionTypes = rulesPro ? [...freeConditionTypes, ...proOnlyTypes] : [...freeConditionTypes];
         return {
             conditionTypes,
             /** @deprecated use operatorsForType(type) in condition rows */

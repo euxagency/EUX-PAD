@@ -139,15 +139,19 @@ class WPD_Checkout_Handler {
 		// Call REST API
 		$api_url = rest_url( 'eux-pad/v1/pickup-dates' );
 
+		$body            = array(
+			'cart_items' => $cart_items,
+		);
+		$pickup_store_id = $this->get_post_string( 'pickup_store_id' );
+		if ( '' !== $pickup_store_id ) {
+			$body['store_id'] = $pickup_store_id;
+		}
+
 		$response = wp_remote_post(
 			$api_url,
 			array(
 				'headers' => array( 'Content-Type' => 'application/json' ),
-				'body'    => wp_json_encode(
-					array(
-						'cart_items' => $cart_items,
-					)
-				),
+				'body'    => wp_json_encode( $body ),
 				'timeout' => 15,
 			)
 		);
@@ -566,6 +570,17 @@ class WPD_Checkout_Handler {
 			'address'         => $address_data,
 			'timestamp'       => time(), // Store timestamp for expiry check
 		);
+
+		if ( 'pickup' === $type ) {
+			$pickup_store_id   = $this->get_post_string( 'pickup_store_id' );
+			$pickup_store_name = $this->get_post_string( 'pickup_store_name' );
+			if ( '' !== $pickup_store_id ) {
+				$selection_data['pickup_store_id'] = $pickup_store_id;
+			}
+			if ( '' !== $pickup_store_name ) {
+				$selection_data['pickup_store_name'] = $pickup_store_name;
+			}
+		}
 
 		WC()->session->set( 'wpd_pad_selection', $selection_data );
 

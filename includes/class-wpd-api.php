@@ -9,6 +9,13 @@ class EUX_PAD_API {
 
 	private static $instance = null;
 
+	/**
+	 * Optional pickup store id from REST request (for multi-store add-ons).
+	 *
+	 * @var string
+	 */
+	private $pickup_store_id = '';
+
 	public static function get_instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -37,6 +44,11 @@ class EUX_PAD_API {
 						'required'    => true,
 						'type'        => 'array',
 						'description' => 'Cart items data',
+					),
+					'store_id'   => array(
+						'required'    => false,
+						'type'        => 'string',
+						'description' => 'Pickup store id (multi-store)',
 					),
 				),
 			)
@@ -81,11 +93,13 @@ class EUX_PAD_API {
 			);
 		}
 
+		$this->pickup_store_id = sanitize_text_field( (string) $request->get_param( 'store_id' ) );
+
 		// Dates from today through global "days displayed" window (then rules applied)
 		$dates = $this->generate_pickup_dates( $cart_items );
 		$dates = $this->apply_rules_to_dates( $dates, 'pickup', $cart_items, null );
 
-		return rest_ensure_response(
+		$response              = rest_ensure_response(
 			array(
 				'success' => true,
 				'data'    => array(
@@ -94,6 +108,8 @@ class EUX_PAD_API {
 				),
 			)
 		);
+		$this->pickup_store_id = '';
+		return $response;
 	}
 
 	/**
@@ -261,6 +277,15 @@ class EUX_PAD_API {
 			$settings = get_option( WPD_Settings::OPTION_PICKUP, array() );
 			$defaults = WPD_Settings::get_instance()->get_pickup_defaults();
 			$merged   = WPD_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $settings ) ? $settings : array() );
+			$store_id = isset( $this->pickup_store_id ) ? (string) $this->pickup_store_id : '';
+			/**
+			 * Adjust merged pickup settings used to build time slots (e.g. per-store hours).
+			 *
+			 * @param array  $merged     Merged pickup settings.
+			 * @param array  $cart_items Cart line payload.
+			 * @param string $store_id   Store id from pickup-dates request, if any.
+			 */
+			$merged   = apply_filters( 'wpd_pickup_time_slot_settings', $merged, $cart_items, $store_id );
 			$interval = max( 5, (int) $merged['interval'] );
 			$opening  = isset( $merged['opening_hours'] ) && is_array( $merged['opening_hours'] ) ? $merged['opening_hours'] : array();
 		}

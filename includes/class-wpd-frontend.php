@@ -246,21 +246,31 @@ class WPD_Frontend {
 			true
 		);
 
+		$pad_data = array(
+			'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+			'nonce'            => wp_create_nonce( 'wpd_nonce' ),
+			'checkoutUrl'      => wc_get_checkout_url(),
+			'storeAddress'     => $this->get_store_address(),
+			'australianStates' => $this->get_australian_states(),
+			'customerAddress'  => $this->get_customer_shipping_address(),
+			'shippingMethods'  => $this->get_shipping_methods(),
+			'globalSettings'   => $this->get_global_settings(),
+			'pickupSettings'   => $this->get_pickup_settings(),
+			'deliverySuburbs'  => $this->get_delivery_suburbs_for_pad(),
+		);
+
+		/**
+		 * Extend PAD localized `wpdData` (e.g. multi-store add-on).
+		 *
+		 * @param array $pad_data Localized data.
+		 * @return array
+		 */
+		$pad_data = apply_filters( 'wpd_pad_localize_script_data', $pad_data );
+
 		wp_localize_script(
 			'wpd-pad-app',
 			'wpdData',
-			array(
-				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'wpd_nonce' ),
-				'checkoutUrl'      => wc_get_checkout_url(),
-				'storeAddress'     => $this->get_store_address(),
-				'australianStates' => $this->get_australian_states(),
-				'customerAddress'  => $this->get_customer_shipping_address(),
-				'shippingMethods'  => $this->get_shipping_methods(),
-				'globalSettings'   => $this->get_global_settings(),
-				'pickupSettings'   => $this->get_pickup_settings(),
-				'deliverySuburbs'  => $this->get_delivery_suburbs_for_pad(),
-			)
+			$pad_data
 		);
 	}
 
@@ -287,7 +297,7 @@ class WPD_Frontend {
 			$settings             = get_option( WPD_Settings::OPTION_PICKUP, array() );
 			$defaults             = WPD_Settings::get_instance()->get_pickup_defaults();
 			$merged               = WPD_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $settings ) ? $settings : array() );
-			$iframe               = $this->build_pickup_map_iframe( isset( $merged['address'] ) ? $merged['address'] : '' );
+			$iframe               = self::pickup_map_iframe_html( isset( $merged['address'] ) ? $merged['address'] : '' );
 			$merged['map_iframe'] = wp_kses(
 				$iframe,
 				array(
@@ -338,9 +348,9 @@ class WPD_Frontend {
 	 * Build a Google Maps iframe embed from address text.
 	 *
 	 * @param string $address Multiline address.
-	 * @return string Iframe HTML (sanitized later by frontend rendering constraints).
+	 * @return string Iframe HTML (sanitize with wp_kses iframe allowlist before output).
 	 */
-	private function build_pickup_map_iframe( $address ) {
+	public static function pickup_map_iframe_html( $address ) {
 		$address = trim( (string) $address );
 		if ( '' === $address ) {
 			return '';

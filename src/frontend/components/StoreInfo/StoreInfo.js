@@ -7,7 +7,7 @@ import LocationIcon from '../icons/LocationIcon';
 import PhoneIcon from '../icons/PhoneIcon';
 import ClockIcon from '../icons/ClockIcon';
 
-export default function StoreInfo({ address, pickupSettings }) {
+export default function StoreInfo({ address, pickupSettings, heading }) {
     const a = address || {};
     const p = pickupSettings || {};
     const addressText =
@@ -32,9 +32,12 @@ export default function StoreInfo({ address, pickupSettings }) {
             ? openingLines.join('\n')
             : a.hours || 'Monday – Friday : 6:30am – 4:00pm';
     const mapIframe = p.map_iframe || '';
+    const title =
+        typeof heading === 'string' && heading.trim().length > 0 ? heading.trim() : __('Pickup Address', 'eux-pad');
+
     return (
         <div className="wpd-store-info">
-            <h3>{__('Pickup Address', 'eux-pad')}</h3>
+            <h3>{title}</h3>
             <div className="wpd-store-details">
                 <div className="wpd-store-detail-item">
                     <div className="wpd-store-icon">
