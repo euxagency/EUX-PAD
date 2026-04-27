@@ -142,14 +142,21 @@ class WPD_Rules {
 				}
 			}
 
+			$bookable = array_key_exists( 'bookable', $item ) ? (bool) $item['bookable'] : true;
+
 			if ( 'enable_day' === $rule_action ) {
-				$result[] = $item;
+				$item['bookable'] = true;
+				$result[]         = $item;
 			} elseif ( 'disable_day' === $rule_action ) {
-				// Exclude this date.
-				continue;
-			} else {
-				// No rule matched – keep original availability.
+				$item['bookable'] = false;
+				if ( 'pickup' === $type && isset( $item['time_slots'] ) && is_array( $item['time_slots'] ) ) {
+					$item['time_slots'] = array();
+				}
 				$result[] = $item;
+			} else {
+				// No rule matched – keep original bookable flag from API generation.
+				$item['bookable'] = $bookable;
+				$result[]         = $item;
 			}
 		}
 

@@ -297,6 +297,8 @@ class WPD_Frontend {
 			$settings             = get_option( WPD_Settings::OPTION_PICKUP, array() );
 			$defaults             = WPD_Settings::get_instance()->get_pickup_defaults();
 			$merged               = WPD_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $settings ) ? $settings : array() );
+			$merged               = WPD_Settings::get_instance()->apply_inactive_multi_store_pickup_fallback( $merged );
+			$merged['address']    = WPD_Settings::get_instance()->format_pickup_location_multiline( $merged );
 			$iframe               = self::pickup_map_iframe_html( isset( $merged['address'] ) ? $merged['address'] : '' );
 			$merged['map_iframe'] = wp_kses(
 				$iframe,

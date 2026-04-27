@@ -13,6 +13,17 @@ import PickupIcon from './icons/PickupIcon';
 
 const wpdData = typeof window !== 'undefined' ? window.wpdData || {} : {};
 
+/** Prefer first non-whitespace string (handles `''` unlike `??`). */
+function wpdFirstNonEmpty(...vals) {
+    for (let i = 0; i < vals.length; i += 1) {
+        const v = vals[i];
+        if (v != null && String(v).trim() !== '') {
+            return v;
+        }
+    }
+    return '';
+}
+
 function wpdNormSuburb(s) {
     return String(s).trim().toLowerCase();
 }
@@ -111,10 +122,16 @@ export default function PADApp() {
         const oh = selectedMultiStore.opening_hours;
         return {
             ...pickupSettings,
-            address: selectedMultiStore.address ?? pickupSettings.address,
-            phone: selectedMultiStore.phone ?? pickupSettings.phone,
+            address: wpdFirstNonEmpty(selectedMultiStore.address, pickupSettings.address),
+            phone: wpdFirstNonEmpty(selectedMultiStore.phone, pickupSettings.phone),
             opening_hours: Array.isArray(oh) && oh.length ? oh : pickupSettings.opening_hours,
-            map_iframe: selectedMultiStore.map_iframe ?? pickupSettings.map_iframe,
+            map_iframe: wpdFirstNonEmpty(selectedMultiStore.map_iframe, pickupSettings.map_iframe),
+            street_number: selectedMultiStore.street_number,
+            street_name: selectedMultiStore.street_name,
+            city: selectedMultiStore.city,
+            state: selectedMultiStore.state,
+            postcode: selectedMultiStore.postcode,
+            country: selectedMultiStore.country,
         };
     }, [pickupSettings, selectedMultiStore]);
 
@@ -173,6 +190,7 @@ export default function PADApp() {
                             full: `${fullDayName}, ${fullMonthName} ${dayNumber}, ${year}`,
                             day_of_week: fullDayName,
                             time_slots: dateObj.time_slots || [],
+                            bookable: dateObj.bookable !== false,
                         };
                     });
 
@@ -319,6 +337,7 @@ export default function PADApp() {
                             display: dateInstance.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
                             full: `${fullDayName}, ${fullMonthName} ${dayNumber}, ${year}`,
                             day_of_week: fullDayName,
+                            bookable: dateObj.bookable !== false,
                         };
                     });
                     setAvailableDates(transformedDates);
@@ -361,6 +380,9 @@ export default function PADApp() {
     }, [activeTab, showDeliveryDates, showDateRefreshTimer, timerDuration, fetchLocalPickup]);
 
     const handleDateSelect = (date) => {
+        if (!date || date.bookable === false) {
+            return;
+        }
         setSelectedDate(date);
         setSelectedTimeSlot(null);
         if (activeTab === 'pickup') {
@@ -386,6 +408,10 @@ export default function PADApp() {
     const handleProceed = async () => {
         if (!selectedDate) {
             setNotice({ type: 'error', message: __('Please select a date', 'eux-pad') });
+            return;
+        }
+        if (selectedDate.bookable === false) {
+            setNotice({ type: 'error', message: __('Please select an available date', 'eux-pad') });
             return;
         }
         if (activeTab === 'pickup' && !selectedTimeSlot) {

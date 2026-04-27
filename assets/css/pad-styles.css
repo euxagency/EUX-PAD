@@ -898,6 +898,25 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Not bookable (e.g. rules, holiday, no pickup hours) — still shown to fill Days displayed window */
+.wpd-date-box.wpd-date-box--unavailable {
+  cursor: not-allowed;
+  opacity: 0.45;
+  pointer-events: none;
+  background: #e8e8e8;
+}
+
+.wpd-date-box.wpd-date-box--unavailable .wpd-date-day,
+.wpd-date-box.wpd-date-box--unavailable .wpd-date-month {
+  color: #888 !important;
+}
+
+.wpd-date-box.wpd-date-box--unavailable:hover {
+  transform: none;
+  box-shadow: none;
+  background: #e8e8e8;
+}
+
 .wpd-date-box:hover .wpd-date-day {
   color: var(--wpd-day-name-selected, #fff) !important;
   transition: color 0.3s ease;
@@ -941,8 +960,8 @@
   position: relative;
   height: 2px;
   background: #d9d9d9;
-  margin-top: 42px;
-  margin-bottom: 32px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .wpd-delivery-slots-divider {
@@ -975,7 +994,7 @@
 }
 
 .wpd-time-slot {
-  border: 1.5px solid #fff;
+  border: 1px solid #fff;
   min-width: 0;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

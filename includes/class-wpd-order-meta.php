@@ -418,14 +418,18 @@ class WPD_Order_Meta {
 	public function prefill_shipping_address( $value, $input ) {
 		$selection = WC()->session->get( 'wpd_pad_selection' );
 
-		// Only prefill if delivery type and address exists
-		if ( empty( $selection ) || 'delivery' !== $selection['type'] || empty( $selection['address'] ) ) {
+		if ( empty( $selection ) || empty( $selection['address'] ) || ! is_array( $selection['address'] ) ) {
+			return $value;
+		}
+
+		$type = isset( $selection['type'] ) ? (string) $selection['type'] : '';
+		if ( 'delivery' !== $type && 'pickup' !== $type ) {
 			return $value;
 		}
 
 		$address = $selection['address'];
 
-		// Map delivery form fields to WooCommerce shipping fields
+		// Map PAD fields to WooCommerce shipping fields (delivery + pickup store).
 		$field_map = array(
 			'shipping_address_1' => 'street_address',
 			'shipping_city'      => 'suburb',
@@ -438,11 +442,13 @@ class WPD_Order_Meta {
 		if ( isset( $field_map[ $input ] ) ) {
 			$form_field = $field_map[ $input ];
 
-			// Return form value if exists
 			if ( 'country' === $form_field ) {
-				return 'AU'; // Always Australia
-			} elseif ( isset( $address[ $form_field ] ) && ! empty( $address[ $form_field ] ) ) {
-				return $address[ $form_field ];
+				if ( isset( $address['country'] ) && '' !== (string) $address['country'] ) {
+					return (string) $address['country'];
+				}
+				return 'AU';
+			} elseif ( isset( $address[ $form_field ] ) && '' !== (string) $address[ $form_field ] ) {
+				return (string) $address[ $form_field ];
 			}
 		}
 
@@ -471,17 +477,18 @@ class WPD_Order_Meta {
 
 		$shipping_method_id = $selection['shipping_method'];
 
-		// If delivery, set the customer address first
-		if ( 'delivery' === $selection['type'] && ! empty( $selection['address'] ) ) {
+		// Sync customer shipping from PAD (delivery or pickup store).
+		if ( ! empty( $selection['address'] ) && is_array( $selection['address'] ) ) {
 			$address  = $selection['address'];
 			$customer = WC()->customer;
 
-			if ( $customer ) {
-				$customer->set_shipping_address_1( $address['street_address'] );
-				$customer->set_shipping_city( $address['suburb'] );
-				$customer->set_shipping_state( $address['state'] );
-				$customer->set_shipping_postcode( $address['postcode'] );
-				$customer->set_shipping_country( 'AU' );
+			if ( $customer && ( 'delivery' === $selection['type'] || 'pickup' === $selection['type'] ) ) {
+				$country = isset( $address['country'] ) && '' !== (string) $address['country'] ? (string) $address['country'] : 'AU';
+				$customer->set_shipping_address_1( isset( $address['street_address'] ) ? (string) $address['street_address'] : '' );
+				$customer->set_shipping_city( isset( $address['suburb'] ) ? (string) $address['suburb'] : '' );
+				$customer->set_shipping_state( isset( $address['state'] ) ? (string) $address['state'] : '' );
+				$customer->set_shipping_postcode( isset( $address['postcode'] ) ? (string) $address['postcode'] : '' );
+				$customer->set_shipping_country( $country );
 				$customer->save();
 			}
 		}
@@ -588,37 +595,42 @@ class WPD_Order_Meta {
 	public function update_shipping_address( $order, $data ) {
 		$selection = WC()->session->get( 'wpd_pad_selection' );
 
-		if ( empty( $selection ) || 'delivery' !== $selection['type'] ) {
+		if ( empty( $selection ) ) {
 			return;
 		}
 
-		// Get address data from selection
-		$address = isset( $selection['address'] ) ? $selection['address'] : array();
+		$type = isset( $selection['type'] ) ? (string) $selection['type'] : '';
+		if ( 'delivery' !== $type && 'pickup' !== $type ) {
+			return;
+		}
 
-		if ( ! empty( $address ) ) {
-			// Update shipping address on order
-			$order->set_shipping_address_1( $address['street_address'] );
-			$order->set_shipping_address_2( '' );
-			$order->set_shipping_city( $address['suburb'] );
-			$order->set_shipping_state( $address['state'] );
-			$order->set_shipping_postcode( $address['postcode'] );
-			$order->set_shipping_country( 'AU' ); // Australia
+		$address = isset( $selection['address'] ) && is_array( $selection['address'] ) ? $selection['address'] : array();
 
-			// Set customer note if instructions provided
-			if ( ! empty( $address['instructions'] ) ) {
-				$order->set_customer_note( $address['instructions'] );
-			}
+		if ( empty( $address ) ) {
+			return;
+		}
 
-			// Update customer's default shipping address if logged in
-			$customer_id = $order->get_customer_id();
-			if ( $customer_id ) {
-				update_user_meta( $customer_id, 'shipping_address_1', $address['street_address'] );
-				update_user_meta( $customer_id, 'shipping_address_2', '' );
-				update_user_meta( $customer_id, 'shipping_city', $address['suburb'] );
-				update_user_meta( $customer_id, 'shipping_state', $address['state'] );
-				update_user_meta( $customer_id, 'shipping_postcode', $address['postcode'] );
-				update_user_meta( $customer_id, 'shipping_country', 'AU' );
-			}
+		$country = isset( $address['country'] ) && '' !== (string) $address['country'] ? (string) $address['country'] : 'AU';
+
+		$order->set_shipping_address_1( isset( $address['street_address'] ) ? (string) $address['street_address'] : '' );
+		$order->set_shipping_address_2( '' );
+		$order->set_shipping_city( isset( $address['suburb'] ) ? (string) $address['suburb'] : '' );
+		$order->set_shipping_state( isset( $address['state'] ) ? (string) $address['state'] : '' );
+		$order->set_shipping_postcode( isset( $address['postcode'] ) ? (string) $address['postcode'] : '' );
+		$order->set_shipping_country( $country );
+
+		if ( 'delivery' === $type && ! empty( $address['instructions'] ) ) {
+			$order->set_customer_note( $address['instructions'] );
+		}
+
+		$customer_id = $order->get_customer_id();
+		if ( $customer_id ) {
+			update_user_meta( $customer_id, 'shipping_address_1', isset( $address['street_address'] ) ? (string) $address['street_address'] : '' );
+			update_user_meta( $customer_id, 'shipping_address_2', '' );
+			update_user_meta( $customer_id, 'shipping_city', isset( $address['suburb'] ) ? (string) $address['suburb'] : '' );
+			update_user_meta( $customer_id, 'shipping_state', isset( $address['state'] ) ? (string) $address['state'] : '' );
+			update_user_meta( $customer_id, 'shipping_postcode', isset( $address['postcode'] ) ? (string) $address['postcode'] : '' );
+			update_user_meta( $customer_id, 'shipping_country', $country );
 		}
 	}
 

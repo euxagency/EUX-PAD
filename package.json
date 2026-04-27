@@ -6,7 +6,8 @@
   "scripts": {
     "build": "webpack --mode production",
     "start": "webpack --mode development --watch",
-    "lint:php": "composer run phpcs"
+    "lint:php": "composer run lint",
+    "fix:php": "composer run fix"
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",

@@ -123,14 +123,16 @@ export default function DateSelection({
                                       const month = monthDay[0] || '';
                                       const dayNumber = (monthDay[1] || '').replace(',', '');
 
+                                      const bookable = date.bookable !== false;
                                       return (
                                           <div
                                               key={date.date}
-                                              className={`wpd-date-box ${selectedDate && selectedDate.date === date.date ? 'selected' : ''}`}
-                                              onClick={() => onDateSelect(date)}
-                                              role="button"
-                                              tabIndex={0}
-                                              onKeyDown={(e) => e.key === 'Enter' && onDateSelect(date)}
+                                              className={`wpd-date-box ${selectedDate && selectedDate.date === date.date ? 'selected' : ''}${bookable ? '' : ' wpd-date-box--unavailable'}`}
+                                              onClick={() => bookable && onDateSelect(date)}
+                                              role={bookable ? 'button' : 'presentation'}
+                                              tabIndex={bookable ? 0 : -1}
+                                              onKeyDown={(e) => bookable && e.key === 'Enter' && onDateSelect(date)}
+                                              aria-disabled={bookable ? undefined : 'true'}
                                           >
                                               <div className="wpd-date-day">{dayName}</div>
                                               <div className="wpd-date-month">{dayNumber}</div>
@@ -224,7 +226,13 @@ export default function DateSelection({
                         type="button"
                         className="wpd-proceed-button"
                         onClick={handleProceed}
-                        disabled={isLoading || !selectedDate || !selectedShippingMethod || (activeTab === 'pickup' && !selectedTimeSlot)}
+                        disabled={
+                            isLoading ||
+                            !selectedDate ||
+                            selectedDate.bookable === false ||
+                            !selectedShippingMethod ||
+                            (activeTab === 'pickup' && !selectedTimeSlot)
+                        }
                     >
                         {isLoading ? <span className="wpd-loading" /> : (continueText || __('Continue', 'eux-pad'))}
                     </button>

@@ -1,27 +1,23 @@
 import { __ } from '@wordpress/i18n';
 import { useEffect, useState, useCallback } from '@wordpress/element';
-import {
-    Button,
-    Card,
-    CardBody,
-    Flex,
-    TextControl,
-    TextareaControl,
-    ToggleControl,
-} from '@wordpress/components';
+import { Button, Card, CardBody, Flex, TextControl, ToggleControl } from '@wordpress/components';
 import AdminPageLayout from './AdminPageLayout';
 import RulesCustomSelect from './RulesCustomSelect';
 import PickupStoresPanel from './PickupStoresPanel';
+import PickupAddressFields from './PickupAddressFields';
 import { setApiDefaults } from '../utils/api';
 
 const apiFetch = window.wp?.apiFetch;
 
-const wpdAdmin = typeof window !== 'undefined' ? window.wpdAdmin || {} : {};
-const multiPickupStoresAddon = !!wpdAdmin.multiPickupStoresAddon;
-
 const DEFAULTS = {
-    address: '',
-    phone: '',
+    street_number: '155',
+    street_name: 'George St',
+    city: 'SYDNEY',
+    state: 'NSW',
+    postcode: '2000',
+    country: 'AU',
+    address: '155 George St\nSYDNEY NSW 2000',
+    phone: '(02) 5550 4321',
     interval: 60,
     opening_hours: [],
     tab_enabled: true,
@@ -42,6 +38,9 @@ const ALL_DAYS = [
 const MAX_OPENING_ROWS = 7;
 
 export default function PickupSettings() {
+    const multiPickupStoresAddon =
+        typeof window !== 'undefined' && !!window.wpdAdmin?.multiPickupStoresAddon;
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [resetting, setResetting] = useState(false);
@@ -63,7 +62,7 @@ export default function PickupSettings() {
             /* REST missing if add-on deactivated */
         }
         return [];
-    }, []);
+    }, [multiPickupStoresAddon]);
 
     const load = async () => {
         setApiDefaults();
@@ -81,6 +80,9 @@ export default function PickupSettings() {
                 }
                 if (typeof data.tab_title !== 'string') {
                     data.tab_title = '';
+                }
+                if (typeof data.country !== 'string' || data.country.length !== 2) {
+                    data.country = 'AU';
                 }
                 setSettings(data);
             }
@@ -135,6 +137,23 @@ export default function PickupSettings() {
         });
     };
 
+    const buildPickupSavePayload = () => {
+        if (!multiPickupStoresAddon) {
+            return { ...settings };
+        }
+        const p = { ...settings };
+        if (!String(p.address ?? '').trim()) {
+            delete p.address;
+        }
+        if (!String(p.phone ?? '').trim()) {
+            delete p.phone;
+        }
+        if (Array.isArray(p.opening_hours) && p.opening_hours.length === 0) {
+            delete p.opening_hours;
+        }
+        return p;
+    };
+
     const save = async () => {
         setApiDefaults();
         setSaving(true);
@@ -143,7 +162,7 @@ export default function PickupSettings() {
             const res = await apiFetch({
                 path: '/wpd/v1/settings/pickup',
                 method: 'POST',
-                data: settings,
+                data: buildPickupSavePayload(),
             });
             if (!res?.success) {
                 setToast({ status: 'error', message: __('Failed to save pickup settings.', 'eux-pad') });
@@ -159,6 +178,9 @@ export default function PickupSettings() {
             }
             if (typeof data.tab_title !== 'string') {
                 data.tab_title = '';
+            }
+            if (typeof data.country !== 'string' || data.country.length !== 2) {
+                data.country = 'AU';
             }
             setSettings(data);
 
@@ -207,6 +229,9 @@ export default function PickupSettings() {
                 }
                 if (typeof data.tab_title !== 'string') {
                     data.tab_title = '';
+                }
+                if (typeof data.country !== 'string' || data.country.length !== 2) {
+                    data.country = 'AU';
                 }
                 setSettings(data);
                 setToast({ status: 'success', message: __('Reset to default.', 'eux-pad') });
@@ -296,11 +321,16 @@ export default function PickupSettings() {
                                     {__('Configure your pickup address and contact', 'eux-pad')}
                                 </div>
 
-                                <TextareaControl
-                                    label={__('Address', 'eux-pad')}
-                                    help={__('Shown on the pickup page.', 'eux-pad')}
-                                    value={settings.address || ''}
-                                    onChange={(v) => update('address', v)}
+                                <PickupAddressFields
+                                    values={{
+                                        street_number: settings.street_number,
+                                        street_name: settings.street_name,
+                                        city: settings.city,
+                                        state: settings.state,
+                                        postcode: settings.postcode,
+                                        country: settings.country,
+                                    }}
+                                    onChange={(patch) => setSettings((prev) => ({ ...prev, ...patch }))}
                                 />
 
                                 <TextControl
@@ -308,7 +338,6 @@ export default function PickupSettings() {
                                     value={settings.phone || ''}
                                     onChange={(v) => update('phone', v)}
                                 />
-
                                 <TextControl
                                     type="number"
                                     label={__('Interval (minutes)', 'eux-pad')}

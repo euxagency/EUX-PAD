@@ -23,7 +23,7 @@
  * WC tested up to:         9.5
  * Author:                  EUX
  * Author URI:              https://eux.com.au
- * License:                 GPL-2.0+
+ * License:                 GPL-2.0-or-later
  * License URI:             http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:             eux-pad
  */

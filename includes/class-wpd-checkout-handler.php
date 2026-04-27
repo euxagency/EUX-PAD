@@ -529,6 +529,49 @@ class WPD_Checkout_Handler {
 	}
 
 	/**
+	 * Build PAD session address for pickup: multi-store row when applicable, else merged global Pickup settings.
+	 *
+	 * @param string $pickup_store_id Posted store id (empty for single-store PAD).
+	 * @return array{street_address:string,suburb:string,state:string,postcode:string,country:string}
+	 */
+	private function build_pickup_session_checkout_address( $pickup_store_id ) {
+		$pickup_store_id = sanitize_text_field( (string) $pickup_store_id );
+		$store_row       = null;
+
+		if ( class_exists( 'WPD_Multi_Store' ) ) {
+			$list = WPD_Multi_Store::sanitize_stores_list( get_option( 'wpd_multi_pickup_stores', array() ) );
+			if ( '' !== $pickup_store_id ) {
+				foreach ( $list as $cand ) {
+					if ( empty( $cand['enabled'] ) ) {
+						continue;
+					}
+					if ( isset( $cand['id'] ) && (string) $cand['id'] === $pickup_store_id ) {
+						$store_row = $cand;
+						break;
+					}
+				}
+			} elseif ( ! empty( $list ) ) {
+				foreach ( $list as $cand ) {
+					if ( ! empty( $cand['enabled'] ) ) {
+						$store_row = $cand;
+						break;
+					}
+				}
+			}
+			if ( $store_row ) {
+				return WPD_Multi_Store::store_row_to_checkout_address( $store_row );
+			}
+		}
+
+		$saved    = get_option( WPD_Settings::OPTION_PICKUP, array() );
+		$defaults = WPD_Settings::get_instance()->get_pickup_defaults();
+		$merged   = WPD_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $saved ) ? $saved : array() );
+		$merged   = WPD_Settings::get_instance()->apply_inactive_multi_store_pickup_fallback( $merged );
+
+		return WPD_Settings::get_instance()->pickup_location_to_checkout_address( $merged );
+	}
+
+	/**
 	 * Save PAD selection via AJAX
 	 */
 	public function save_pad_selection() {
@@ -559,7 +602,10 @@ class WPD_Checkout_Handler {
 				wp_send_json_error( array( 'message' => __( 'Please choose a valid delivery suburb and complete the address.', 'eux-pad' ) ) );
 				return;
 			}
+			$address_data['country'] = 'AU';
 		}
+
+		$session_address = ( 'delivery' === $type ) ? $address_data : array();
 
 		// Store in session with 5 minute expiry
 		$selection_data = array(
@@ -567,7 +613,7 @@ class WPD_Checkout_Handler {
 			'date'            => $date,
 			'time_slot'       => $time_slot,
 			'shipping_method' => $shipping_method,
-			'address'         => $address_data,
+			'address'         => $session_address,
 			'timestamp'       => time(), // Store timestamp for expiry check
 		);
 
@@ -580,21 +626,32 @@ class WPD_Checkout_Handler {
 			if ( '' !== $pickup_store_name ) {
 				$selection_data['pickup_store_name'] = $pickup_store_name;
 			}
+			// PAD only sends pickup_store_id when Multi-Store is on; single-store pickup must still populate WC shipping fields.
+			$selection_data['address'] = $this->build_pickup_session_checkout_address( $pickup_store_id );
 		}
 
 		WC()->session->set( 'wpd_pad_selection', $selection_data );
 
 		// IMPORTANT: Set the chosen shipping method immediately
 		if ( ! empty( $shipping_method ) ) {
-			// Set customer address for delivery first
-			if ( 'delivery' === $type && ! empty( $address_data ) ) {
-				$customer = WC()->customer;
-				if ( $customer ) {
+			// Set customer shipping from PAD (delivery address or pickup store).
+			$customer = WC()->customer;
+			if ( $customer ) {
+				if ( 'delivery' === $type && ! empty( $address_data ) ) {
 					$customer->set_shipping_address_1( $address_data['street_address'] );
 					$customer->set_shipping_city( $address_data['suburb'] );
 					$customer->set_shipping_state( $address_data['state'] );
 					$customer->set_shipping_postcode( $address_data['postcode'] );
-					$customer->set_shipping_country( 'AU' );
+					$customer->set_shipping_country( isset( $address_data['country'] ) ? (string) $address_data['country'] : 'AU' );
+					$customer->save();
+				} elseif ( 'pickup' === $type && ! empty( $selection_data['address'] ) && is_array( $selection_data['address'] ) ) {
+					$pad_addr = $selection_data['address'];
+					$country  = isset( $pad_addr['country'] ) && '' !== (string) $pad_addr['country'] ? (string) $pad_addr['country'] : 'AU';
+					$customer->set_shipping_address_1( isset( $pad_addr['street_address'] ) ? (string) $pad_addr['street_address'] : '' );
+					$customer->set_shipping_city( isset( $pad_addr['suburb'] ) ? (string) $pad_addr['suburb'] : '' );
+					$customer->set_shipping_state( isset( $pad_addr['state'] ) ? (string) $pad_addr['state'] : '' );
+					$customer->set_shipping_postcode( isset( $pad_addr['postcode'] ) ? (string) $pad_addr['postcode'] : '' );
+					$customer->set_shipping_country( $country );
 					$customer->save();
 				}
 			}

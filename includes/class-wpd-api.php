@@ -198,33 +198,24 @@ class EUX_PAD_API {
 		$dates  = array();
 		$today  = $this->get_booking_window_start();
 		$window = $this->get_global_days_displayed();
-		// Inclusive: today + (window - 1) days = `window` calendar days scanned.
-		$end_date = clone $today;
-		$end_date->modify( '+' . ( $window - 1 ) . ' days' );
 
-		$current_date = clone $today;
-
-		while ( $current_date <= $end_date ) {
+		// Always return exactly `window` consecutive calendar days (rules may mark days non-bookable later).
+		for ( $i = 0; $i < $window; $i++ ) {
+			$current_date = clone $today;
+			$current_date->modify( '+' . $i . ' days' );
 			$date_string = $current_date->format( 'Y-m-d' );
 
-			// Check if date is available
-			if ( ! $this->is_date_available( $current_date, $cart_items, 'pickup', null ) ) {
-				$current_date->modify( '+1 day' );
-				continue;
+			$base_ok    = $this->is_date_available( $current_date, $cart_items, 'pickup', null );
+			$time_slots = array();
+			if ( $base_ok ) {
+				$time_slots = $this->generate_time_slots_array( $current_date, $cart_items );
 			}
 
-			// Generate time slots for this date
-			$time_slots = $this->generate_time_slots_array( $current_date, $cart_items );
-
-			// Only add date if it has available time slots
-			if ( ! empty( $time_slots ) ) {
-				$dates[] = array(
-					'date'       => $date_string,
-					'time_slots' => $time_slots,
-				);
-			}
-
-			$current_date->modify( '+1 day' );
+			$dates[] = array(
+				'date'       => $date_string,
+				'time_slots' => $time_slots,
+				'bookable'   => $base_ok && ! empty( $time_slots ),
+			);
 		}
 
 		return $dates;
@@ -234,29 +225,20 @@ class EUX_PAD_API {
 	 * Generate delivery dates (NEW FORMAT - dates only, no time slots)
 	 */
 	private function generate_delivery_dates( $cart_items, $delivery_address ) {
-		$dates    = array();
-		$today    = $this->get_booking_window_start();
-		$window   = $this->get_global_days_displayed();
-		$end_date = clone $today;
-		$end_date->modify( '+' . ( $window - 1 ) . ' days' );
+		$dates  = array();
+		$today  = $this->get_booking_window_start();
+		$window = $this->get_global_days_displayed();
 
-		$current_date = clone $today;
-
-		while ( $current_date <= $end_date ) {
+		// Always return exactly `window` consecutive calendar days (rules may mark days non-bookable later).
+		for ( $i = 0; $i < $window; $i++ ) {
+			$current_date = clone $today;
+			$current_date->modify( '+' . $i . ' days' );
 			$date_string = $current_date->format( 'Y-m-d' );
 
-			// Check if date is available for delivery
-			if ( ! $this->is_date_available( $current_date, $cart_items, 'delivery', $delivery_address ) ) {
-				$current_date->modify( '+1 day' );
-				continue;
-			}
-
-			// Simple format for delivery - just the date
 			$dates[] = array(
-				'date' => $date_string,
+				'date'     => $date_string,
+				'bookable' => $this->is_date_available( $current_date, $cart_items, 'delivery', $delivery_address ),
 			);
-
-			$current_date->modify( '+1 day' );
 		}
 
 		return $dates;

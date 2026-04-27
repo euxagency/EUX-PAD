@@ -5,8 +5,9 @@
 
 import { __, sprintf } from '@wordpress/i18n';
 import { useCallback, useRef, useState, useId } from '@wordpress/element';
-import { Button, TextControl, TextareaControl, ToggleControl } from '@wordpress/components';
+import { Button, TextControl, ToggleControl } from '@wordpress/components';
 import RulesCustomSelect from './RulesCustomSelect';
+import PickupAddressFields from './PickupAddressFields';
 
 const RULES_LIST_GAP_PX = 12;
 
@@ -79,7 +80,12 @@ export function createEmptyPickupStore() {
         id: newStoreId(),
         enabled: true,
         name: '',
-        address: '',
+        street_number: '',
+        street_name: '',
+        city: '',
+        state: '',
+        postcode: '',
+        country: 'AU',
         phone: '',
         interval: 60,
         opening_hours: [
@@ -90,7 +96,7 @@ export function createEmptyPickupStore() {
 }
 
 /**
- * One store: name + same fields as Pickup Location (address, phone, interval, opening hours).
+ * One store: name + structured address row, phone, interval, opening hours.
  */
 function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, sortHandleProps }) {
     const bodyId = useId();
@@ -205,11 +211,21 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                         value={store.name || ''}
                         onChange={(v) => update({ name: v })}
                     />
-                    <TextareaControl
-                        label={__('Address', 'eux-pad')}
-                        help={__('Shown on the pickup page.', 'eux-pad')}
-                        value={store.address || ''}
-                        onChange={(v) => update({ address: v })}
+                    <PickupAddressFields
+                        values={{
+                            street_number: store.street_number,
+                            street_name: store.street_name,
+                            city: store.city,
+                            state: store.state,
+                            postcode: store.postcode,
+                            country: store.country,
+                        }}
+                        onChange={(patch) => update(patch)}
+                        sectionTitle={__('Store address', 'eux-pad')}
+                        sectionHelp={__(
+                            'Shown on the pickup page and used as the shipping address at checkout for this store.',
+                            'eux-pad'
+                        )}
                     />
                     <TextControl
                         label={__('Phone', 'eux-pad')}

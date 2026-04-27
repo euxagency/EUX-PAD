@@ -85,7 +85,36 @@ class WPD_Admin {
 			'colorHelpImageBase'     => esc_url_raw( trailingslashit( WPD_PLUGIN_URL ) . 'assets/img/color-help/' ),
 			'rulesPro'               => class_exists( 'WPD_Rules' ) && WPD_Rules::has_pro_features(),
 			'multiPickupStoresAddon' => class_exists( 'WPD_Multi_Store' ),
+			'wcCountries'            => array(),
+			'wcCountryStates'        => array(),
 		);
+
+		if ( function_exists( 'WC' ) && WC()->countries ) {
+			$wc_countries = WC()->countries->get_countries();
+			$wc_countries = is_array( $wc_countries ) ? $wc_countries : array();
+			uasort(
+				$wc_countries,
+				static function ( $a, $b ) {
+					return strnatcasecmp( (string) $a, (string) $b );
+				}
+			);
+			$states_by_country = array();
+			foreach ( array_keys( $wc_countries ) as $cc ) {
+				if ( ! is_string( $cc ) || 2 !== strlen( $cc ) ) {
+					continue;
+				}
+				$states = WC()->countries->get_states( $cc );
+				if ( is_array( $states ) && ! empty( $states ) ) {
+					$states_by_country[ strtoupper( $cc ) ] = $states;
+				}
+			}
+			$wpd_admin['wcCountries']     = $wc_countries;
+			$wpd_admin['wcCountryStates'] = $states_by_country;
+		} else {
+			$wpd_admin['wcCountries'] = array(
+				'AU' => __( 'Australia', 'eux-pad' ),
+			);
+		}
 
 		/**
 		 * Extend localized `wpdAdmin` for admin React apps.

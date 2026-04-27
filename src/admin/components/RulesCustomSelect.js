@@ -28,6 +28,8 @@ export default function RulesCustomSelect({
     className,
     label,
     ariaLabel,
+    portalDropdownClassName,
+    portalMaxWidth,
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState(null);
@@ -87,7 +89,9 @@ export default function RulesCustomSelect({
         createPortal(
             <div
                 ref={portalRef}
-                className="wpd-rules-multiselect-dropdown wpd-rules-multiselect-dropdown--portal"
+                className={`wpd-rules-multiselect-dropdown wpd-rules-multiselect-dropdown--portal${
+                    portalDropdownClassName ? ` ${portalDropdownClassName}` : ''
+                }`}
                 role="listbox"
                 style={{
                     position: 'fixed',
@@ -95,7 +99,7 @@ export default function RulesCustomSelect({
                     left: `${coords.left}px`,
                     minWidth: `${coords.minWidth}px`,
                     width: 'max-content',
-                    maxWidth: 'min(340px, calc(100vw - 24px))',
+                    maxWidth: portalMaxWidth || 'min(340px, calc(100vw - 24px))',
                     zIndex: 100000,
                     backgroundColor: '#fff',
                     border: '1px solid #eceef2',

@@ -698,6 +698,31 @@ border: 1px solid #E0E4EA;
     margin: 18px 0 10px 0;
 }
 
+/* Multi-store pickup: address fields, two per row */
+.wpd-admin .wpd-store-address-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.wpd-admin .wpd-store-address-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: end;
+}
+
+@media (max-width: 600px) {
+    .wpd-admin .wpd-store-address-pair {
+        grid-template-columns: 1fr;
+    }
+}
+
+.wpd-rules-multiselect-dropdown--portal.wpd-store-address-dropdown--wide {
+    max-height: min(320px, 60vh) !important;
+}
+
 /* -------------------------------------------------------------------------
    Delivery settings – suburb chips (WooCommerce attribute–style)
    ------------------------------------------------------------------------- */

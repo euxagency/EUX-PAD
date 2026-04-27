@@ -7,13 +7,43 @@ import LocationIcon from '../icons/LocationIcon';
 import PhoneIcon from '../icons/PhoneIcon';
 import ClockIcon from '../icons/ClockIcon';
 
+/**
+ * When `p.address` is empty but multi-store structured fields exist on localized pickup settings.
+ *
+ * @param {Record<string, unknown>} p
+ * @returns {string}
+ */
+function formatAddressFromStructuredParts(p) {
+    const sn = String(p.street_number ?? '').trim();
+    const st = String(p.street_name ?? '').trim();
+    const city = String(p.city ?? '').trim();
+    const state = String(p.state ?? '').trim();
+    const pc = String(p.postcode ?? '').trim();
+    const country = String(p.country ?? '').trim();
+    const line1 = [sn, st].filter(Boolean).join(' ').trim();
+    const lines = [];
+    if (line1) {
+        lines.push(line1);
+    }
+    if (city) {
+        lines.push(city);
+    }
+    const tail = [state, pc, country].filter(Boolean);
+    if (tail.length) {
+        lines.push(tail.join(' '));
+    }
+    return lines.join('\n');
+}
+
 export default function StoreInfo({ address, pickupSettings, heading }) {
     const a = address || {};
     const p = pickupSettings || {};
+    const fromParts = formatAddressFromStructuredParts(p).trim();
     const addressText =
-        p.address && p.address.trim().length
-            ? p.address
-            : `${[a.name, a.address].filter(Boolean).join(', ')}\n${[a.suburb, a.state, a.postcode].filter(Boolean).join(' ')}`;
+        p.address && String(p.address).trim().length
+            ? String(p.address).trim()
+            : fromParts ||
+              `${[a.name, a.address].filter(Boolean).join(', ')}\n${[a.suburb, a.state, a.postcode].filter(Boolean).join(' ')}`;
     const phone = p.phone || a.phone || '1300 477 024';
 
     const openingLines =

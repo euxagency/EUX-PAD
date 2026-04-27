@@ -348,8 +348,14 @@ class WPD_Settings {
 	 */
 	public function get_pickup_defaults() {
 		return array(
-			'address'       => "123 Main Street, Suite 100\nSan Francisco, CA 94102\nUnited States",
-			'phone'         => '+1 (555) 123-4567',
+			'street_number' => '155',
+			'street_name'   => 'George St',
+			'city'          => 'SYDNEY',
+			'state'         => 'NSW',
+			'postcode'      => '2000',
+			'country'       => 'AU',
+			'address'       => "155 George St\nSYDNEY NSW 2000",
+			'phone'         => '(02) 5550 4321',
 			'interval'      => 60,
 			'opening_hours' => array(
 				array(
@@ -568,11 +574,168 @@ class WPD_Settings {
 			$data['tab_title'] = isset( $global['labels']['pickup_title'] ) ? (string) $global['labels']['pickup_title'] : $defaults['tab_title'];
 		}
 
+		$data            = $this->apply_inactive_multi_store_pickup_fallback( $data );
+		$data['address'] = $this->format_pickup_location_multiline( $data );
+
 		return rest_ensure_response(
 			array(
 				'success' => true,
 				'data'    => $data,
 			)
+		);
+	}
+
+	/**
+	 * When Multi-Store is off but its option still exists, surface the first enabled store on GET so
+	 * Pickup Settings shows an address (deactivation sync or legacy installs).
+	 *
+	 * @param array $data Merged pickup settings.
+	 * @return array
+	 */
+	public function apply_inactive_multi_store_pickup_fallback( array $data ) {
+		if ( class_exists( 'WPD_Multi_Store' ) ) {
+			return $data;
+		}
+		if ( '' !== trim( (string) ( $data['address'] ?? '' ) ) ) {
+			return $data;
+		}
+		// Option name matches WPD_Multi_Store::OPTION in the Multi-Store add-on.
+		$raw = get_option( 'wpd_multi_pickup_stores', array() );
+		if ( ! is_array( $raw ) || empty( $raw ) ) {
+			return $data;
+		}
+		foreach ( $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$enabled = ! array_key_exists( 'enabled', $row ) || ! empty( $row['enabled'] );
+			if ( ! $enabled ) {
+				continue;
+			}
+			$addr = $this->format_pickup_location_multiline( $row );
+			if ( '' === $addr ) {
+				continue;
+			}
+			$data['address'] = $addr;
+			if ( ( ! isset( $data['phone'] ) || '' === trim( (string) $data['phone'] ) ) && ! empty( $row['phone'] ) ) {
+				$data['phone'] = sanitize_text_field( (string) $row['phone'] );
+			}
+			if ( ! empty( $row['opening_hours'] ) && is_array( $row['opening_hours'] ) ) {
+				$oh = array();
+				foreach ( $row['opening_hours'] as $slot ) {
+					if ( ! is_array( $slot ) ) {
+						continue;
+					}
+					$d = isset( $slot['day'] ) ? sanitize_text_field( (string) $slot['day'] ) : '';
+					$s = isset( $slot['start'] ) ? sanitize_text_field( (string) $slot['start'] ) : '';
+					$e = isset( $slot['end'] ) ? sanitize_text_field( (string) $slot['end'] ) : '';
+					if ( '' !== $d && '' !== $s && '' !== $e ) {
+						$oh[] = array(
+							'day'   => $d,
+							'start' => $s,
+							'end'   => $e,
+						);
+					}
+					if ( count( $oh ) >= 7 ) {
+						break;
+					}
+				}
+				if ( ! empty( $oh ) ) {
+					$data['opening_hours'] = $oh;
+				}
+			}
+			if ( isset( $row['interval'] ) ) {
+				$data['interval'] = max( 5, min( 360, absint( $row['interval'] ) ) );
+			}
+			break;
+		}
+		if ( '' !== trim( (string) ( $data['address'] ?? '' ) ) ) {
+			return $data;
+		}
+		foreach ( $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$addr = $this->format_pickup_location_multiline( $row );
+			if ( '' === $addr ) {
+				continue;
+			}
+			$data['address'] = $addr;
+			if ( ( ! isset( $data['phone'] ) || '' === trim( (string) $data['phone'] ) ) && ! empty( $row['phone'] ) ) {
+				$data['phone'] = sanitize_text_field( (string) $row['phone'] );
+			}
+			break;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Multiline pickup address from structured fields, else legacy `address` textarea (single-store or store row).
+	 *
+	 * @param array $pickup Pickup settings or store row.
+	 * @return string
+	 */
+	public function format_pickup_location_multiline( array $pickup ) {
+		$sn    = trim( (string) ( $pickup['street_number'] ?? '' ) );
+		$st    = trim( (string) ( $pickup['street_name'] ?? '' ) );
+		$city  = trim( (string) ( $pickup['city'] ?? '' ) );
+		$state = trim( (string) ( $pickup['state'] ?? '' ) );
+		$pc    = trim( (string) ( $pickup['postcode'] ?? '' ) );
+		$cc    = strtoupper( sanitize_text_field( (string) ( $pickup['country'] ?? '' ) ) );
+		if ( 2 !== strlen( $cc ) || ! preg_match( '/^[A-Z]{2}$/', $cc ) ) {
+			$cc = '';
+		}
+		$line1 = trim( $sn . ' ' . $st );
+		$lines = array();
+		if ( '' !== $line1 ) {
+			$lines[] = $line1;
+		}
+		if ( '' !== $city ) {
+			$lines[] = $city;
+		}
+		$tail = array_filter( array( $state, $pc, $cc ) );
+		if ( ! empty( $tail ) ) {
+			$lines[] = implode( ' ', $tail );
+		}
+		$out = implode( "\n", array_filter( $lines ) );
+		if ( '' !== $out ) {
+			return $out;
+		}
+		$legacy = isset( $pickup['address'] ) ? trim( (string) $pickup['address'] ) : '';
+		return $legacy;
+	}
+
+	/**
+	 * Map merged pickup settings (same shape as a multi-store row) to WooCommerce shipping field keys.
+	 *
+	 * @param array<string, mixed> $pickup Merged pickup option row.
+	 * @return array{street_address:string,suburb:string,state:string,postcode:string,country:string}
+	 */
+	public function pickup_location_to_checkout_address( array $pickup ) {
+		$sn    = trim( (string) ( $pickup['street_number'] ?? '' ) );
+		$st    = trim( (string) ( $pickup['street_name'] ?? '' ) );
+		$city  = trim( (string) ( $pickup['city'] ?? '' ) );
+		$state = trim( (string) ( $pickup['state'] ?? '' ) );
+		$pc    = trim( (string) ( $pickup['postcode'] ?? '' ) );
+		$cc    = strtoupper( sanitize_text_field( (string) ( $pickup['country'] ?? '' ) ) );
+		if ( 2 !== strlen( $cc ) || ! preg_match( '/^[A-Z]{2}$/', $cc ) ) {
+			$cc = 'AU';
+		}
+		$line1 = trim( $sn . ' ' . $st );
+		if ( '' === $line1 && ! empty( $pickup['address'] ) ) {
+			$raw_lines = preg_split( '/\r\n|\r|\n/', trim( (string) $pickup['address'] ) );
+			$line1     = isset( $raw_lines[0] ) ? trim( (string) $raw_lines[0] ) : '';
+			if ( '' === $city && isset( $raw_lines[1] ) ) {
+				$city = trim( (string) $raw_lines[1] );
+			}
+		}
+		return array(
+			'street_address' => $line1,
+			'suburb'         => $city,
+			'state'          => $state,
+			'postcode'       => $pc,
+			'country'        => $cc,
 		);
 	}
 
@@ -583,10 +746,21 @@ class WPD_Settings {
 	 * @return WP_REST_Response
 	 */
 	public function save_pickup_settings( $request ) {
-		$params   = $request->get_json_params();
-		$params   = is_array( $params ) ? $params : array();
+		$params = $request->get_json_params();
+		if ( ! is_array( $params ) ) {
+			$body = $request->get_body();
+			if ( is_string( $body ) && '' !== $body ) {
+				$decoded = json_decode( $body, true );
+				$params  = is_array( $decoded ) ? $decoded : array();
+			} else {
+				$params = array();
+			}
+		}
 		$defaults = $this->get_pickup_defaults();
-		$clean    = $this->sanitize_pickup_settings( $params, $defaults );
+		$saved    = get_option( self::OPTION_PICKUP, array() );
+		$saved    = is_array( $saved ) ? $saved : array();
+		$base     = $this->merge_pickup_settings( $defaults, $saved );
+		$clean    = $this->sanitize_pickup_settings( $params, $base, $defaults );
 
 		update_option( self::OPTION_PICKUP, $clean, false );
 
@@ -1105,6 +1279,11 @@ class WPD_Settings {
 		if ( isset( $saved['address'] ) ) {
 			$out['address'] = (string) $saved['address'];
 		}
+		foreach ( array( 'street_number', 'street_name', 'city', 'state', 'postcode', 'country' ) as $sk ) {
+			if ( isset( $saved[ $sk ] ) ) {
+				$out[ $sk ] = (string) $saved[ $sk ];
+			}
+		}
 		if ( isset( $saved['phone'] ) ) {
 			$out['phone'] = (string) $saved['phone'];
 		}
@@ -1119,6 +1298,17 @@ class WPD_Settings {
 		}
 		if ( is_array( $saved ) && array_key_exists( 'tab_title', $saved ) ) {
 			$out['tab_title'] = sanitize_text_field( wp_unslash( (string) $saved['tab_title'] ) );
+		}
+
+		if ( '' === trim( (string) ( $out['phone'] ?? '' ) ) ) {
+			$out['phone'] = $defaults['phone'];
+		}
+		if ( '' === trim( $this->format_pickup_location_multiline( $out ) ) ) {
+			foreach ( array( 'street_number', 'street_name', 'city', 'state', 'postcode', 'country', 'address' ) as $addr_key ) {
+				if ( array_key_exists( $addr_key, $defaults ) ) {
+					$out[ $addr_key ] = $defaults[ $addr_key ];
+				}
+			}
 		}
 
 		return $out;
@@ -1267,51 +1457,72 @@ class WPD_Settings {
 	/**
 	 * Sanitize payload for pickup settings.
 	 *
-	 * @param array $params Input.
-	 * @param array $defaults Defaults.
+	 * Starts from merged saved settings (`$base`) so omitted keys are not reset to hardcoded defaults
+	 * (important when Multi-Store UI only sends tab fields and stores are saved separately).
+	 *
+	 * @param array $params   Request body.
+	 * @param array $base     Merged defaults + current DB (pickup option).
+	 * @param array $defaults Plugin defaults (opening hours fallback).
 	 * @return array
 	 */
-	private function sanitize_pickup_settings( $params, $defaults ) {
-		$out = $defaults;
+	private function sanitize_pickup_settings( $params, $base, $defaults ) {
+		$out = $base;
 
-		if ( isset( $params['address'] ) ) {
-			$out['address'] = sanitize_textarea_field( wp_unslash( $params['address'] ) );
+		$multi_store = class_exists( 'WPD_Multi_Store' );
+
+		// Multi-Store admin sends the same pickup payload as single-store; empty address/phone/hours
+		// must not wipe DB values (those fields are edited per store, not on this screen).
+		if ( array_key_exists( 'address', $params ) ) {
+			$addr = sanitize_textarea_field( wp_unslash( (string) $params['address'] ) );
+			if ( '' !== trim( $addr ) ) {
+				$out['address'] = $addr;
+			} elseif ( ! $multi_store ) {
+				$out['address'] = $addr;
+			}
 		}
-		if ( isset( $params['phone'] ) ) {
-			$out['phone'] = sanitize_text_field( wp_unslash( $params['phone'] ) );
+		if ( array_key_exists( 'phone', $params ) ) {
+			$ph = sanitize_text_field( wp_unslash( (string) $params['phone'] ) );
+			if ( '' !== trim( $ph ) ) {
+				$out['phone'] = $ph;
+			} elseif ( ! $multi_store ) {
+				$out['phone'] = $ph;
+			}
 		}
 		if ( isset( $params['interval'] ) ) {
 			$out['interval'] = max( 5, min( 360, absint( $params['interval'] ) ) );
 		}
-		$out['opening_hours'] = array();
 
 		if ( isset( $params['opening_hours'] ) && is_array( $params['opening_hours'] ) ) {
-			$max_opening_rows = 7;
-			foreach ( $params['opening_hours'] as $row ) {
-				if ( count( $out['opening_hours'] ) >= $max_opening_rows ) {
-					break;
-				}
-				if ( empty( $row['day'] ) ) {
-					continue;
-				}
-				$day   = sanitize_text_field( wp_unslash( $row['day'] ) );
-				$start = isset( $row['start'] ) ? sanitize_text_field( wp_unslash( $row['start'] ) ) : '';
-				$end   = isset( $row['end'] ) ? sanitize_text_field( wp_unslash( $row['end'] ) ) : '';
+			if ( $multi_store && empty( $params['opening_hours'] ) ) {
+				// Keep saved global opening hours; empty array is React defaults, not "clear".
+			} else {
+				$out['opening_hours'] = array();
+				$max_opening_rows     = 7;
+				foreach ( $params['opening_hours'] as $row ) {
+					if ( count( $out['opening_hours'] ) >= $max_opening_rows ) {
+						break;
+					}
+					if ( empty( $row['day'] ) ) {
+						continue;
+					}
+					$day   = sanitize_text_field( wp_unslash( $row['day'] ) );
+					$start = isset( $row['start'] ) ? sanitize_text_field( wp_unslash( $row['start'] ) ) : '';
+					$end   = isset( $row['end'] ) ? sanitize_text_field( wp_unslash( $row['end'] ) ) : '';
 
-				if ( '' === $start || '' === $end ) {
-					continue;
-				}
+					if ( '' === $start || '' === $end ) {
+						continue;
+					}
 
-				$out['opening_hours'][] = array(
-					'day'   => $day,
-					'start' => $start,
-					'end'   => $end,
-				);
+					$out['opening_hours'][] = array(
+						'day'   => $day,
+						'start' => $start,
+						'end'   => $end,
+					);
+				}
+				if ( empty( $out['opening_hours'] ) ) {
+					$out['opening_hours'] = $defaults['opening_hours'];
+				}
 			}
-		}
-
-		if ( empty( $out['opening_hours'] ) ) {
-			$out['opening_hours'] = $defaults['opening_hours'];
 		}
 
 		if ( array_key_exists( 'tab_enabled', $params ) ) {
@@ -1320,6 +1531,25 @@ class WPD_Settings {
 		if ( isset( $params['tab_title'] ) ) {
 			$out['tab_title'] = sanitize_text_field( wp_unslash( (string) $params['tab_title'] ) );
 		}
+
+		if ( ! $multi_store ) {
+			$struct_keys = array( 'street_number', 'street_name', 'city', 'state', 'postcode' );
+			foreach ( $struct_keys as $k ) {
+				if ( array_key_exists( $k, $params ) ) {
+					$out[ $k ] = sanitize_text_field( wp_unslash( (string) $params[ $k ] ) );
+				}
+			}
+			if ( array_key_exists( 'country', $params ) ) {
+				$c              = strtoupper( sanitize_text_field( wp_unslash( (string) $params['country'] ) ) );
+				$out['country'] = ( 2 === strlen( $c ) && preg_match( '/^[A-Z]{2}$/', $c ) ) ? $c : 'AU';
+			}
+		}
+
+		if ( empty( $out['opening_hours'] ) || ! is_array( $out['opening_hours'] ) ) {
+			$out['opening_hours'] = $defaults['opening_hours'];
+		}
+
+		$out['address'] = $this->format_pickup_location_multiline( $out );
 
 		return $out;
 	}

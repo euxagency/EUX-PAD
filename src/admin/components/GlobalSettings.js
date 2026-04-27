@@ -645,6 +645,22 @@ export default function GlobalSettings() {
                         </CardBody>
                     </Card>
 
+                     <Card>
+                        <CardBody>
+                            <div className="wpd-admin-section">
+                                <div className="wpd-admin-section__title">{__('Days displayed', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__subtitle">{__('How many days to display in the calendar', 'eux-pad')}</div>
+                                <TextControl
+                                    type="number"
+                                    min={1}
+                                    max={60}
+                                    value={settings.days_displayed}
+                                    onChange={(v) => update(['days_displayed'], parseInt(v, 10) || 15)}
+                                />
+                            </div>
+                        </CardBody>
+                    </Card>
+
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
@@ -916,21 +932,7 @@ export default function GlobalSettings() {
                         </CardBody>
                     </Card>
 
-                    <Card>
-                        <CardBody>
-                            <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Days displayed', 'eux-pad')}</div>
-                                <div className="wpd-admin-section__subtitle">{__('How many days to display in the calendar', 'eux-pad')}</div>
-                                <TextControl
-                                    type="number"
-                                    min={1}
-                                    max={60}
-                                    value={settings.days_displayed}
-                                    onChange={(v) => update(['days_displayed'], parseInt(v, 10) || 15)}
-                                />
-                            </div>
-                        </CardBody>
-                    </Card>
+                   
                 </>
             )}
         </AdminPageLayout>
