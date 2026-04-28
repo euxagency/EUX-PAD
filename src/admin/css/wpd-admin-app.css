@@ -14,6 +14,14 @@
     background: #fff;
 }
 
+/* Hide core WP/WC notices on our React admin pages only. */
+.wpd-admin .notice,
+.wpd-admin .woocommerce-message,
+.wpd-admin .woocommerce-error,
+.wpd-admin .woocommerce-info {
+    display: none !important;
+}
+
 /* -------------------------------------------------------------------------
    Design tokens (customize these for easy theming)
    ------------------------------------------------------------------------- */

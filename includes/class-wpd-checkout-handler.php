@@ -395,7 +395,11 @@ class WPD_Checkout_Handler {
 
 		// For pickup
 		if ( 'pickup' === $type ) {
-			wp_send_json_error( array( 'message' => __( 'Local pickup is not configured. Please add Local Pickup in WooCommerce → Settings → Shipping.', 'eux-pad' ) ) );
+			wp_send_json_error(
+				array(
+					'message' => __( "Shipping or Pickup hasn't been configured for this address, for more information please contact the store owner.", 'eux-pad' ),
+				)
+			);
 			return;
 		}
 
@@ -435,11 +439,7 @@ class WPD_Checkout_Handler {
 		} else {
 			wp_send_json_error(
 				array(
-					'message' => sprintf(
-						/* translators: %s: shipping postcode entered by the customer. */
-						__( 'No delivery shipping methods available for postcode %s. Please configure shipping zones in WooCommerce → Settings → Shipping (excluding Local Pickup/Click & Collect).', 'eux-pad' ),
-						$postcode
-					),
+					'message' => __( "Shipping or Pickup hasn't been configured for this address, for more information please contact the store owner.", 'eux-pad' ),
 				)
 			);
 		}

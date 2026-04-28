@@ -474,19 +474,9 @@ class EUX_PAD_API {
 	 * Check if postcode is serviced on a specific day
 	 */
 	private function is_postcode_serviced( $postcode, $day_of_week ) {
-		$postcode = intval( $postcode );
-
-		// Example: Postcodes 4000-4499 serviced Mon-Fri
-		if ( $postcode >= 4000 && $postcode <= 4499 ) {
-			return ! in_array( $day_of_week, array( 'Saturday', 'Sunday' ), true );
-		}
-
-		// Example: Postcodes 4500-4999 serviced Mon, Wed, Fri
-		if ( $postcode >= 4500 && $postcode <= 4999 ) {
-			return in_array( $day_of_week, array( 'Monday', 'Wednesday', 'Friday' ), true );
-		}
-
-		// Default: all days including Sunday
+		// Previously, delivery availability was restricted by hardcoded postcode/day rules.
+		// This is now disabled so delivery date availability is controlled by the Rules engine,
+		// holidays, and capacity checks instead.
 		return true;
 	}
 }
