@@ -15,7 +15,7 @@
  * Plugin Name:             EUX Pickup & Delivery
  * Plugin URI:              https://eux.com.au/product/improved-delivery-and-pick-up-for-woocommerce/
  * Description:             Enhance your WooCommerce store with a Pickup & Delivery system for your customers.
- * Version:                 1.0.1
+ * Version:                 1.0.2
  * Requires at least:       5.0
  * Requires PHP:            7.4
  * Tested up to:            6.9
