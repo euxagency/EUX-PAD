@@ -134,7 +134,7 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
             <div className="wpd-rules-rule-header">
                 <div
                     className="wpd-rules-drag-handle"
-                    title={__('Drag to reorder', 'eux-pad')}
+                    title={__('Drag to reorder', 'eux-pickup-delivery')}
                     {...(sortHandleProps || {})}
                     onClick={(e) => {
                         e.stopPropagation();
@@ -156,7 +156,7 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                     tabIndex={0}
                     aria-expanded={expanded}
                     aria-controls={expanded ? bodyId : undefined}
-                    title={__('Click to expand or collapse', 'eux-pad')}
+                    title={__('Click to expand or collapse', 'eux-pickup-delivery')}
                     onClick={() => onToggleExpand(store.id)}
                     onKeyDown={onHeaderKeyDown}
                 >
@@ -172,7 +172,7 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                         </svg>
                     </span>
                     <span className="wpd-rules-rule-header-main__text">
-                        {store.name?.trim() || __('Untitled store', 'eux-pad')}
+                        {store.name?.trim() || __('Untitled store', 'eux-pickup-delivery')}
                     </span>
                 </div>
                 <button
@@ -182,8 +182,8 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                         e.stopPropagation();
                         onRemove();
                     }}
-                    aria-label={__('Delete store', 'eux-pad')}
-                    title={__('Delete store', 'eux-pad')}
+                    aria-label={__('Delete store', 'eux-pickup-delivery')}
+                    title={__('Delete store', 'eux-pickup-delivery')}
                 >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path
@@ -198,16 +198,18 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                     onPointerDown={(e) => e.stopPropagation()}
                 >
                     <ToggleControl
-                        label={__('Enabled', 'eux-pad')}
+                        className="wpd-rules-toggle"
+                        label=""
                         checked={store.enabled !== false}
                         onChange={(v) => update({ enabled: !!v })}
+                        aria-label={__('Store enabled', 'eux-pickup-delivery')}
                     />
                 </span>
             </div>
             {expanded ? (
                 <div className="wpd-rules-rule-body" id={bodyId}>
                     <TextControl
-                        label={__('Store name', 'eux-pad')}
+                        label={__('Store name', 'eux-pickup-delivery')}
                         value={store.name || ''}
                         onChange={(v) => update({ name: v })}
                     />
@@ -221,33 +223,33 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                             country: store.country,
                         }}
                         onChange={(patch) => update(patch)}
-                        sectionTitle={__('Store address', 'eux-pad')}
+                        sectionTitle={__('Store address', 'eux-pickup-delivery')}
                         sectionHelp={__(
                             'Shown on the pickup page and used as the shipping address at checkout for this store.',
-                            'eux-pad'
+                            'eux-pickup-delivery'
                         )}
                     />
                     <TextControl
-                        label={__('Phone', 'eux-pad')}
+                        label={__('Phone', 'eux-pickup-delivery')}
                         value={store.phone || ''}
                         onChange={(v) => update({ phone: v })}
                     />
                     <TextControl
                         type="number"
-                        label={__('Interval (minutes)', 'eux-pad')}
-                        help={__('Gap between each pickup time slot for this store.', 'eux-pad')}
+                        label={__('Interval (minutes)', 'eux-pickup-delivery')}
+                        help={__('Gap between each pickup time slot for this store.', 'eux-pickup-delivery')}
                         min={5}
                         max={360}
                         value={store.interval}
                         onChange={(v) => update({ interval: parseInt(v, 10) || 60 })}
                     />
                     <div className="wpd-opening-label" style={{ marginTop: 12 }}>
-                        {__('Opening Hours', 'eux-pad')}
+                        {__('Opening Hours', 'eux-pickup-delivery')}
                     </div>
                     <p className="wpd-admin-section__subtitle wpd-opening-hours-help">
                         {__(
                             'Add up to 7 rows (e.g. one per day). Each row needs a day, open time, and close time.',
-                            'woo-pickup-delivery'
+                            'eux-pickup-delivery'
                         )}
                     </p>
                     {Array.isArray(store.opening_hours) &&
@@ -258,7 +260,7 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                                     .filter(Boolean)
                             );
                             const options = [
-                                { label: __('Select day', 'eux-pad'), value: '' },
+                                { label: __('Select day', 'eux-pickup-delivery'), value: '' },
                                 ...ALL_DAYS.filter(
                                     (day) => day === row.day || !used.has(day.toLowerCase())
                                 ).map((day) => ({ label: day, value: day })),
@@ -270,8 +272,8 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                                         value={row.day || ''}
                                         options={options}
                                         onChange={(v) => updateOpeningRow(index, { day: v })}
-                                        placeholder={__('Select day', 'eux-pad')}
-                                        ariaLabel={__('Day', 'eux-pad')}
+                                        placeholder={__('Select day', 'eux-pickup-delivery')}
+                                        ariaLabel={__('Day', 'eux-pickup-delivery')}
                                     />
                                     <input
                                         type="time"
@@ -290,7 +292,7 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                                         isDestructive
                                         variant="link"
                                         onClick={() => removeOpeningRow(index)}
-                                        aria-label={__('Remove row', 'eux-pad')}
+                                        aria-label={__('Remove row', 'eux-pickup-delivery')}
                                     >
                                         <svg
                                             width="16"
@@ -315,7 +317,7 @@ function PickupStoreCard({ store, expanded, onToggleExpand, onUpdate, onRemove, 
                             !Array.isArray(store.opening_hours) || store.opening_hours.length >= MAX_OPENING_ROWS
                         }
                     >
-                        {__('+ Add row', 'eux-pad')}
+                        {__('+ Add row', 'eux-pickup-delivery')}
                     </Button>
                 </div>
             ) : null}
@@ -433,10 +435,10 @@ export default function PickupStoresPanel({ stores, onChange }) {
     };
 
     const requestRemove = (idx, store) => {
-        const name = (store?.name || '').trim() || __('Untitled store', 'eux-pad');
+        const name = (store?.name || '').trim() || __('Untitled store', 'eux-pickup-delivery');
         const message = sprintf(
             /* translators: %s: store name */
-            __('Are you sure you want to delete "%s"?', 'eux-pad'),
+            __('Are you sure you want to delete "%s"?', 'eux-pickup-delivery'),
             name
         );
         if (!window.confirm(message)) {
@@ -454,17 +456,17 @@ export default function PickupStoresPanel({ stores, onChange }) {
         <div className="wpd-admin-section wpd-rules-section">
             <div className="wpd-rules-section-header">
                 <div>
-                    <div className="wpd-admin-section__title">{__('Pickup stores', 'eux-pad')}</div>
+                    <div className="wpd-admin-section__title">{__('Pickup stores', 'eux-pickup-delivery')}</div>
                     <div className="wpd-admin-section__subtitle">
                         {__(
                             'Each store uses the same fields as a single pickup location. Shoppers choose a store on the Pickup & Delivery page.',
-                            'eux-pad'
+                            'eux-pickup-delivery'
                         )}
                     </div>
                 </div>
                 <div className="wpd-rules-section-header-actions">
                     <button type="button" className="wpd-admin-btn wpd-admin-btn--primary wpd-rules-add-btn" onClick={addStore}>
-                        {__('Add store', 'eux-pad')}
+                        {__('Add store', 'eux-pickup-delivery')}
                     </button>
                 </div>
             </div>
@@ -474,7 +476,7 @@ export default function PickupStoresPanel({ stores, onChange }) {
             >
                 {stores.length === 0 ? (
                     <p className="wpd-rules-empty">
-                        {__('No stores yet. Click "Add store" to create one, or save settings after activating the Multi-Store add-on.', 'eux-pad')}
+                        {__('No stores yet. Click "Add store" to create one, or save settings after activating the Multi-Store add-on.', 'eux-pickup-delivery')}
                     </p>
                 ) : (
                     stores.map((store, index) => {

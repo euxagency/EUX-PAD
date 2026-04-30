@@ -363,7 +363,7 @@ class WPD_Frontend {
 
 		return sprintf(
 			'<iframe title="%s" src="%s" width="100%%" height="509" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>',
-			esc_attr__( 'Pickup map', 'eux-pad' ),
+			esc_attr__( 'Pickup map', 'eux-pickup-delivery' ),
 			esc_url( $src )
 		);
 	}
@@ -460,7 +460,7 @@ class WPD_Frontend {
 						} elseif ( 'flat_rate' === $method->id ) {
 							$cost_display = ! empty( $cost ) ? wc_price( $cost ) : wc_price( 0 );
 						} else {
-							$cost_display = __( 'Calculated at checkout', 'eux-pad' );
+							$cost_display = __( 'Calculated at checkout', 'eux-pickup-delivery' );
 						}
 
 						$shipping_methods[] = array(
@@ -491,7 +491,7 @@ class WPD_Frontend {
 				} elseif ( 'flat_rate' === $method->id ) {
 					$cost_display = ! empty( $cost ) ? wc_price( $cost ) : wc_price( 0 );
 				} else {
-					$cost_display = __( 'Calculated at checkout', 'eux-pad' );
+					$cost_display = __( 'Calculated at checkout', 'eux-pickup-delivery' );
 				}
 
 				$shipping_methods[] = array(

@@ -79,17 +79,17 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
 
     return (
         <div className="wpd-delivery-suburbs-field">
-            <div className="wpd-delivery-suburbs-field__label">{__('Delivery suburbs', 'eux-pad')}</div>
+            <div className="wpd-delivery-suburbs-field__label">{__('Delivery suburbs', 'eux-pickup-delivery')}</div>
             <p className="wpd-admin-section__subtitle wpd-delivery-suburbs-field__help">
                 {__(
                     'Type a suburb name and press comma or Enter to add it. You can also paste a comma-separated list. These names appear in Rules → Suburb conditions.',
-                    'eux-pad'
+                    'eux-pickup-delivery'
                 )}
             </p>
             <div
                 className="wpd-delivery-suburbs-field__inner"
                 role="group"
-                aria-label={__('Suburb names', 'eux-pad')}
+                aria-label={__('Suburb names', 'eux-pickup-delivery')}
                 onClick={() => inputRef.current?.focus()}
             >
                 <input
@@ -108,7 +108,7 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
                             commitDraft();
                         }
                     }}
-                    placeholder={suburbs.length ? __('Add another…', 'eux-pad') : __('e.g. Richmond', 'eux-pad')}
+                    placeholder={suburbs.length ? __('Add another…', 'eux-pickup-delivery') : __('e.g. Richmond', 'eux-pickup-delivery')}
                     autoComplete="off"
                 />
                 {suburbs.map((name, i) => (
@@ -121,7 +121,7 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
                                 ev.stopPropagation();
                                 removeAt(i);
                             }}
-                            aria-label={__('Remove suburb', 'eux-pad')}
+                            aria-label={__('Remove suburb', 'eux-pickup-delivery')}
                         >
                             ×
                         </button>
@@ -158,7 +158,7 @@ export default function DeliverySettings() {
                 setSettings(data);
             }
         } catch (e) {
-            setToast({ status: 'error', message: __('Failed to load delivery settings.', 'eux-pad') });
+            setToast({ status: 'error', message: __('Failed to load delivery settings.', 'eux-pickup-delivery') });
         } finally {
             setLoading(false);
         }
@@ -199,12 +199,12 @@ export default function DeliverySettings() {
                     data.tab_title = '';
                 }
                 setSettings(data);
-                setToast({ status: 'success', message: __('Delivery settings saved.', 'eux-pad') });
+                setToast({ status: 'success', message: __('Delivery settings saved.', 'eux-pickup-delivery') });
             } else {
-                setToast({ status: 'error', message: __('Failed to save delivery settings.', 'eux-pad') });
+                setToast({ status: 'error', message: __('Failed to save delivery settings.', 'eux-pickup-delivery') });
             }
         } catch (e) {
-            setToast({ status: 'error', message: __('Failed to save delivery settings.', 'eux-pad') });
+            setToast({ status: 'error', message: __('Failed to save delivery settings.', 'eux-pickup-delivery') });
         } finally {
             setSaving(false);
         }
@@ -230,12 +230,12 @@ export default function DeliverySettings() {
                     data.tab_title = '';
                 }
                 setSettings(data);
-                setToast({ status: 'success', message: __('Reset to default.', 'eux-pad') });
+                setToast({ status: 'success', message: __('Reset to default.', 'eux-pickup-delivery') });
             } else {
-                setToast({ status: 'error', message: __('Failed to reset.', 'eux-pad') });
+                setToast({ status: 'error', message: __('Failed to reset.', 'eux-pickup-delivery') });
             }
         } catch (e) {
-            setToast({ status: 'error', message: __('Failed to reset.', 'eux-pad') });
+            setToast({ status: 'error', message: __('Failed to reset.', 'eux-pickup-delivery') });
         } finally {
             setResetting(false);
         }
@@ -244,9 +244,9 @@ export default function DeliverySettings() {
     return (
         <>
             <AdminPageLayout
-                title={__('Pickup & Delivery Settings', 'eux-pad')}
-                description={__('Configure texts, colors, rules, schedules, and checkout behavior', 'eux-pad')}
-                pageTitle={__('Delivery Settings', 'eux-pad')}
+                title={__('Pickup & Delivery Settings', 'eux-pickup-delivery')}
+                description={__('Configure texts, colors, rules, schedules, and checkout behavior', 'eux-pickup-delivery')}
+                pageTitle={__('Delivery Settings', 'eux-pickup-delivery')}
                 notice={null}
                 loading={loading}
                 actions={
@@ -258,7 +258,7 @@ export default function DeliverySettings() {
                                 onClick={reset}
                                 disabled={saving || resetting}
                             >
-                                {resetting ? __('Resetting...', 'eux-pad') : __('Reset to Default', 'eux-pad')}
+                                {resetting ? __('Resetting...', 'eux-pickup-delivery') : __('Reset to Default', 'eux-pickup-delivery')}
                             </button>
                             <button
                                 type="button"
@@ -266,7 +266,7 @@ export default function DeliverySettings() {
                                 onClick={save}
                                 disabled={saving || resetting}
                             >
-                                {saving ? __('Saving...', 'eux-pad') : __('Save Settings', 'eux-pad')}
+                                {saving ? __('Saving...', 'eux-pickup-delivery') : __('Save Settings', 'eux-pickup-delivery')}
                             </button>
                         </Flex>
                     )
@@ -276,20 +276,20 @@ export default function DeliverySettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Pickup & Delivery page —> Delivery tab', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Pickup & Delivery page —> Delivery tab', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-section__subtitle">
                                     {__(
                                         'Controls the delivery tab on the storefront Pickup & Delivery step.',
-                                        'eux-pad'
+                                        'eux-pickup-delivery'
                                     )}
                                 </div>
                                 <ToggleControl
-                                    label={__('Enable Delivery tab', 'eux-pad')}
+                                    label={__('Enable Delivery tab', 'eux-pickup-delivery')}
                                     checked={settings.tab_enabled !== false}
                                     onChange={(val) => setSettings((prev) => ({ ...prev, tab_enabled: !!val }))}
                                 />
                                 <TextControl
-                                    label={__('Delivery tab title', 'eux-pad')}
+                                    label={__('Delivery tab title', 'eux-pickup-delivery')}
                                     value={settings.tab_title || ''}
                                     onChange={(v) => setSettings((prev) => ({ ...prev, tab_title: v }))}
                                 />
@@ -301,11 +301,11 @@ export default function DeliverySettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Allowed delivery suburbs', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Allowed delivery suburbs', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-section__subtitle">
                                     {__(
                                         'Used when customers choose delivery and when you build Suburb rules.',
-                                        'eux-pad'
+                                        'eux-pickup-delivery'
                                     )}
                                 </div>
                                 <DeliverySuburbChipsField suburbs={settings.suburbs || []} onChange={updateSuburbs} />

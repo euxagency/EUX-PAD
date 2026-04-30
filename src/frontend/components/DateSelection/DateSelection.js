@@ -79,11 +79,11 @@ export default function DateSelection({
             {(activeTab === 'pickup' || showDeliveryDates) && (
                 <div className="wpd-date-header">
                     <h3 className="wpd-date-title">
-                        {activeTab === 'pickup' ? __('Pickup Date', 'eux-pad') : __('Delivery Date', 'eux-pad')}
+                        {activeTab === 'pickup' ? __('Pickup Date', 'eux-pickup-delivery') : __('Delivery Date', 'eux-pickup-delivery')}
                     </h3>
                     {showDateRefreshTimer && (
                         <div className="wpd-timer-wrapper">
-                            <span className="wpd-timer-label">{__('Dates will auto-refresh in', 'eux-pad')}</span>
+                            <span className="wpd-timer-label">{__('Dates will auto-refresh in', 'eux-pickup-delivery')}</span>
                             <div
                                 className={`wpd-countdown-timer ${timeRemaining <= timerWarnSeconds ? 'wpd-timer-warning' : ''}`}
                             >
@@ -106,9 +106,9 @@ export default function DateSelection({
                 {activeTab === 'delivery' && !showDeliveryDates && !datesLoading ? (
                     <div className="wpd-no-dates">
                         <p>
-                            {__('Please fill the delivery details', 'eux-pad')}
+                            {__('Please fill the delivery details', 'eux-pickup-delivery')}
                             <br />
-                            {__('to get the available dates', 'eux-pad')}
+                            {__('to get the available dates', 'eux-pickup-delivery')}
                         </p>
                     </div>
                 ) : (
@@ -167,7 +167,7 @@ export default function DateSelection({
             {activeTab === 'delivery' && showDeliveryDates && !datesLoading && shippingMethods && shippingMethods.length > 0 && (
                 <div className="wpd-shipping-methods">
                      <div className="wpd-delivery-slots-divider" />
-                    <h4>{__('Choose Delivery Option', 'eux-pad')}</h4>
+                    <h4>{__('Choose Delivery Option', 'eux-pickup-delivery')}</h4>
                     <div className="wpd-shipping-methods-list">
                         {shippingMethods.map((method) => (
                             <div
@@ -192,7 +192,7 @@ export default function DateSelection({
             {showTimeSlots && selectedDate && (
                 <div className="wpd-time-slots">
                     <div className="wpd-time-slots-divider" />
-                    <h4>{__('Select a pickup time', 'eux-pad')}</h4>
+                    <h4>{__('Select a pickup time', 'eux-pickup-delivery')}</h4>
                     <div className="wpd-time-slots-grid">
                         {timeSlotsLoading
                             ? Array(8).fill(0).map((_, i) => <div key={`skeleton-time-${i}`} className="wpd-skeleton wpd-skeleton-time" />)
@@ -234,7 +234,7 @@ export default function DateSelection({
                             (activeTab === 'pickup' && !selectedTimeSlot)
                         }
                     >
-                        {isLoading ? <span className="wpd-loading" /> : (continueText || __('Continue', 'eux-pad'))}
+                        {isLoading ? <span className="wpd-loading" /> : (continueText || __('Continue', 'eux-pickup-delivery'))}
                     </button>
                 </div>
             )}

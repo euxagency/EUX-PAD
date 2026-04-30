@@ -93,7 +93,7 @@ function SuburbSearchSelect({ value, onChange, suburbs, hasError }) {
                 }}
                 onFocus={openMenu}
                 onBlur={scheduleBlurClose}
-                placeholder={__('Search or select suburb', 'eux-pad')}
+                placeholder={__('Search or select suburb', 'eux-pickup-delivery')}
                 className={hasError ? 'wpd-field-error' : ''}
             />
             {open && (
@@ -104,7 +104,7 @@ function SuburbSearchSelect({ value, onChange, suburbs, hasError }) {
                     onMouseDown={cancelBlurClose}
                 >
                     {filtered.length === 0 ? (
-                        <li className="wpd-suburb-combobox__empty">{__('No matches', 'eux-pad')}</li>
+                        <li className="wpd-suburb-combobox__empty">{__('No matches', 'eux-pickup-delivery')}</li>
                     ) : (
                         filtered.map((s) => (
                             <li
@@ -143,17 +143,17 @@ export default function DeliveryForm({
 
     return (
         <div className="wpd-delivery-form">
-            <h3>{__('Delivery Address', 'eux-pad')}</h3>
+            <h3>{__('Delivery Address', 'eux-pickup-delivery')}</h3>
             <p></p>
 
             <div className="wpd-form-group">
-                <label>{__('Street Address', 'eux-pad')} *</label>
+                <label>{__('Street Address', 'eux-pickup-delivery')} *</label>
                 <input
                     id="wpd-street-address-input"
                     type="text"
                     value={form.streetAddress}
                     onChange={(e) => onChange('streetAddress', e.target.value)}
-                    placeholder={__('Enter street address', 'eux-pad')}
+                    placeholder={__('Enter street address', 'eux-pickup-delivery')}
                     className={fieldErrors.streetAddress ? 'wpd-field-error' : ''}
                     autoComplete="off"
                 />
@@ -161,7 +161,7 @@ export default function DeliveryForm({
 
             <div className="wpd-manual-address-fields wpd-visible">
                 <div className="wpd-form-group">
-                    <label>{__('Suburb', 'eux-pad')} *</label>
+                    <label>{__('Suburb', 'eux-pickup-delivery')} *</label>
                     {useSuburbList ? (
                         <SuburbSearchSelect
                             value={form.suburb}
@@ -174,13 +174,13 @@ export default function DeliveryForm({
                             type="text"
                             value={form.suburb}
                             onChange={(e) => onChange('suburb', e.target.value)}
-                            placeholder={__('Enter suburb', 'eux-pad')}
+                            placeholder={__('Enter suburb', 'eux-pickup-delivery')}
                             className={fieldErrors.suburb ? 'wpd-field-error' : ''}
                         />
                     )}
                 </div>
                 <div className="wpd-form-group">
-                    <label>{__('State', 'eux-pad')} *</label>
+                    <label>{__('State', 'eux-pickup-delivery')} *</label>
                     <select value={form.state} onChange={(e) => onChange('state', e.target.value)}>
                         {Object.entries(states || {}).map(([code, name]) => (
                             <option key={code} value={code}>
@@ -190,30 +190,30 @@ export default function DeliveryForm({
                     </select>
                 </div>
                 <div className="wpd-form-group">
-                    <label>{__('Postcode', 'eux-pad')} *</label>
+                    <label>{__('Postcode', 'eux-pickup-delivery')} *</label>
                     <input
                         type="text"
                         value={form.postcode}
                         onChange={(e) => onChange('postcode', e.target.value)}
-                        placeholder={__('Enter postcode', 'eux-pad')}
+                        placeholder={__('Enter postcode', 'eux-pickup-delivery')}
                         className={fieldErrors.postcode ? 'wpd-field-error' : ''}
                     />
                 </div>
             </div>
 
             <div className="wpd-form-group">
-                <label>{__('Delivery Instructions', 'eux-pad')}</label>
+                <label>{__('Delivery Instructions', 'eux-pickup-delivery')}</label>
                 <textarea
                     value={form.instructions}
                     onChange={(e) => onChange('instructions', e.target.value)}
-                    placeholder={__('Add Comment', 'eux-pad')}
+                    placeholder={__('Add Comment', 'eux-pickup-delivery')}
                     className={fieldErrors.instructions ? 'wpd-field-error' : ''}
                 />
             </div>
 
             <div className="wpd-form-group">
                 <button type="button" className="wpd-get-days-button" onClick={onGetDays}>
-                    {__('Check Available Dates', 'eux-pad')}
+                    {__('Check Available Dates', 'eux-pickup-delivery')}
                 </button>
             </div>
         </div>

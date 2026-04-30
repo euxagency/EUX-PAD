@@ -97,7 +97,14 @@ class EUX_PAD_API {
 
 		// Dates from today through global "days displayed" window (then rules applied)
 		$dates = $this->generate_pickup_dates( $cart_items );
-		$dates = $this->apply_rules_to_dates( $dates, 'pickup', $cart_items, null );
+		$dates = $this->apply_rules_to_dates(
+			$dates,
+			'pickup',
+			$cart_items,
+			array(
+				'store_id' => $this->pickup_store_id,
+			)
+		);
 
 		$response              = rest_ensure_response(
 			array(

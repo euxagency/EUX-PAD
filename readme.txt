@@ -1,5 +1,5 @@
 === EUX Pickup & Delivery ===
-Contributors: eux
+Contributors: eux, euxdigital
 Tags: woocommerce, pickup, delivery, checkout, scheduling
 Requires at least: 5.0
 Tested up to: 6.9
@@ -47,10 +47,8 @@ The complete source code is available on [GitHub](https://github.com/euxagency/E
 * Create rules that enable or disable dates for pickup and/or delivery.
 * Each rule combines multiple conditions with AND logic.
 * Rules are evaluated in priority order (lowest `order` wins) — the first matching rule decides the date.
-* Free conditions: Days of Week, Specific Dates, Delivery/Pickup Method.
-* Pro conditions (require the EUX Pickup & Delivery Pro add-on): Order Value, Total Orders, Suburb, Preparation / Lead Time, Cutoff Time.
-* Operators supported: *matches any of*, *equal*, *not equal*, *contains*, *between*.
-* Lead Time and Cutoff Time conditions only support the Disable Day objective (enforced at both save time and runtime).
+* Conditions: Days of Week, Specific Dates, Delivery/Pickup Method, and (when multi-store is enabled) Store.
+* Operators supported: *matches any of*, *equal*, *not equal*, *contains*, *between* (depending on condition type).
 
 **6. Global Appearance & Labels**
 * Customize tab labels (Delivery / Pickup) and the continue button text.
@@ -82,12 +80,20 @@ The complete source code is available on [GitHub](https://github.com/euxagency/E
 * REST API under two namespaces: `wpd/v1` (settings) and `eux-pad/v1` (date availability).
 * Rule engine respects the WordPress site timezone.
 * Settings and the auto-generated PAD page are cleanly removed on uninstall.
-* No external services, no tracking — runs entirely inside your WordPress install.
-* Extensible via the `wpd_rules_has_pro` and `wpd_rules_evaluate_pro_condition` filters.
+* Core scheduling and rule evaluation run entirely inside your WordPress installation.
 
 == External services ==
 
-This plugin does not connect to any external services. All scheduling, rule evaluation, and settings storage happen entirely within your WordPress installation. No customer data, order data, or site data is transmitted to EUX Digital Agency or any third party by this plugin.
+This plugin does **not** call EUX Digital Agency servers or include third-party analytics.
+
+**Optional: Google Maps (embed)**  
+If you paste a **Google Maps** HTML embed into Pickup Settings (or a multi-store location’s map field), the customer’s **browser** loads Google’s map resources to display that embed. Google may receive typical web data (for example IP address, referrer, and interaction with the map) as described in their policies. This only happens when you choose to add an embed; you can leave map fields empty.
+
+* [Google Terms of Service](https://policies.google.com/terms)  
+* [Google Privacy Policy](https://policies.google.com/privacy)  
+
+**Other map or iframe providers**  
+If you embed another provider’s map via HTML iframe, the visitor’s browser loads that third party under that provider’s terms — the plugin only outputs the HTML you save; it does not send your WooCommerce order data to those services by itself.
 
 == Installation ==
 
@@ -121,13 +127,10 @@ Yes. Add suburbs as chips under **Delivery Settings**. When at least one suburb 
 From the opening hours you define per weekday and the interval (in minutes) set under **Pickup Settings**. For example, Monday 9:00–17:00 with a 60-minute interval produces slots at 9:00–10:00, 10:00–11:00, and so on.
 
 = How does the rules engine work? =
-A rule has an objective (Enable Day or Disable Day) and one or more conditions that must all match (AND logic). When multiple rules could affect the same date, the one with the lowest `order` value wins. A rule needs at minimum a date-scope condition (Days of Week or Specific Dates) plus a Method condition. Lead Time and Cutoff Time conditions only support the Disable Day objective.
-
-= Which rule conditions require the Pro add-on? =
-Order Value, Total Orders, Suburb, Preparation (Lead) Time and Cutoff Time are provided by the separate EUX Pickup & Delivery Pro add-on. The free plugin ships with Days of Week, Specific Dates and Delivery/Pickup Method conditions.
+A rule has an objective (Enable Day or Disable Day) and one or more conditions that must all match (AND logic). When multiple rules could affect the same date, the one with the lowest `order` value wins. A rule needs at minimum a date-scope condition (Days of Week or Specific Dates) plus a Method condition.
 
 = Does the plugin send any data to an external service? =
-No. It runs entirely inside your WordPress install and doesn't call any third-party APIs.
+The plugin itself does not phone home. Optional map embeds (see **External services** in this readme) load in the visitor’s browser only if you add them in settings.
 
 = Can I customize the look of the PAD page? =
 Yes. Tab colours, day and time selector backgrounds and text colours, and continue-button hover states are all exposed under **Global Settings**. You can also upload custom icons and change tab labels.
@@ -141,6 +144,7 @@ The uninstall script removes the auto-created PAD page and deletes the four sett
 == Changelog ==
 
 = 1.0.1 =
+* WordPress.org compliance: unique main class name, text domain aligned with plugin slug, no trialware rule locks, no raw inline script/style in flagged locations, readme external-services documentation for optional map embeds, contributor list.
 * Coding standards, security hardening, and tooling for distribution.
 
 = 1.0.0 =

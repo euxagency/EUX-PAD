@@ -78,7 +78,14 @@
 
 .wpd-content-wrapper > * {
   min-width: 0; /* Prevent overflow */
-  width: 100%; /* Ensure equal width */
+  flex: 1 1 0;
+  width: auto;
+}
+
+/* Pickup right column wrapper (dates + time slots) */
+.wpd-pickup-slots {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 @media (max-width: 768px) {
@@ -2143,51 +2150,144 @@
 
 /* Multi-store pickup selector */
 .wpd-pickup-store-picker {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   flex-shrink: 0;
-  margin-bottom: 20px;
-  padding: 16px 20px;
-  background: #f0f0f0;
-  border: 1px solid #ebebeb;
-  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
-.wpd-pickup-store-option {
-  text-align: left;
-  padding: 12px 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  color: #232323;
-  cursor: pointer;
-  font: inherit;
+.wpd-pickup-store-card {
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  background: transparent;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease,
     background 0.15s ease;
+  overflow: hidden;
 }
 
-.wpd-pickup-store-option:hover {
-  border-color: #999;
-  background: #fafafa;
+.wpd-pickup-store-card:hover {
+  border-color: #cfcfcf;
 }
 
-.wpd-pickup-store-option.is-selected {
-  border-color: #2e5f29;
-  box-shadow: 0 0 0 2px rgba(46, 95, 41, 0.25);
-  background: #fff;
+.wpd-pickup-store-card.is-selected {
+  border-color: #e6e6e6;
+  box-shadow: none;
 }
 
-.wpd-pickup-store-option__name {
-  font-weight: 600;
+.wpd-pickup-store-card__header {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  background: transparent;
+}
+
+/* `button` + theme checkout (Woo/Blocks) often adds a filled background — strip it from the row toggle only */
+.wpd-app button.wpd-pickup-store-card__toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.wpd-app button.wpd-pickup-store-card__toggle:hover,
+.wpd-app button.wpd-pickup-store-card__toggle:focus,
+.wpd-app button.wpd-pickup-store-card__toggle:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  color: inherit;
+}
+
+.wpd-pickup-store-card__toggle:focus-visible {
+  outline: 2px solid var(--wpd-continue-bg, #2e5f29);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.wpd-pickup-store-card__radio {
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--wpd-continue-bg, #2e5f29);
+  flex-shrink: 0;
+}
+
+.wpd-pickup-store-card__summary {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  background: transparent;
+}
+
+.wpd-pickup-store-card__name {
   display: block;
-  line-height: 1.35;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+  color: #3b3b3b;
 }
 
-@media (max-width: 768px) {
-  .wpd-pickup-store-picker {
-    grid-template-columns: 1fr;
-  }
+.wpd-pickup-store-card__chevron {
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1;
+  color: #8a8a8a;
+}
+
+.wpd-pickup-store-card__sub--oneline {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wpd-pickup-store-card__sub {
+  margin-top: 3px;
+  color: #8a8a8a;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+/* Expanded: full default StoreInfo (grey panel, title, address, phone, hours, map) */
+.wpd-pickup-store-card__details {
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid #e6e6e6;
+  background: transparent;
+}
+
+.wpd-pickup-store-card__details .wpd-store-info {
+  margin-top: 0;
+}
+
+.wpd-pickup-store-card__details .wpd-store-map {
+  margin-top: 12px;
 }

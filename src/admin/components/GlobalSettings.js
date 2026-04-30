@@ -183,7 +183,7 @@ function ColorField({ label, value, onChange, tooltip, tooltipDiagram }) {
                             type="button"
                             className="wpd-color-field__tooltip-trigger"
                             aria-describedby={helpFlyoutId}
-                            aria-label={__('Where this color is used (hover for diagram)', 'eux-pad')}
+                            aria-label={__('Where this color is used (hover for diagram)', 'eux-pickup-delivery')}
                         >
                             <svg
                                 width="16"
@@ -207,7 +207,7 @@ function ColorField({ label, value, onChange, tooltip, tooltipDiagram }) {
                                     src={diagramSrc}
                                     alt={sprintf(
                                         /* translators: %s: color setting label */
-                                        __('Visual reference for: %s', 'eux-pad'),
+                                        __('Visual reference for: %s', 'eux-pickup-delivery'),
                                         label
                                     )}
                                     loading="lazy"
@@ -232,7 +232,7 @@ function ColorField({ label, value, onChange, tooltip, tooltipDiagram }) {
                             onClick={onToggle}
                             aria-expanded={isOpen}
                             aria-haspopup="dialog"
-                            aria-label={__('Open color picker', 'eux-pad')}
+                            aria-label={__('Open color picker', 'eux-pickup-delivery')}
                         >
                             <span
                                 className="wpd-color-swatch__fill"
@@ -258,7 +258,7 @@ function ColorField({ label, value, onChange, tooltip, tooltipDiagram }) {
                 <TextControl
                     value={value || ''}
                     onChange={(v) => onChange(v)}
-                    placeholder={__('Hex, #RRGGBBAA, or rgba(…)', 'eux-pad')}
+                    placeholder={__('Hex, #RRGGBBAA, or rgba(…)', 'eux-pickup-delivery')}
                 />
             </div>
         </div>
@@ -286,7 +286,7 @@ function MediaUploadField({ label, valueUrl, onSelect, onClear }) {
         if (!window.wp?.media) return;
         const frame = window.wp.media({
             title: label,
-            button: { text: __('Select', 'eux-pad') },
+            button: { text: __('Select', 'eux-pickup-delivery') },
             multiple: false,
         });
         frame.on('select', () => {
@@ -309,10 +309,10 @@ function MediaUploadField({ label, valueUrl, onSelect, onClear }) {
                             className="wpd-upload-choose wpd-upload-choose--empty"
                             onClick={openMedia}
                         >
-                            {__('Choose file', 'eux-pad')}
+                            {__('Choose file', 'eux-pickup-delivery')}
                         </button>
                         <span className="wpd-upload-placeholder">
-                            {__('No file chosen', 'eux-pad')}
+                            {__('No file chosen', 'eux-pickup-delivery')}
                         </span>
                     </>
                 ) : (
@@ -323,7 +323,7 @@ function MediaUploadField({ label, valueUrl, onSelect, onClear }) {
                                 type="button"
                                 className="wpd-upload-chip__remove"
                                 onClick={onClear}
-                                aria-label={__('Remove', 'eux-pad')}
+                                aria-label={__('Remove', 'eux-pickup-delivery')}
                             >
                                 ×
                             </button>
@@ -358,7 +358,7 @@ export default function GlobalSettings() {
                 setSettings(res.data);
             }
         } catch (e) {
-            setNotice({ status: 'error', message: __('Failed to load settings.', 'eux-pad') });
+            setNotice({ status: 'error', message: __('Failed to load settings.', 'eux-pickup-delivery') });
         } finally {
             setLoading(false);
         }
@@ -415,12 +415,12 @@ export default function GlobalSettings() {
             });
             if (res?.success) {
                 setSettings(res.data);
-                setToast({ status: 'success', message: __('Settings saved.', 'eux-pad') });
+                setToast({ status: 'success', message: __('Settings saved.', 'eux-pickup-delivery') });
             } else {
-                setToast({ status: 'error', message: __('Failed to save settings.', 'eux-pad') });
+                setToast({ status: 'error', message: __('Failed to save settings.', 'eux-pickup-delivery') });
             }
         } catch (e) {
-            setToast({ status: 'error', message: __('Failed to save settings.', 'eux-pad') });
+            setToast({ status: 'error', message: __('Failed to save settings.', 'eux-pickup-delivery') });
         } finally {
             setSaving(false);
         }
@@ -437,7 +437,7 @@ export default function GlobalSettings() {
             if (res?.success && res?.data) {
                 setToast({
                     status: 'success',
-                    message: res.message || __('PAD page updated.', 'eux-pad'),
+                    message: res.message || __('PAD page updated.', 'eux-pickup-delivery'),
                 });
                 setPadStatus({
                     has_pad_page: true,
@@ -451,13 +451,13 @@ export default function GlobalSettings() {
                     pad_page_id: res.data.pad_page_id || 0,
                 }));
             } else {
-                setToast({ status: 'error', message: __('Could not set up the PAD page.', 'eux-pad') });
+                setToast({ status: 'error', message: __('Could not set up the PAD page.', 'eux-pickup-delivery') });
             }
         } catch (e) {
             const msg =
                 e?.message ||
                 e?.data?.message ||
-                __('Could not set up the PAD page.', 'eux-pad');
+                __('Could not set up the PAD page.', 'eux-pickup-delivery');
             setToast({ status: 'error', message: msg });
         } finally {
             setEnsuringPad(false);
@@ -478,13 +478,13 @@ export default function GlobalSettings() {
                 loadPadStatus();
                 setToast({
                     status: 'success',
-                    message: __('Colors reset to default. Other settings were not changed.', 'eux-pad'),
+                    message: __('Colors reset to default. Other settings were not changed.', 'eux-pickup-delivery'),
                 });
             } else {
-                setToast({ status: 'error', message: __('Failed to reset colors.', 'eux-pad') });
+                setToast({ status: 'error', message: __('Failed to reset colors.', 'eux-pickup-delivery') });
             }
         } catch (e) {
-            setToast({ status: 'error', message: __('Failed to reset colors.', 'eux-pad') });
+            setToast({ status: 'error', message: __('Failed to reset colors.', 'eux-pickup-delivery') });
         } finally {
             setResetting(false);
         }
@@ -493,9 +493,9 @@ export default function GlobalSettings() {
     return (
         <>
         <AdminPageLayout
-            title={__('Pickup & Delivery Settings', 'eux-pad')}
-            description={__('Configure texts, colors, rules, schedules, and checkout behavior', 'eux-pad')}
-            pageTitle={__('Global Settings', 'eux-pad')}
+            title={__('Pickup & Delivery Settings', 'eux-pickup-delivery')}
+            description={__('Configure texts, colors, rules, schedules, and checkout behavior', 'eux-pickup-delivery')}
+            pageTitle={__('Global Settings', 'eux-pickup-delivery')}
             notice={null}
             loading={loading}
             actions={
@@ -508,8 +508,8 @@ export default function GlobalSettings() {
                             disabled={saving || resetting}
                         >
                             {resetting
-                                ? __('Resetting colors...', 'eux-pad')
-                                : __('Reset colors to default', 'eux-pad')}
+                                ? __('Resetting colors...', 'eux-pickup-delivery')
+                                : __('Reset colors to default', 'eux-pickup-delivery')}
                         </button>
                         <button
                             type="button"
@@ -518,8 +518,8 @@ export default function GlobalSettings() {
                             disabled={saving || resetting}
                         >
                             {saving
-                                ? __('Saving...', 'eux-pad')
-                                : __('Save Settings', 'eux-pad')}
+                                ? __('Saving...', 'eux-pickup-delivery')
+                                : __('Save Settings', 'eux-pickup-delivery')}
                         </button>
                     </Flex>
                 )
@@ -530,11 +530,11 @@ export default function GlobalSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('PAD Setup', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('PAD Setup', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-section__subtitle">
                                     {__(
                                         'Create or reconnect the storefront page that shows pickup and delivery. It uses the shortcode and is published at /pad when created here.',
-                                        'woo-pickup-delivery'
+                                        'eux-pickup-delivery'
                                     )}
                                 </div>
                                 {padStatusLoading ? (
@@ -547,13 +547,13 @@ export default function GlobalSettings() {
                                             <p className="wpd-pad-setup__status wpd-pad-setup__status--ok">
                                                 {__(
                                                     'A page with the PAD shortcode already exists.',
-                                                    'woo-pickup-delivery'
+                                                    'eux-pickup-delivery'
                                                 )}
                                                 {padStatus.url ? (
                                                     <>
                                                         {' '}
                                                         <a href={padStatus.url} target="_blank" rel="noopener noreferrer">
-                                                            {padStatus.title || padStatus.slug || __('View page', 'eux-pad')}
+                                                            {padStatus.title || padStatus.slug || __('View page', 'eux-pickup-delivery')}
                                                         </a>
                                                         {padStatus.slug ? (
                                                             <span className="wpd-pad-setup__slug">
@@ -568,7 +568,7 @@ export default function GlobalSettings() {
                                             <p className="wpd-pad-setup__status">
                                                 {__(
                                                     'No page with the PAD shortcode was found. Click the button below to create a published page with slug “pad”.',
-                                                    'woo-pickup-delivery'
+                                                    'eux-pickup-delivery'
                                                 )}
                                             </p>
                                         )}
@@ -579,8 +579,8 @@ export default function GlobalSettings() {
                                             disabled={ensuringPad}
                                         >
                                             {ensuringPad
-                                                ? __('Please wait…', 'eux-pad')
-                                                : __('Set up PAD page', 'eux-pad')}
+                                                ? __('Please wait…', 'eux-pickup-delivery')
+                                                : __('Set up PAD page', 'eux-pickup-delivery')}
                                         </button>
                                     </>
                                 )}
@@ -591,15 +591,15 @@ export default function GlobalSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Checkout progress bar', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Checkout progress bar', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-section__subtitle">
                                     {__(
                                         'Show the step indicator (Shopping cart → Pickup & Delivery → Checkout → Order complete) on the cart, PAD, checkout, and order received pages.',
-                                        'woo-pickup-delivery'
+                                        'eux-pickup-delivery'
                                     )}
                                 </div>
                                 <ToggleControl
-                                    label={__('Show checkout progress bar', 'eux-pad')}
+                                    label={__('Show checkout progress bar', 'eux-pickup-delivery')}
                                     checked={settings.show_checkout_progress_bar !== false}
                                     onChange={(val) => update(['show_checkout_progress_bar'], !!val)}
                                 />
@@ -610,20 +610,20 @@ export default function GlobalSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Date refresh countdown', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Date refresh countdown', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-section__subtitle">
                                     {__(
                                         'On the Pickup & Delivery page, show a timer next to the date list. When it reaches zero, available dates reload. Enter duration in seconds (default 300).',
-                                        'eux-pad'
+                                        'eux-pickup-delivery'
                                     )}
                                 </div>
                                 <ToggleControl
-                                    label={__('Show countdown timer', 'eux-pad')}
+                                    label={__('Show countdown timer', 'eux-pickup-delivery')}
                                     checked={settings.show_date_refresh_timer !== false}
                                     onChange={(val) => update(['show_date_refresh_timer'], !!val)}
                                 />
                                 <TextControl
-                                    label={__('Duration (seconds)', 'eux-pad')}
+                                    label={__('Duration (seconds)', 'eux-pickup-delivery')}
                                     type="number"
                                     min={15}
                                     max={3600}
@@ -639,7 +639,7 @@ export default function GlobalSettings() {
                                             Math.min(3600, Math.max(15, parseInt(v, 10) || 300))
                                         )
                                     }
-                                    help={__('Allowed range: 15–3600 seconds.', 'eux-pad')}
+                                    help={__('Allowed range: 15–3600 seconds.', 'eux-pickup-delivery')}
                                 />
                             </div>
                         </CardBody>
@@ -648,8 +648,8 @@ export default function GlobalSettings() {
                      <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Days displayed', 'eux-pad')}</div>
-                                <div className="wpd-admin-section__subtitle">{__('How many days to display in the calendar', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Days displayed', 'eux-pickup-delivery')}</div>
+                                <div className="wpd-admin-section__subtitle">{__('How many days to display in the calendar', 'eux-pickup-delivery')}</div>
                                 <TextControl
                                     type="number"
                                     min={1}
@@ -664,23 +664,23 @@ export default function GlobalSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Labels & tab icons', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Labels & tab icons', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-section__subtitle">
                                     {__(
                                         'Continue button text and tab icons. Delivery/pickup tab visibility and titles are under Delivery Settings and Pickup Settings.',
-                                        'eux-pad'
+                                        'eux-pickup-delivery'
                                     )}
                                 </div>
 
                                 <TextControl
-                                    label={__('Continue button text', 'eux-pad')}
+                                    label={__('Continue button text', 'eux-pickup-delivery')}
                                     value={settings.labels?.continue_button_text || ''}
                                     onChange={(v) => update(['labels', 'continue_button_text'], v)}
                                 />
 
                                 <div className="wpd-admin-grid-2">
                                     <MediaUploadField
-                                        label={__('Pickup icon', 'eux-pad')}
+                                        label={__('Pickup icon', 'eux-pickup-delivery')}
                                         valueUrl={settings.icons?.pickup_icon_url}
                                         onSelect={({ id, url }) => {
                                             update(['icons', 'pickup_icon_id'], id);
@@ -692,7 +692,7 @@ export default function GlobalSettings() {
                                         }}
                                     />
                                     <MediaUploadField
-                                        label={__('Delivery icon', 'eux-pad')}
+                                        label={__('Delivery icon', 'eux-pickup-delivery')}
                                         valueUrl={settings.icons?.delivery_icon_url}
                                         onSelect={({ id, url }) => {
                                             update(['icons', 'delivery_icon_id'], id);
@@ -711,46 +711,46 @@ export default function GlobalSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Tabs Colors', 'eux-pad')}</div>
-                                <div className="wpd-admin-section__subtitle">{__('Customize tab appearance', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Tabs Colors', 'eux-pickup-delivery')}</div>
+                                <div className="wpd-admin-section__subtitle">{__('Customize tab appearance', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-grid-3">
                                     <ColorField
-                                        label={__('Tab hover bg', 'eux-pad')}
+                                        label={__('Tab hover bg', 'eux-pickup-delivery')}
                                         value={settings.colors?.tab_hover_bg}
                                         onChange={(v) => update(['colors', 'tab_hover_bg'], v)}
                                         tooltip={__(
                                             'Background of the Pickup / Delivery tabs when you hover them (not the selected tab).',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="tabs.svg"
                                     />
                                     <ColorField
-                                        label={__('Tab selected bg', 'eux-pad')}
+                                        label={__('Tab selected bg', 'eux-pickup-delivery')}
                                         value={settings.colors?.tab_selected_bg}
                                         onChange={(v) => update(['colors', 'tab_selected_bg'], v)}
                                         tooltip={__(
                                             'Background of the tab that is currently selected (active method).',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="tabs.svg"
                                     />
                                     <ColorField
-                                        label={__('Tab selected text', 'eux-pad')}
+                                        label={__('Tab selected text', 'eux-pickup-delivery')}
                                         value={settings.colors?.tab_selected_text}
                                         onChange={(v) => update(['colors', 'tab_selected_text'], v)}
                                         tooltip={__(
                                             'Text and icon color on the selected Pickup / Delivery tab.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="tabs.svg"
                                     />
                                     <ColorField
-                                        label={__('Tab text', 'eux-pad')}
+                                        label={__('Tab text', 'eux-pickup-delivery')}
                                         value={settings.colors?.tab_text}
                                         onChange={(v) => update(['colors', 'tab_text'], v)}
                                         tooltip={__(
                                             'Text and icon color on tab which is not selected.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="tabs.svg"
                                     />
@@ -762,66 +762,66 @@ export default function GlobalSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Day Selector Colors', 'eux-pad')}</div>
-                                <div className="wpd-admin-section__subtitle">{__('Customize day selector appearance', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Day Selector Colors', 'eux-pickup-delivery')}</div>
+                                <div className="wpd-admin-section__subtitle">{__('Customize day selector appearance', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-grid-3">
                                     <ColorField
-                                        label={__('Day name', 'eux-pad')}
+                                        label={__('Day name', 'eux-pickup-delivery')}
                                         value={settings.colors?.day_name}
                                         onChange={(v) => update(['colors', 'day_name'], v)}
                                         tooltip={__(
                                             'Color of the short weekday label (e.g. Mon) on each day chip before it is selected.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="days.svg"
                                     />
                                     <ColorField
-                                        label={__('Day number', 'eux-pad')}
+                                        label={__('Day number', 'eux-pickup-delivery')}
                                         value={settings.colors?.day_number}
                                         onChange={(v) => update(['colors', 'day_number'], v)}
                                         tooltip={__(
                                             'Color of the day-of-month number on each day chip before it is selected.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="days.svg"
                                     />
                                     <ColorField
-                                        label={__('Day selector bg', 'eux-pad')}
+                                        label={__('Day selector bg', 'eux-pickup-delivery')}
                                         value={settings.colors?.day_selector_bg}
                                         onChange={(v) => update(['colors', 'day_selector_bg'], v)}
                                         tooltip={__(
                                             'Background of each day chip in the date row when it is not selected.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="days.svg"
                                     />
                                     <ColorField
-                                        label={__('Day name (selected)', 'eux-pad')}
+                                        label={__('Day name (selected)', 'eux-pickup-delivery')}
                                         value={settings.colors?.day_name_selected}
                                         onChange={(v) => update(['colors', 'day_name_selected'], v)}
                                         tooltip={__(
                                             'Weekday label color on the day chip that is currently selected.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="days.svg"
                                     />
                                     <ColorField
-                                        label={__('Day number (selected)', 'eux-pad')}
+                                        label={__('Day number (selected)', 'eux-pickup-delivery')}
                                         value={settings.colors?.day_number_selected}
                                         onChange={(v) => update(['colors', 'day_number_selected'], v)}
                                         tooltip={__(
                                             'Day-of-month number color on the selected day chip.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="days.svg"
                                     />
                                     <ColorField
-                                        label={__('Day selector bg (selected)', 'eux-pad')}
+                                        label={__('Day selector bg (selected)', 'eux-pickup-delivery')}
                                         value={settings.colors?.day_selector_bg_selected}
                                         onChange={(v) => update(['colors', 'day_selector_bg_selected'], v)}
                                         tooltip={__(
                                             'Background of the selected day chip in the date row.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="days.svg"
                                     />
@@ -833,46 +833,46 @@ export default function GlobalSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Time Selector Colors', 'eux-pad')}</div>
-                                <div className="wpd-admin-section__subtitle">{__('Customize time slot appearance', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Time Selector Colors', 'eux-pickup-delivery')}</div>
+                                <div className="wpd-admin-section__subtitle">{__('Customize time slot appearance', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-grid-3">
                                     <ColorField
-                                        label={__('Time selector bg', 'eux-pad')}
+                                        label={__('Time selector bg', 'eux-pickup-delivery')}
                                         value={settings.colors?.time_selector_bg}
                                         onChange={(v) => update(['colors', 'time_selector_bg'], v)}
                                         tooltip={__(
                                             'Background of each time-slot pill before a slot is selected.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="times.svg"
                                     />
                                     <ColorField
-                                        label={__('Time selector text', 'eux-pad')}
+                                        label={__('Time selector text', 'eux-pickup-delivery')}
                                         value={settings.colors?.time_selector_text}
                                         onChange={(v) => update(['colors', 'time_selector_text'], v)}
                                         tooltip={__(
                                             'Text color inside time-slot pills before a slot is selected.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="times.svg"
                                     />
                                     <ColorField
-                                        label={__('Time selector bg (selected)', 'eux-pad')}
+                                        label={__('Time selector bg (selected)', 'eux-pickup-delivery')}
                                         value={settings.colors?.time_selector_bg_selected}
                                         onChange={(v) => update(['colors', 'time_selector_bg_selected'], v)}
                                         tooltip={__(
                                             'Background of the time-slot pill that is currently selected.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="times.svg"
                                     />
                                     <ColorField
-                                        label={__('Time selector text (selected)', 'eux-pad')}
+                                        label={__('Time selector text (selected)', 'eux-pickup-delivery')}
                                         value={settings.colors?.time_selector_text_selected}
                                         onChange={(v) => update(['colors', 'time_selector_text_selected'], v)}
                                         tooltip={__(
                                             'Text color on the selected time-slot pill.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="times.svg"
                                     />
@@ -884,46 +884,46 @@ export default function GlobalSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Continue Button Colors', 'eux-pad')}</div>
-                                <div className="wpd-admin-section__subtitle">{__('Customize button appearance', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Continue Button Colors', 'eux-pickup-delivery')}</div>
+                                <div className="wpd-admin-section__subtitle">{__('Customize button appearance', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-grid-3">
                                     <ColorField
-                                        label={__('Continue button background', 'eux-pad')}
+                                        label={__('Continue button background', 'eux-pickup-delivery')}
                                         value={settings.colors?.continue_button_bg}
                                         onChange={(v) => update(['colors', 'continue_button_bg'], v)}
                                         tooltip={__(
                                             'Background of the Continue button on the PAD page in its default state.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="continue.svg"
                                     />
                                     <ColorField
-                                        label={__('Continue button text', 'eux-pad')}
+                                        label={__('Continue button text', 'eux-pickup-delivery')}
                                         value={settings.colors?.continue_button_text}
                                         onChange={(v) => update(['colors', 'continue_button_text'], v)}
                                         tooltip={__(
                                             'Text color on the Continue button in its default state.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="continue.svg"
                                     />
                                     <ColorField
-                                        label={__('Continue button bg (hover)', 'eux-pad')}
+                                        label={__('Continue button bg (hover)', 'eux-pickup-delivery')}
                                         value={settings.colors?.continue_button_bg_hover}
                                         onChange={(v) => update(['colors', 'continue_button_bg_hover'], v)}
                                         tooltip={__(
                                             'Continue button background while the pointer is over the button.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="continue.svg"
                                     />
                                     <ColorField
-                                        label={__('Continue button text (hover)', 'eux-pad')}
+                                        label={__('Continue button text (hover)', 'eux-pickup-delivery')}
                                         value={settings.colors?.continue_button_text_hover}
                                         onChange={(v) => update(['colors', 'continue_button_text_hover'], v)}
                                         tooltip={__(
                                             'Continue button text color while the pointer is over the button.',
-                                            'eux-pad'
+                                            'eux-pickup-delivery'
                                         )}
                                         tooltipDiagram="continue.svg"
                                     />

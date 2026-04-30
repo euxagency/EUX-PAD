@@ -1,0 +1,60 @@
+/* Checkout: copy shipping → billing button (PAD delivery) */
+.woocommerce-billing-fields h3 {
+	margin-bottom: 0;
+}
+
+.wpd-copy-shipping-wrapper {
+	position: relative;
+	bottom: 40px;
+	left: 640px;
+}
+
+.wpd-copy-shipping-button {
+	background: #2e5f29 !important;
+	color: #fff !important;
+	border: none !important;
+	padding: 12px 24px !important;
+	font-size: 14px !important;
+	font-weight: 500 !important;
+	border-radius: 5px !important;
+	cursor: pointer !important;
+	transition: all 0.3s ease !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+}
+
+.wpd-copy-shipping-button:hover {
+	background: #234a21 !important;
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(46, 95, 41, 0.3) !important;
+}
+
+.wpd-copy-icon {
+	font-size: 16px;
+}
+
+.wpd-copy-success {
+	display: none;
+	margin-left: 10px;
+	color: #2e5f29;
+	font-weight: 600;
+	animation: wpd-copy-fade-in 0.3s ease;
+}
+
+@keyframes wpd-copy-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@media (max-width: 768px) {
+	.wpd-copy-shipping-wrapper {
+		left: 0;
+		bottom: 10px;
+		margin-top: 20px;
+	}
+}

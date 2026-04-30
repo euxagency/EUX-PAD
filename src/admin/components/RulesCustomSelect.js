@@ -79,9 +79,9 @@ export default function RulesCustomSelect({
     const selected = list.find((o) => String(o.value) === String(value));
     const displayText = selected
         ? `${optionLabel(selected)}${
-              selected.isPro && selected.disabled ? ` (${__('Pro', 'eux-pad')})` : ''
+              selected.isPro && selected.disabled ? ` (${__('Pro', 'eux-pickup-delivery')})` : ''
           }`.trim()
-        : placeholder || __('Select…', 'eux-pad');
+        : placeholder || __('Select…', 'eux-pickup-delivery');
 
     const dropdown =
         isOpen &&
@@ -118,8 +118,8 @@ export default function RulesCustomSelect({
                         >
                             <span className="wpd-rules-custom-select-option__label">{optionLabel(opt)}</span>
                             {opt.isPro ? (
-                                <span className="wpd-pro-badge" title={__('Requires Pro add-on', 'eux-pad')}>
-                                    {__('Pro', 'eux-pad')}
+                                <span className="wpd-pro-badge" title={__('Requires Pro add-on', 'eux-pickup-delivery')}>
+                                    {__('Pro', 'eux-pickup-delivery')}
                                 </span>
                             ) : null}
                         </div>

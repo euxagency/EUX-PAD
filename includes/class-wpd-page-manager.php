@@ -32,21 +32,18 @@ class WPD_Page_Manager {
 	private function __construct() {
 		add_shortcode( 'wpd_pickup_delivery', array( $this, 'render_pad_page' ) );
 
-		// Add JavaScript to modify checkout steps
-		add_action( 'wp_footer', array( $this, 'add_checkout_steps_js' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_checkout_progress_script' ), 25 );
 	}
 
 	/**
-	 * Add JavaScript to modify existing checkout steps
+	 * Checkout progress step indicator (cart → PAD → checkout → complete).
 	 */
-	public function add_checkout_steps_js() {
+	public function enqueue_checkout_progress_script() {
 		if ( class_exists( 'WPD_Settings' ) && ! WPD_Settings::get_instance()->is_checkout_progress_bar_enabled() ) {
 			return;
 		}
 
-		// Only on cart, PAD, or checkout pages
-		$pad_page_id = get_option( 'wpd_pad_page_id' );
-
+		$pad_page_id = (int) get_option( 'wpd_pad_page_id', 0 );
 		if ( ! is_cart() && ! is_checkout() && ! is_page( $pad_page_id ) ) {
 			return;
 		}
@@ -56,7 +53,6 @@ class WPD_Page_Manager {
 			$pad_step_enabled = WPD_Settings::get_instance()->is_pad_step_enabled();
 		}
 
-		// Determine current page
 		$current_page = 'cart';
 		if ( is_page( $pad_page_id ) ) {
 			$current_page = 'pad';
@@ -66,163 +62,30 @@ class WPD_Page_Manager {
 			$current_page = 'complete';
 		}
 
-		?>
-		<script>
-		jQuery(document).ready(function($) {
-			var currentPage = '<?php echo esc_js( $current_page ); ?>';
-			var wpdPadStepEnabled = <?php echo $pad_step_enabled ? 'true' : 'false'; ?>;
-			var padUrl = '<?php echo esc_js( get_permalink( $pad_page_id ) ); ?>';
-			var checkoutUrl = '<?php echo esc_js( wc_get_checkout_url() ); ?>';
-			var cartUrl = '<?php echo esc_js( wc_get_cart_url() ); ?>';
-			
-			// Find the existing checkout steps
-			var $steps = $('.wd-checkout-steps');
-			
-			// If steps don't exist (PAD page), create them
-			if ($steps.length === 0) {
-				console.log('WPD: Creating checkout steps (not found)');
-				
-				// Find the container in page title area
-				var $container = $('.wd-page-title .container');
-				
-				if ($container.length === 0) {
-					return; // Can't find container
-				}
-				
-				// For PAD page: hide title and breadcrumbs first
-				if (currentPage === 'pad') {
-					$container.find('h1.entry-title, h1.title, .wd-breadcrumbs').hide();
-				}
-				
-				// Create steps using jQuery (not HTML string) for proper formatting
-				var $newSteps = $('<ul class="wd-checkout-steps"></ul>');
-				
-				// Create each step as a proper jQuery element
-				var $cartStep = $('<li class="step-cart"></li>');
-				$cartStep.append($('<a href="' + cartUrl + '"></a>').append($('<span>Shopping cart</span>')));
-				
-				var $padStep = $('<li class="step-pad"></li>');
-				$padStep.append($('<a href="' + padUrl + '"></a>').append($('<span>Pickup & Delivery</span>')));
-				
-				var $checkoutStep = $('<li class="step-checkout"></li>');
-				$checkoutStep.append($('<a href="' + checkoutUrl + '"></a>').append($('<span>Checkout</span>')));
-				
-				var $completeStep = $('<li class="step-complete"></li>');
-				$completeStep.append($('<span>Order complete</span>'));
-				
-				// Append all steps (omit PAD when both pickup & delivery are off in global settings)
-				$newSteps.append($cartStep);
-				if (wpdPadStepEnabled) {
-					$newSteps.append($padStep);
-				}
-				$newSteps.append($checkoutStep);
-				$newSteps.append($completeStep);
-				
-				// Prepend to container
-				$container.prepend($newSteps);
-				
-				$steps = $('.wd-checkout-steps');
-			} else {
-				console.log('WPD: Modifying existing checkout steps');
-				
-				// Get existing steps
-				var $cartStep = $steps.find('.step-cart');
-				var $checkoutStep = $steps.find('.step-checkout');
-				var $completeStep = $steps.find('.step-complete');
-				
-				if ($cartStep.length === 0 || $checkoutStep.length === 0) {
-					return; // Required steps not found
-				}
+		$script_path = WPD_PLUGIN_DIR . 'assets/js/wpd-checkout-progress.js';
+		if ( ! file_exists( $script_path ) ) {
+			return;
+		}
 
-				if (!wpdPadStepEnabled) {
-					$steps.find('.step-pad').remove();
-				} else {
-					if ($steps.find('.step-pad').length === 0) {
-						var $padStepNew = $('<li class="step-pad"></li>');
-						var $padLink = $('<a href="' + padUrl + '"><span>Pickup & Delivery</span></a>');
-						$padStepNew.append($padLink);
-						$cartStep.after($padStepNew);
-					}
-				}
-				
-				// Update the checkout step's link to point to checkout
-				$checkoutStep.find('a').attr('href', checkoutUrl);
-				$checkoutStep.find('span').text('Checkout');
-			}
-			
-			// Set appropriate classes based on current page
-			$steps.find('li').removeClass('step-active step-complete step-inactive');
-			
-			var $cartStep = $steps.find('.step-cart');
-			var $padStep = $steps.find('.step-pad');
-			var $checkoutStep = $steps.find('.step-checkout');
-			var $completeStep = $steps.find('li').last(); // Last step
-			
-			// Ensure complete step has proper class
-			if (!$completeStep.hasClass('step-complete')) {
-				$completeStep.addClass('step-complete');
-			}
-			
-			if (wpdPadStepEnabled) {
-				switch(currentPage) {
-					case 'cart':
-						$cartStep.addClass('step-active');
-						$padStep.addClass('step-inactive');
-						$checkoutStep.addClass('step-inactive');
-						$completeStep.addClass('step-inactive');
-						break;
-						
-					case 'pad':
-						$cartStep.addClass('step-complete');
-						$padStep.addClass('step-active');
-						$checkoutStep.addClass('step-inactive');
-						$completeStep.addClass('step-inactive');
-						break;
-						
-					case 'checkout':
-						$cartStep.addClass('step-complete');
-						$padStep.addClass('step-complete');
-						$checkoutStep.addClass('step-active');
-						$completeStep.addClass('step-inactive');
-						break;
-						
-					case 'complete':
-						$cartStep.addClass('step-complete');
-						$padStep.addClass('step-complete');
-						$checkoutStep.addClass('step-complete');
-						$completeStep.addClass('step-active');
-						break;
-				}
-			} else {
-				switch(currentPage) {
-					case 'cart':
-						$cartStep.addClass('step-active');
-						$checkoutStep.addClass('step-inactive');
-						$completeStep.addClass('step-inactive');
-						break;
-					case 'pad':
-						// Unusual: PAD page with both methods off (normally redirects)
-						$cartStep.addClass('step-complete');
-						$checkoutStep.addClass('step-active');
-						$completeStep.addClass('step-inactive');
-						break;
-					case 'checkout':
-						$cartStep.addClass('step-complete');
-						$checkoutStep.addClass('step-active');
-						$completeStep.addClass('step-inactive');
-						break;
-					case 'complete':
-						$cartStep.addClass('step-complete');
-						$checkoutStep.addClass('step-complete');
-						$completeStep.addClass('step-active');
-						break;
-				}
-			}
-			
-			console.log('WPD: Checkout steps updated (PAD step: ' + (wpdPadStepEnabled ? 'on' : 'off') + ') - current page: ' + currentPage);
-		});
-		</script>
-		<?php
+		wp_enqueue_script(
+			'wpd-checkout-progress',
+			WPD_PLUGIN_URL . 'assets/js/wpd-checkout-progress.js',
+			array( 'jquery' ),
+			(string) filemtime( $script_path ),
+			true
+		);
+
+		wp_localize_script(
+			'wpd-checkout-progress',
+			'wpdCheckoutProgress',
+			array(
+				'currentPage'    => $current_page,
+				'padStepEnabled' => (bool) $pad_step_enabled,
+				'padUrl'         => $pad_page_id ? (string) get_permalink( $pad_page_id ) : '',
+				'checkoutUrl'    => function_exists( 'wc_get_checkout_url' ) ? (string) wc_get_checkout_url() : '',
+				'cartUrl'        => function_exists( 'wc_get_cart_url' ) ? (string) wc_get_cart_url() : '',
+			)
+		);
 	}
 
 	/**
@@ -266,7 +129,7 @@ class WPD_Page_Manager {
 
 		// Now safe to check cart
 		if ( WC()->cart->is_empty() ) {
-			return '<div class="woocommerce-info">' . esc_html__( 'Your cart is empty.', 'eux-pad' ) . '</div>';
+			return '<div class="woocommerce-info">' . esc_html__( 'Your cart is empty.', 'eux-pickup-delivery' ) . '</div>';
 		}
 
 		// Start output buffering

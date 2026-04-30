@@ -126,14 +126,14 @@ class WPD_Checkout_Handler {
 		// Verify nonce
 		$nonce = $this->get_post_string( 'nonce' );
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wpd_nonce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pickup-delivery' ) ) );
 		}
 
 		// Get cart items
 		$cart_items = $this->prepare_cart_data();
 
 		if ( empty( $cart_items ) ) {
-			wp_send_json_error( array( 'message' => __( 'Cart is empty', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Cart is empty', 'eux-pickup-delivery' ) ) );
 		}
 
 		// Call REST API
@@ -159,7 +159,7 @@ class WPD_Checkout_Handler {
 		if ( is_wp_error( $response ) ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Failed to fetch pickup dates', 'eux-pad' ),
+					'message' => __( 'Failed to fetch pickup dates', 'eux-pickup-delivery' ),
 					'error'   => $response->get_error_message(),
 				)
 			);
@@ -173,7 +173,7 @@ class WPD_Checkout_Handler {
 		} else {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Invalid API response', 'eux-pad' ),
+					'message' => __( 'Invalid API response', 'eux-pickup-delivery' ),
 				)
 			);
 		}
@@ -186,14 +186,14 @@ class WPD_Checkout_Handler {
 		// Verify nonce
 		$nonce = $this->get_post_string( 'nonce' );
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wpd_nonce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pickup-delivery' ) ) );
 		}
 
 		// Get cart items
 		$cart_items = $this->prepare_cart_data();
 
 		if ( empty( $cart_items ) ) {
-			wp_send_json_error( array( 'message' => __( 'Cart is empty', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Cart is empty', 'eux-pickup-delivery' ) ) );
 		}
 
 		// Get delivery address
@@ -208,7 +208,7 @@ class WPD_Checkout_Handler {
 		// Validate address
 		if ( empty( $delivery_address['street_address'] ) || empty( $delivery_address['suburb'] ) ||
 			empty( $delivery_address['state'] ) || empty( $delivery_address['postcode'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Complete address is required', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Complete address is required', 'eux-pickup-delivery' ) ) );
 		}
 
 		// Call REST API
@@ -231,7 +231,7 @@ class WPD_Checkout_Handler {
 		if ( is_wp_error( $response ) ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Failed to fetch delivery dates', 'eux-pad' ),
+					'message' => __( 'Failed to fetch delivery dates', 'eux-pickup-delivery' ),
 					'error'   => $response->get_error_message(),
 				)
 			);
@@ -245,7 +245,7 @@ class WPD_Checkout_Handler {
 		} else {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Invalid API response', 'eux-pad' ),
+					'message' => __( 'Invalid API response', 'eux-pickup-delivery' ),
 				)
 			);
 		}
@@ -298,7 +298,7 @@ class WPD_Checkout_Handler {
 		// Verify nonce
 		$nonce = $this->get_post_string( 'nonce' );
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wpd_nonce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pickup-delivery' ) ) );
 		}
 
 		// Get address data and type
@@ -313,12 +313,12 @@ class WPD_Checkout_Handler {
 
 		// For delivery, validate address
 		if ( 'delivery' === $type && ( empty( $street_address ) || empty( $suburb ) || empty( $postcode ) ) ) {
-			wp_send_json_error( array( 'message' => __( 'Please fill all required fields', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please fill all required fields', 'eux-pickup-delivery' ) ) );
 		}
 
 		// Check if cart has items
 		if ( WC()->cart->is_empty() ) {
-			wp_send_json_error( array( 'message' => __( 'Your cart is empty. Please add items to cart first.', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Your cart is empty. Please add items to cart first.', 'eux-pickup-delivery' ) ) );
 		}
 
 		// Build shipping package from cart
@@ -351,7 +351,7 @@ class WPD_Checkout_Handler {
 							if ( $cost_value > 0 ) {
 								$cost_display = html_entity_decode( wp_strip_all_tags( wc_price( $cost_value ) ) );
 							} else {
-								$cost_display = __( 'Free', 'eux-pad' );
+								$cost_display = __( 'Free', 'eux-pickup-delivery' );
 							}
 
 							wp_send_json_success(
@@ -376,7 +376,7 @@ class WPD_Checkout_Handler {
 							if ( $cost_value > 0 ) {
 								$cost_display = html_entity_decode( wp_strip_all_tags( wc_price( $cost_value ) ) );
 							} else {
-								$cost_display = __( 'Free', 'eux-pad' );
+								$cost_display = __( 'Free', 'eux-pickup-delivery' );
 							}
 
 							$shipping_methods[] = array(
@@ -397,7 +397,7 @@ class WPD_Checkout_Handler {
 		if ( 'pickup' === $type ) {
 			wp_send_json_error(
 				array(
-					'message' => __( "Shipping or Pickup hasn't been configured for this address, for more information please contact the store owner.", 'eux-pad' ),
+					'message' => __( "Shipping or Pickup hasn't been configured for this address, for more information please contact the store owner.", 'eux-pickup-delivery' ),
 				)
 			);
 			return;
@@ -439,7 +439,7 @@ class WPD_Checkout_Handler {
 		} else {
 			wp_send_json_error(
 				array(
-					'message' => __( "Shipping or Pickup hasn't been configured for this address, for more information please contact the store owner.", 'eux-pad' ),
+					'message' => __( "Shipping or Pickup hasn't been configured for this address, for more information please contact the store owner.", 'eux-pickup-delivery' ),
 				)
 			);
 		}
@@ -577,7 +577,7 @@ class WPD_Checkout_Handler {
 	public function save_pad_selection() {
 		// Verify nonce
 		if ( ! check_ajax_referer( 'wpd_nonce', 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'eux-pad' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'eux-pickup-delivery' ) ) );
 			return;
 		}
 
@@ -599,7 +599,7 @@ class WPD_Checkout_Handler {
 			);
 			$address_data['suburb'] = $this->resolve_delivery_suburb( $address_data['suburb'] );
 			if ( empty( $address_data['street_address'] ) || empty( $address_data['suburb'] ) || empty( $address_data['state'] ) || empty( $address_data['postcode'] ) ) {
-				wp_send_json_error( array( 'message' => __( 'Please choose a valid delivery suburb and complete the address.', 'eux-pad' ) ) );
+				wp_send_json_error( array( 'message' => __( 'Please choose a valid delivery suburb and complete the address.', 'eux-pickup-delivery' ) ) );
 				return;
 			}
 			$address_data['country'] = 'AU';

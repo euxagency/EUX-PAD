@@ -796,8 +796,8 @@ class WPD_Settings {
 	public function get_rules() {
 		$rules = get_option( self::OPTION_RULES, array() );
 		$rules = is_array( $rules ) ? $rules : array();
-		if ( class_exists( 'WPD_Rules' ) && ! WPD_Rules::has_pro_features() ) {
-			$rules = $this->strip_pro_conditions_from_rules( $rules );
+		if ( class_exists( 'WPD_Rules' ) ) {
+			$rules = $this->strip_disallowed_conditions_from_rules( $rules );
 		}
 		return rest_ensure_response(
 			array(
@@ -808,17 +808,17 @@ class WPD_Settings {
 	}
 
 	/**
-	 * Remove Pro-only conditions from each rule (free plugin REST responses).
+	 * Remove unsupported condition types from each rule (REST responses).
 	 *
 	 * @param array $rules Rules list.
 	 * @return array
 	 */
-	private function strip_pro_conditions_from_rules( $rules ) {
+	private function strip_disallowed_conditions_from_rules( $rules ) {
 		if ( ! class_exists( 'WPD_Rules' ) ) {
 			return $rules;
 		}
-		$pro_types = WPD_Rules::get_pro_condition_types();
-		$out       = array();
+		$allowed = WPD_Rules::get_allowed_condition_types();
+		$out     = array();
 		foreach ( $rules as $rule ) {
 			if ( ! is_array( $rule ) ) {
 				continue;
@@ -830,7 +830,7 @@ class WPD_Settings {
 					continue;
 				}
 				$t = isset( $c['type'] ) ? (string) $c['type'] : '';
-				if ( in_array( $t, $pro_types, true ) ) {
+				if ( ! in_array( $t, $allowed, true ) ) {
 					continue;
 				}
 				$keep[] = $c;
@@ -898,7 +898,7 @@ class WPD_Settings {
 			if ( ! $has_date_scope || ! $has_method ) {
 				return new WP_Error(
 					'wpd_rules_primary_required',
-					__( 'Every enabled rule must include at least one Days of Week or Specific Dates condition and one Method condition.', 'eux-pad' ),
+					__( 'Every enabled rule must include at least one Days of Week or Specific Dates condition and one Method condition.', 'eux-pickup-delivery' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -913,7 +913,7 @@ class WPD_Settings {
 	 * @return true|WP_Error
 	 */
 	private function validate_rules_lead_cutoff_objective( $rules ) {
-		if ( ! class_exists( 'WPD_Rules' ) || ! WPD_Rules::has_pro_features() ) {
+		if ( ! class_exists( 'WPD_Rules' ) ) {
 			return true;
 		}
 		foreach ( $rules as $rule ) {
@@ -932,7 +932,7 @@ class WPD_Settings {
 			if ( $has && isset( $rule['objective'] ) && 'disable_day' !== $rule['objective'] ) {
 				return new WP_Error(
 					'wpd_rules_lead_cutoff_objective',
-					__( 'Rules that include Lead Time or Cutoff Time must use the Disable Day objective.', 'eux-pad' ),
+					__( 'Rules that include Lead Time or Cutoff Time must use the Disable Day objective.', 'eux-pickup-delivery' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -967,7 +967,7 @@ class WPD_Settings {
 						continue;
 					}
 					$ctype = sanitize_text_field( wp_unslash( $c['type'] ) );
-					if ( class_exists( 'WPD_Rules' ) && ! WPD_Rules::has_pro_features() && WPD_Rules::is_pro_condition_type( $ctype ) ) {
+					if ( class_exists( 'WPD_Rules' ) && ! WPD_Rules::is_allowed_condition_type( $ctype ) ) {
 						continue;
 					}
 					$cop = isset( $c['operator'] ) ? sanitize_text_field( wp_unslash( $c['operator'] ) ) : 'matches_any_of';
@@ -1121,7 +1121,7 @@ class WPD_Settings {
 				array(
 					'success' => true,
 					'status'  => 'exists',
-					'message' => __( 'A page with the PAD shortcode already exists.', 'eux-pad' ),
+					'message' => __( 'A page with the PAD shortcode already exists.', 'eux-pickup-delivery' ),
 					'data'    => array(
 						'pad_page_id' => $existing_id,
 						'title'       => get_the_title( $existing_id ),
@@ -1157,7 +1157,7 @@ class WPD_Settings {
 		if ( ! $page_id ) {
 			return new WP_Error(
 				'wpd_pad_create_failed',
-				__( 'Could not create the PAD page.', 'eux-pad' ),
+				__( 'Could not create the PAD page.', 'eux-pickup-delivery' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1169,7 +1169,7 @@ class WPD_Settings {
 			array(
 				'success' => true,
 				'status'  => 'created',
-				'message' => __( 'PAD page created.', 'eux-pad' ),
+				'message' => __( 'PAD page created.', 'eux-pickup-delivery' ),
 				'data'    => array(
 					'pad_page_id' => (int) $page_id,
 					'title'       => get_the_title( $page_id ),

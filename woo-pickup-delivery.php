@@ -13,7 +13,7 @@
  *
  * @wordpress-plugin
  * Plugin Name:             EUX Pickup & Delivery
- * Plugin URI:              https://eux.com.au
+ * Plugin URI:              https://eux.com.au/product/improved-delivery-and-pick-up-for-woocommerce/
  * Description:             Enhance your WooCommerce store with a Pickup & Delivery system for your customers.
  * Version:                 1.0.1
  * Requires at least:       5.0
@@ -25,7 +25,7 @@
  * Author URI:              https://eux.com.au
  * License:                 GPL-2.0-or-later
  * License URI:             http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:             eux-pad
+ * Text Domain:             eux-pickup-delivery
  */
 
 
@@ -51,9 +51,9 @@ add_action(
 	}
 );
 /**
- * Main plugin class
+ * Main plugin class (unique prefix for WordPress.org).
  */
-class WooPickupDelivery {
+class EUXPIDE_PickupDelivery {
 
 	/**
 	 * Single instance of the class
@@ -106,7 +106,7 @@ class WooPickupDelivery {
 	public function woocommerce_missing_notice() {
 		?>
 		<div class="notice notice-error">
-			<p><?php esc_html_e( 'WooCommerce Pickup and Delivery requires WooCommerce to be installed and active.', 'eux-pad' ); ?></p>
+			<p><?php esc_html_e( 'WooCommerce Pickup and Delivery requires WooCommerce to be installed and active.', 'eux-pickup-delivery' ); ?></p>
 		</div>
 		<?php
 	}
@@ -118,7 +118,7 @@ class WooPickupDelivery {
 	 */
 	public function init() {
 		// Load text domain
-		load_plugin_textdomain( 'eux-pad', false, dirname( WPD_PLUGIN_BASENAME ) . '/languages' );
+		load_plugin_textdomain( 'eux-pickup-delivery', false, dirname( WPD_PLUGIN_BASENAME ) . '/languages' );
 
 		// Include required files
 		$this->includes();
@@ -209,9 +209,9 @@ class WooPickupDelivery {
 /**
  * Initialize plugin
  */
-function woo_pickup_delivery() {
-	return WooPickupDelivery::get_instance();
+function euxpide_pickup_delivery() {
+	return EUXPIDE_PickupDelivery::get_instance();
 }
 
 // Start the plugin
-woo_pickup_delivery();
+euxpide_pickup_delivery();

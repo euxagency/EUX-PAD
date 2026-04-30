@@ -7,9 +7,7 @@
  * on a rule are ANDed. Rules are sorted by order (ascending): the first matching rule wins when
  * several would affect the same date.
  *
- * Condition summary (free): days of week, specific dates, method (pickup/delivery).
- * Pro-only conditions (order value, total orders, suburb, lead time, cutoff) are implemented by
- * the EUX Pickup & Delivery Pro add-on via the `wpd_rules_has_pro` and `wpd_rules_evaluate_pro_condition` filters.
+ * Condition types: days of week, specific dates, method (pickup/delivery), store (multi-store).
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -19,43 +17,31 @@ class WPD_Rules {
 	private static $instance = null;
 
 	/**
-	 * Whether Pro rule conditions (order value, suburb, lead time, etc.) are active.
-	 *
-	 * @return bool
-	 */
-	public static function has_pro_features() {
-		return (bool) apply_filters( 'wpd_rules_has_pro', false );
-	}
-
-	/**
-	 * Condition types implemented by EUX Pickup & Delivery Pro.
+	 * Condition types supported by this plugin (WordPress.org distribution).
 	 *
 	 * @return string[]
 	 */
-	public static function get_pro_condition_types() {
-		return array( 'order_value', 'total_orders', 'suburb', 'lead_time', 'cutoff_time' );
+	public static function get_allowed_condition_types() {
+		return array( 'days_of_week', 'specific_dates', 'method', 'store' );
 	}
 
 	/**
 	 * @param string $type Condition type slug.
 	 * @return bool
 	 */
-	public static function is_pro_condition_type( $type ) {
-		return in_array( (string) $type, self::get_pro_condition_types(), true );
+	public static function is_allowed_condition_type( $type ) {
+		return in_array( (string) $type, self::get_allowed_condition_types(), true );
 	}
 
 	/**
-	 * Strip Pro-only conditions when the Pro add-on is not active.
+	 * Drop unsupported condition rows (legacy data from older installs).
 	 *
 	 * @param array $conditions Rule conditions.
 	 * @return array
 	 */
-	private function filter_conditions_by_license( $conditions ) {
+	private function filter_allowed_conditions( $conditions ) {
 		if ( ! is_array( $conditions ) ) {
 			return array();
-		}
-		if ( self::has_pro_features() ) {
-			return $conditions;
 		}
 		$out = array();
 		foreach ( $conditions as $c ) {
@@ -63,10 +49,9 @@ class WPD_Rules {
 				continue;
 			}
 			$t = isset( $c['type'] ) ? (string) $c['type'] : '';
-			if ( self::is_pro_condition_type( $t ) ) {
-				continue;
+			if ( self::is_allowed_condition_type( $t ) ) {
+				$out[] = $c;
 			}
-			$out[] = $c;
 		}
 		return $out;
 	}
@@ -179,7 +164,7 @@ class WPD_Rules {
 	 */
 	private function rule_matches( $rule, $date_str, $day_name, $type, $cart_total, $cart_items, $delivery_address, $days_ahead, $today_now ) {
 		$raw_conditions = isset( $rule['conditions'] ) && is_array( $rule['conditions'] ) ? $rule['conditions'] : array();
-		$conditions     = $this->filter_conditions_by_license( $raw_conditions );
+		$conditions     = $this->filter_allowed_conditions( $raw_conditions );
 		if ( empty( $conditions ) ) {
 			return false;
 		}
@@ -245,30 +230,19 @@ class WPD_Rules {
 				}
 				return ( $method_type === $target );
 
-			default:
-				if ( self::is_pro_condition_type( $type ) ) {
-					if ( ! self::has_pro_features() ) {
-						return true;
-					}
-					$result = apply_filters(
-						'wpd_rules_evaluate_pro_condition',
-						null,
-						$this,
-						$type,
-						$operator,
-						$value,
-						$date_str,
-						$day_name,
-						$method_type,
-						$cart_total,
-						$cart_items,
-						$delivery_address,
-						$days_ahead,
-						$today_now
-					);
-					return null !== $result ? (bool) $result : false;
+			case 'store':
+				$target_store = is_string( $value ) ? trim( $value ) : '';
+				if ( '' === $target_store ) {
+					return false;
 				}
-				return true;
+				$ctx_store = '';
+				if ( is_array( $delivery_address ) && isset( $delivery_address['store_id'] ) ) {
+					$ctx_store = sanitize_text_field( (string) $delivery_address['store_id'] );
+				}
+				return ( '' !== $ctx_store && $ctx_store === $target_store );
+
+			default:
+				return false;
 		}
 	}
 

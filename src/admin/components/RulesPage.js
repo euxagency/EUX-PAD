@@ -103,78 +103,45 @@ function getReorderShiftY(i, from, to, stride) {
 /** Date scope: at least one of these is required together with Delivery or Pickup. */
 const DATE_SCOPE_CONDITION_TYPES = ['days_of_week', 'specific_dates'];
 
+/** Condition types persisted and evaluated by the plugin (matches PHP `WPD_Rules::get_allowed_condition_types`). */
+const WPD_RULE_ALLOWED_CONDITION_TYPES = ['days_of_week', 'specific_dates', 'method', 'store'];
+
 /** Static copy for the “condition guide” modal (aligned with `WPD_Rules` behavior). */
-function getConditionGuideEntries(rulesPro = false) {
-    const all = [
+function getConditionGuideEntries() {
+    return [
         {
             id: 'days_of_week',
-            term: __('Days of Week', 'eux-pad'),
+            term: __('Days of Week', 'eux-pickup-delivery'),
             desc: __(
                 'The rule only applies on the weekdays you select. Use this to target recurring patterns (for example, every Monday).',
-                'eux-pad'
+                'eux-pickup-delivery'
             ),
         },
         {
             id: 'specific_dates',
-            term: __('Specific Dates', 'eux-pad'),
+            term: __('Specific Dates', 'eux-pickup-delivery'),
             desc: __(
                 'The rule only applies on calendar dates you choose. “Matches any of” uses a list of dates; “Between” uses a from–to range.',
-                'eux-pad'
+                'eux-pickup-delivery'
             ),
         },
         {
             id: 'method',
-            term: __('Delivery or Pickup', 'eux-pad'),
+            term: __('Delivery or Pickup', 'eux-pickup-delivery'),
             desc: __(
                 'Restricts the rule to the method the shopper selected on the Pickup & Delivery page (delivery or pickup).',
-                'eux-pad'
+                'eux-pickup-delivery'
             ),
         },
         {
-            id: 'order_value',
-            term: __('Order Value', 'eux-pad'),
+            id: 'store',
+            term: __('Store', 'eux-pickup-delivery'),
             desc: __(
-                'Compares the sum of existing WooCommerce orders already booked for that calendar date and method (not the live cart). Use the operator and amount to decide when the rule applies.',
-                'eux-pad'
-            ),
-        },
-        {
-            id: 'total_orders',
-            term: __('Total Orders', 'eux-pad'),
-            desc: __(
-                'Compares how many orders are already booked for that date and method against your threshold, using the operator you pick.',
-                'eux-pad'
-            ),
-        },
-        {
-            id: 'suburb',
-            term: __('Suburb', 'eux-pad'),
-            desc: __(
-                'Delivery only. Compares the customer’s suburb from the delivery address to your list (case-insensitive). “Equal” matches when the suburb is in the list; “Not equal” when it is not.',
-                'eux-pad'
-            ),
-        },
-        {
-            id: 'lead_time',
-            term: __('Preparation Time', 'eux-pad'),
-            desc: __(
-                'Minimum full days in advance before a day can be offered. When the rule matches, it is used with “Disable day” to hide dates that are too soon. Rules that include this condition must use the Disable day objective.',
-                'eux-pad'
-            ),
-        },
-        {
-            id: 'cutoff_time',
-            term: __('Cutoff Time', 'eux-pad'),
-            desc: __(
-                'Uses the site timezone. For a candidate date, if the current time is at or after the cutoff on that date, the condition matches—often paired with “Disable day” to stop same-day bookings after a clock time. Must use the Disable day objective.',
-                'eux-pad'
+                'Pickup only when multi-store is enabled. The rule applies only when the customer selected the store you choose.',
+                'eux-pickup-delivery'
             ),
         },
     ];
-    if (rulesPro) {
-        return all;
-    }
-    return all.filter((e) => ['days_of_week', 'specific_dates', 'method'].includes(e.id));
 }
 
 /** Rule is considered enabled unless explicitly turned off (REST / toggles). */
@@ -196,16 +163,8 @@ function ruleMeetsMandatoryConditions(rule) {
     return hasDateScope && hasMethod;
 }
 
-/** Lead / cutoff semantics only support hiding days. */
-function ruleRequiresDisableObjective(rule) {
-    return (rule?.conditions || []).some((c) => c?.type === 'lead_time' || c?.type === 'cutoff_time');
-}
-
 function normalizeRuleLeadCutoffObjective(rule) {
-    if (!ruleRequiresDisableObjective(rule) || rule.objective !== 'enable_day') {
-        return rule;
-    }
-    return { ...rule, objective: 'disable_day' };
+    return rule;
 }
 
 const WEEKDAY_NAMES = [
@@ -343,8 +302,8 @@ function CheckboxPortalMultiSelect({
                             className="components-text-control__input wpd-rules-multiselect-search-input"
                             value={filterQuery}
                             onChange={(e) => setFilterQuery(e.target.value)}
-                            placeholder={__('Search suburbs…', 'eux-pad')}
-                            aria-label={__('Search suburbs', 'eux-pad')}
+                            placeholder={__('Search suburbs…', 'eux-pickup-delivery')}
+                            aria-label={__('Search suburbs', 'eux-pickup-delivery')}
                             onMouseDown={(e) => e.stopPropagation()}
                             onKeyDown={(e) => {
                                 if (e.key === 'Escape') {
@@ -357,8 +316,8 @@ function CheckboxPortalMultiSelect({
                 {filteredOptions.length === 0 ? (
                     <div className="wpd-rules-multiselect-dropdown__empty">
                         {searchable && filterQuery.trim()
-                            ? __('No matching suburbs.', 'eux-pad')
-                            : __('No options.', 'eux-pad')}
+                            ? __('No matching suburbs.', 'eux-pickup-delivery')
+                            : __('No options.', 'eux-pickup-delivery')}
                     </div>
                 ) : (
                     filteredOptions.map(({ value: val, label }) => (
@@ -417,7 +376,7 @@ function DaysOfWeekMultiSelect({ selected = [], onChange, options }) {
             selected={selected}
             onChange={onChange}
             options={options}
-            triggerPlaceholder={__('Select days...', 'eux-pad')}
+            triggerPlaceholder={__('Select days...', 'eux-pickup-delivery')}
         />
     );
 }
@@ -427,23 +386,19 @@ const OPERATOR_KEYS_BY_CONDITION_TYPE = {
     days_of_week: ['equal'],
     specific_dates: ['matches_any_of', 'between'],
     method: ['equal'],
-    order_value: ['equal', 'greater_than', 'lower_than', 'not_equal', 'between'],
-    total_orders: ['equal', 'greater_than', 'lower_than', 'not_equal', 'between'],
-    suburb: ['equal', 'not_equal'],
-    lead_time: ['equal'],
-    cutoff_time: ['equal'],
+    store: ['equal'],
 };
 
-function useRuleFormSelectOptions(rulesPro) {
+function useRuleFormSelectOptions() {
     return useMemo(() => {
         const allOperators = [
-            { value: 'greater_than', label: __('Greater than', 'eux-pad') },
-            { value: 'lower_than', label: __('Lower than', 'eux-pad') },
-            { value: 'equal', label: __('Equal', 'eux-pad') },
-            { value: 'not_equal', label: __('Not equal', 'eux-pad') },
-            { value: 'contain', label: __('Contain', 'eux-pad') },
-            { value: 'matches_any_of', label: __('Matches any of', 'eux-pad') },
-            { value: 'between', label: __('Between', 'eux-pad') },
+            { value: 'greater_than', label: __('Greater than', 'eux-pickup-delivery') },
+            { value: 'lower_than', label: __('Lower than', 'eux-pickup-delivery') },
+            { value: 'equal', label: __('Equal', 'eux-pickup-delivery') },
+            { value: 'not_equal', label: __('Not equal', 'eux-pickup-delivery') },
+            { value: 'contain', label: __('Contain', 'eux-pickup-delivery') },
+            { value: 'matches_any_of', label: __('Matches any of', 'eux-pickup-delivery') },
+            { value: 'between', label: __('Between', 'eux-pickup-delivery') },
         ];
         const opByValue = Object.fromEntries(allOperators.map((o) => [o.value, o]));
         const operatorsForType = (type) => {
@@ -458,51 +413,56 @@ function useRuleFormSelectOptions(rulesPro) {
                         return null;
                     }
                     if (
-                        (type === 'days_of_week' || type === 'method') &&
+                        (type === 'days_of_week' || type === 'method' || type === 'store') &&
                         k === 'equal'
                     ) {
-                        return { ...op, label: __('is', 'eux-pad') };
+                        return { ...op, label: __('is', 'eux-pickup-delivery') };
                     }
                     return op;
                 })
                 .filter(Boolean);
         };
         const freeConditionTypes = [
-            { value: 'days_of_week', label: __('Days of Week', 'eux-pad') },
-            { value: 'specific_dates', label: __('Specific Dates', 'eux-pad') },
-            { value: 'method', label: __('Delivery or Pickup', 'eux-pad') },
+            { value: 'days_of_week', label: __('Days of Week', 'eux-pickup-delivery') },
+            { value: 'specific_dates', label: __('Specific Dates', 'eux-pickup-delivery') },
+            { value: 'method', label: __('Delivery or Pickup', 'eux-pickup-delivery') },
         ];
-        const proOnlyTypes = [
-            { value: 'order_value', label: __('Order Value', 'eux-pad') },
-            { value: 'total_orders', label: __('Total Orders', 'eux-pad') },
-            { value: 'suburb', label: __('Suburb', 'eux-pad') },
-            { value: 'lead_time', label: __('Preparation Time', 'eux-pad') },
-            { value: 'cutoff_time', label: __('Cutoff Time', 'eux-pad') },
-        ];
-        // Free plugin: do not list Pro-only types (Pro add-on adds them when active).
-        const conditionTypes = rulesPro ? [...freeConditionTypes, ...proOnlyTypes] : [...freeConditionTypes];
+        const wpdAdmin = typeof window !== 'undefined' ? window.wpdAdmin || {} : {};
+        const pickupStoresAddon = !!wpdAdmin.multiPickupStoresAddon;
+        const pickupStores = Array.isArray(wpdAdmin.pickupStores) ? wpdAdmin.pickupStores : [];
+        const pickupStoreOptions =
+            pickupStoresAddon && pickupStores.length
+                ? pickupStores.map((s) => ({ value: String(s.id), label: String(s.name || s.id) }))
+                : [];
+        if (pickupStoreOptions.length) {
+            freeConditionTypes.push({ value: 'store', label: __('Store', 'eux-pickup-delivery') });
+        }
+        const conditionTypes = [...freeConditionTypes];
         return {
             conditionTypes,
             /** @deprecated use operatorsForType(type) in condition rows */
             operators: allOperators,
             operatorsForType,
             objectiveOptions: [
-                { value: 'enable_day', label: __('Enable Day', 'eux-pad') },
-                { value: 'disable_day', label: __('Disable Day', 'eux-pad') },
+                { value: 'enable_day', label: __('Enable Day', 'eux-pickup-delivery') },
+                { value: 'disable_day', label: __('Disable Day', 'eux-pickup-delivery') },
             ],
             methodOptions: [
-                { value: 'delivery', label: __('Delivery', 'eux-pad') },
-                { value: 'pickup', label: __('Pickup', 'eux-pad') },
+                { value: 'delivery', label: __('Delivery', 'eux-pickup-delivery') },
+                { value: 'pickup', label: __('Pickup', 'eux-pickup-delivery') },
             ],
+            pickupStoreOptions,
             dayOptions: WEEKDAY_NAMES.map((d) => ({ value: d, label: d })),
         };
-    }, [rulesPro]);
+    }, []);
 }
 
 /**
  * Default value when fixing operator/type for a condition.
  */
 function defaultConditionValueFor(type, operator) {
+    const wpdAdmin = typeof window !== 'undefined' ? window.wpdAdmin || {} : {};
+    const pickupStores = Array.isArray(wpdAdmin.pickupStores) ? wpdAdmin.pickupStores : [];
     switch (type) {
         case 'days_of_week':
             return [];
@@ -510,21 +470,18 @@ function defaultConditionValueFor(type, operator) {
             return operator === 'between' ? ['', ''] : [];
         case 'method':
             return 'delivery';
-        case 'order_value':
-        case 'total_orders':
-        case 'lead_time':
-            return operator === 'between' ? ['', ''] : '';
-        case 'suburb':
-            return [];
-        case 'cutoff_time':
-            return '';
+        case 'store':
+            return pickupStores[0]?.id ? String(pickupStores[0].id) : '';
         default:
             return '';
     }
 }
 
 function normalizeLoadedCondition(cond, operatorsForType) {
-    const type = cond.type || 'days_of_week';
+    let type = cond.type || 'days_of_week';
+    if (!WPD_RULE_ALLOWED_CONDITION_TYPES.includes(type)) {
+        type = 'days_of_week';
+    }
     const allowed = operatorsForType(type).map((o) => o.value);
     let operator = cond.operator;
     let value = cond.value;
@@ -549,16 +506,6 @@ function normalizeLoadedCondition(cond, operatorsForType) {
                 value = [String(value[0] || ''), String(value[1] || '')];
             }
         } else if (!Array.isArray(value)) {
-            value = value ? String(value).split(',').map((s) => s.trim()).filter(Boolean) : [];
-        }
-    }
-
-    if (type === 'suburb') {
-        const allowedSuburbOps = ['equal', 'not_equal'];
-        if (!allowedSuburbOps.includes(operator)) {
-            operator = 'equal';
-        }
-        if (!Array.isArray(value)) {
             value = value ? String(value).split(',').map((s) => s.trim()).filter(Boolean) : [];
         }
     }
@@ -654,7 +601,7 @@ function SpecificDatesMultiCalendarField({ value, onChange }) {
             <div
                 className="wpd-rules-specific-dates-field__inner"
                 role="group"
-                aria-label={__('Selected dates and date picker', 'eux-pad')}
+                aria-label={__('Selected dates and date picker', 'eux-pickup-delivery')}
             >
                 {dates.map((d) => (
                     <span key={d} className="wpd-rules-specific-dates-chip">
@@ -663,7 +610,7 @@ function SpecificDatesMultiCalendarField({ value, onChange }) {
                             type="button"
                             className="wpd-rules-specific-dates-chip__remove"
                             onClick={() => removeDate(d)}
-                            aria-label={__('Remove date', 'eux-pad')}
+                            aria-label={__('Remove date', 'eux-pickup-delivery')}
                         >
                             ×
                         </button>
@@ -673,7 +620,7 @@ function SpecificDatesMultiCalendarField({ value, onChange }) {
                     ref={inputRef}
                     type="date"
                     className="wpd-rules-specific-dates-field__picker"
-                    aria-label={__('Add date from calendar', 'eux-pad')}
+                    aria-label={__('Add date from calendar', 'eux-pickup-delivery')}
                     onChange={handlePick}
                 />
             </div>
@@ -681,7 +628,7 @@ function SpecificDatesMultiCalendarField({ value, onChange }) {
     );
 }
 
-function ConditionValueField({ condition, onChange, methodOptions, dayOptions, deliverySuburbs }) {
+function ConditionValueField({ condition, onChange, methodOptions, dayOptions, pickupStoreOptions }) {
     const { type, operator, value } = condition;
     const updateValue = (v) => onChange({ ...condition, value: v });
 
@@ -705,7 +652,7 @@ function ConditionValueField({ condition, onChange, methodOptions, dayOptions, d
             const to = fromTo[1] || '';
             return (
                 <div className="wpd-rules-value-dates wpd-rules-value-dates--between">
-                    <span className="wpd-rules-value-dates__label">{__('From', 'eux-pad')}</span>
+                    <span className="wpd-rules-value-dates__label">{__('From', 'eux-pickup-delivery')}</span>
                     <input
                         type="date"
                         className="components-text-control__input wpd-rules-input"
@@ -715,7 +662,7 @@ function ConditionValueField({ condition, onChange, methodOptions, dayOptions, d
                     <span className="wpd-rules-between-sep" aria-hidden="true">
                         –
                     </span>
-                    <span className="wpd-rules-value-dates__label">{__('To', 'eux-pad')}</span>
+                    <span className="wpd-rules-value-dates__label">{__('To', 'eux-pickup-delivery')}</span>
                     <input
                         type="date"
                         className="components-text-control__input wpd-rules-input"
@@ -739,101 +686,20 @@ function ConditionValueField({ condition, onChange, methodOptions, dayOptions, d
                 value={value || 'delivery'}
                 options={methodOptions}
                 onChange={updateValue}
-                ariaLabel={__('Delivery or Pickup', 'eux-pad')}
+                ariaLabel={__('Delivery or Pickup', 'eux-pickup-delivery')}
             />
         );
     }
 
-    // Order value, total orders – number (between = min/max); lead time – single number (equal only)
-    if (type === 'order_value' || type === 'total_orders') {
-        const isBetween = operator === 'between';
-        if (isBetween) {
-            const [min, max] = Array.isArray(value) ? value : (typeof value === 'string' ? value.split(',').map((n) => n.trim()) : ['', '']);
-            return (
-                <div className="wpd-rules-value-between">
-                    <input
-                        type="number"
-                        className="components-text-control__input wpd-rules-input wpd-rules-input--small"
-                        placeholder={__('Min', 'eux-pad')}
-                        value={min || ''}
-                        onChange={(e) => updateValue([e.target.value, max])}
-                        min={0}
-                    />
-                    <span className="wpd-rules-between-sep">–</span>
-                    <input
-                        type="number"
-                        className="components-text-control__input wpd-rules-input wpd-rules-input--small"
-                        placeholder={__('Max', 'eux-pad')}
-                        value={max || ''}
-                        onChange={(e) => updateValue([min, e.target.value])}
-                        min={0}
-                    />
-                </div>
-            );
-        }
+    // Store – single select (multi-store add-on only; options localized via wpdAdmin.pickupStores)
+    if (type === 'store') {
         return (
-            <input
-                type="number"
-                className="components-text-control__input wpd-rules-input"
-                value={value ?? ''}
-                onChange={(e) => updateValue(e.target.value ? parseFloat(e.target.value) : '')}
-                placeholder={type === 'order_value' ? __('Order total', 'eux-pad') : __('Count', 'eux-pad')}
-                min={0}
-                step={type === 'order_value' ? 0.01 : 1}
-            />
-        );
-    }
-
-    if (type === 'lead_time') {
-        return (
-            <input
-                type="number"
-                className="components-text-control__input wpd-rules-input"
-                value={value ?? ''}
-                onChange={(e) => updateValue(e.target.value ? parseFloat(e.target.value) : '')}
-                placeholder={__('Days ahead', 'eux-pad')}
-                min={0}
-                step={1}
-            />
-        );
-    }
-
-    // Suburb – same portaled multiselect UI as Days of week (options from Delivery settings)
-    if (type === 'suburb') {
-        const names = Array.isArray(deliverySuburbs) ? deliverySuburbs : [];
-        const selected = Array.isArray(value) ? value : [];
-        if (names.length === 0) {
-            return (
-                <div className="wpd-rules-suburb-empty-wrap">
-                    <p className="wpd-rules-suburb-empty">
-                        {__(
-                            'Add suburb names under Pickup & Delivery → Delivery Settings.',
-                            'eux-pad'
-                        )}
-                    </p>
-                </div>
-            );
-        }
-        return (
-            <CheckboxPortalMultiSelect
-                selected={selected}
-                onChange={updateValue}
-                options={names.map((n) => ({ value: n, label: n }))}
-                triggerPlaceholder={__('Select suburbs...', 'eux-pad')}
-                dropdownMaxHeight="min(280px, 50vh)"
-                searchable
-            />
-        );
-    }
-
-    // Cutoff time – time input
-    if (type === 'cutoff_time') {
-        return (
-            <input
-                type="time"
-                className="components-text-control__input wpd-rules-input"
+            <RulesCustomSelect
                 value={value || ''}
-                onChange={(e) => updateValue(e.target.value)}
+                options={pickupStoreOptions || []}
+                onChange={updateValue}
+                ariaLabel={__('Store', 'eux-pickup-delivery')}
+                placeholder={__('Select store', 'eux-pickup-delivery')}
             />
         );
     }
@@ -842,7 +708,7 @@ function ConditionValueField({ condition, onChange, methodOptions, dayOptions, d
         <TextControl
             value={value ?? ''}
             onChange={(v) => updateValue(v)}
-            placeholder={__('Value', 'eux-pad')}
+            placeholder={__('Value', 'eux-pickup-delivery')}
             __nextHasNoMarginBottom
         />
     );
@@ -856,7 +722,6 @@ function RuleCard({
     selectOptions,
     expanded,
     onAccordionToggle,
-    deliverySuburbs,
 }) {
     const ruleBodyId = useId();
     const updateRule = (patch) => onUpdate({ ...rule, ...patch });
@@ -864,17 +729,11 @@ function RuleCard({
         const conds = [...(rule.conditions || [])];
         conds[index] = cond;
         const patch = { conditions: conds };
-        if (conds.some((c) => c?.type === 'lead_time' || c?.type === 'cutoff_time')) {
-            patch.objective = 'disable_day';
-        }
         updateRule(patch);
     };
     const addCondition = () => {
         const conds = [...(rule.conditions || []), createEmptyCondition()];
         const patch = { conditions: conds };
-        if (conds.some((c) => c?.type === 'lead_time' || c?.type === 'cutoff_time')) {
-            patch.objective = 'disable_day';
-        }
         updateRule(patch);
     };
     const removeCondition = (index) => {
@@ -887,10 +746,7 @@ function RuleCard({
     };
 
     const hasMandatoryConditions = ruleMeetsMandatoryConditions(rule);
-    const requiresDisableObjective = ruleRequiresDisableObjective(rule);
-    const objectiveOptionsForRule = requiresDisableObjective
-        ? selectOptions.objectiveOptions.filter((o) => o.value === 'disable_day')
-        : selectOptions.objectiveOptions;
+    const objectiveOptionsForRule = selectOptions.objectiveOptions;
 
     const onHeaderMainKeyDown = (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -904,7 +760,7 @@ function RuleCard({
             <div className="wpd-rules-rule-header">
                 <div
                     className="wpd-rules-drag-handle"
-                    title={__('Drag to reorder', 'eux-pad')}
+                    title={__('Drag to reorder', 'eux-pickup-delivery')}
                     {...(sortHandleProps || {})}
                     onClick={(e) => {
                         e.stopPropagation();
@@ -926,7 +782,7 @@ function RuleCard({
                     tabIndex={0}
                     aria-expanded={expanded}
                     aria-controls={expanded ? ruleBodyId : undefined}
-                    title={__('Click to expand or collapse rule details', 'eux-pad')}
+                    title={__('Click to expand or collapse rule details', 'eux-pickup-delivery')}
                     onClick={() => onAccordionToggle(rule.id)}
                     onKeyDown={onHeaderMainKeyDown}
                 >
@@ -942,7 +798,7 @@ function RuleCard({
                         </svg>
                     </span>
                     <span className="wpd-rules-rule-header-main__text">
-                        {rule.name || __('Untitled rule', 'eux-pad')}
+                        {rule.name || __('Untitled rule', 'eux-pickup-delivery')}
                     </span>
                 </div>
                 <button
@@ -952,8 +808,8 @@ function RuleCard({
                         e.stopPropagation();
                         onRemove();
                     }}
-                    aria-label={__('Delete rule', 'eux-pad')}
-                    title={__('Delete rule', 'eux-pad')}
+                    aria-label={__('Delete rule', 'eux-pickup-delivery')}
+                    title={__('Delete rule', 'eux-pickup-delivery')}
                 >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path fill="#DC2626" d="M9 3a1 1 0 0 0-.894.553L7.382 5H5a1 1 0 1 0 0 2h.25l.772 11.088A2 2 0 0 0 8.016 20h7.968a2 2 0 0 0 1.994-1.912L18.75 7H19a1 1 0 1 0 0-2h-2.382l-.724-1.447A1 1 0 0 0 14 3H9zm1.382 2L11 4h3l.618 1H10.382zM10 9a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1zm4 0a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1z" />
@@ -978,39 +834,27 @@ function RuleCard({
             <div id={ruleBodyId} className="wpd-rules-rule-body">
                 <div className="wpd-rules-rule-fields">
                     <TextControl
-                        label={__('Rule Name', 'eux-pad')}
+                        label={__('Rule Name', 'eux-pickup-delivery')}
                         value={rule.name || ''}
                         onChange={(v) => updateRule({ name: v })}
-                        placeholder={__('e.g. Weekend Delivery Restriction', 'eux-pad')}
+                        placeholder={__('e.g. Weekend Delivery Restriction', 'eux-pickup-delivery')}
                         __nextHasNoMarginBottom
                     />
                     <RulesCustomSelect
-                        label={__('Rule Objective', 'eux-pad')}
-                        value={
-                            requiresDisableObjective
-                                ? 'disable_day'
-                                : rule.objective || 'disable_day'
-                        }
+                        label={__('Rule Objective', 'eux-pickup-delivery')}
+                        value={rule.objective || 'disable_day'}
                         options={objectiveOptionsForRule}
                         onChange={(v) => updateRule({ objective: v })}
                     />
-                    {requiresDisableObjective && (
-                        <p className="wpd-rules-objective-hint">
-                            {__(
-                                'Preparation Time and Cutoff Time only support the Disable Day objective.',
-                                'eux-pad'
-                            )}
-                        </p>
-                    )}
                 </div>
 
                 <div className="wpd-rules-conditions">
-                    <div className="wpd-rules-conditions-title">{__('Conditions', 'eux-pad')}</div>
+                    <div className="wpd-rules-conditions-title">{__('Conditions', 'eux-pickup-delivery')}</div>
                     {!hasMandatoryConditions && (
                         <p className="wpd-rules-conditions-hint">
                             {__(
                                 'This rule must include at least one Days of Week or Specific Dates condition and one Delivery or Pickup condition.',
-                                'eux-pad'
+                                'eux-pickup-delivery'
                             )}
                         </p>
                     )}
@@ -1034,7 +878,7 @@ function RuleCard({
                                         value: defaultConditionValueFor(v, op0),
                                     });
                                 }}
-                                ariaLabel={__('Condition type', 'eux-pad')}
+                                ariaLabel={__('Condition type', 'eux-pickup-delivery')}
                             />
                             <RulesCustomSelect
                                 className="wpd-rules-condition-operator"
@@ -1044,16 +888,10 @@ function RuleCard({
                                     let next = { ...cond, operator: v };
                                     if (cond.type === 'specific_dates') {
                                         next.value = v === 'between' ? ['', ''] : [];
-                                    } else if (cond.type === 'order_value' || cond.type === 'total_orders') {
-                                        if (v === 'between') {
-                                            next.value = ['', ''];
-                                        } else if (cond.operator === 'between') {
-                                            next.value = '';
-                                        }
                                     }
                                     updateCondition(idx, next);
                                 }}
-                                ariaLabel={__('Operator', 'eux-pad')}
+                                ariaLabel={__('Operator', 'eux-pickup-delivery')}
                             />
                             <div className="wpd-rules-condition-value">
                                 <ConditionValueField
@@ -1061,7 +899,7 @@ function RuleCard({
                                     onChange={(c) => updateCondition(idx, c)}
                                     methodOptions={selectOptions.methodOptions}
                                     dayOptions={selectOptions.dayOptions}
-                                    deliverySuburbs={deliverySuburbs}
+                                    pickupStoreOptions={selectOptions.pickupStoreOptions}
                                 />
                             </div>
                             {idx >= MIN_FIXED_CONDITION_ROWS && (
@@ -1069,7 +907,7 @@ function RuleCard({
                                     type="button"
                                     className="wpd-rules-condition-remove"
                                     onClick={() => removeCondition(idx)}
-                                    aria-label={__('Remove condition', 'eux-pad')}
+                                    aria-label={__('Remove condition', 'eux-pickup-delivery')}
                                 >
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path fill="#DC2626" d="M9 3a1 1 0 0 0-.894.553L7.382 5H5a1 1 0 1 0 0 2h.25l.772 11.088A2 2 0 0 0 8.016 20h7.968a2 2 0 0 0 1.994-1.912L18.75 7H19a1 1 0 1 0 0-2h-2.382l-.724-1.447A1 1 0 0 0 14 3H9zm1.382 2L11 4h3l.618 1H10.382zM10 9a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1zm4 0a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1z" />
@@ -1080,7 +918,7 @@ function RuleCard({
                         );
                     })}
                     <Button variant="secondary" isSmall onClick={addCondition} className="wpd-rules-add-condition">
-                        {__('+ Add new condition', 'eux-pad')}
+                        {__('+ Add new condition', 'eux-pickup-delivery')}
                     </Button>
                 </div>
             </div>
@@ -1090,8 +928,7 @@ function RuleCard({
 }
 
 export default function RulesPage() {
-    const rulesPro = Boolean(typeof window !== 'undefined' && window.wpdAdmin?.rulesPro);
-    const selectOptions = useRuleFormSelectOptions(rulesPro);
+    const selectOptions = useRuleFormSelectOptions();
     const { operatorsForType } = selectOptions;
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -1104,7 +941,6 @@ export default function RulesPage() {
     const [sortPointerDy, setSortPointerDy] = useState(0);
     const [sortStride, setSortStride] = useState(0);
     const [expandedRuleId, setExpandedRuleId] = useState(null);
-    const [deliverySuburbs, setDeliverySuburbs] = useState([]);
     const [conditionsHelpOpen, setConditionsHelpOpen] = useState(false);
 
     const rulesIdKey = useMemo(() => rules.map((r) => r.id).join('\0'), [rules]);
@@ -1130,24 +966,18 @@ export default function RulesPage() {
         setApiDefaults();
         setLoading(true);
         try {
-            const [rulesRes, deliveryRes] = await Promise.all([
-                apiFetch({ path: '/wpd/v1/settings/rules' }),
-                apiFetch({ path: '/wpd/v1/settings/delivery' }),
-            ]);
-            if (deliveryRes?.success && Array.isArray(deliveryRes?.data?.suburbs)) {
-                setDeliverySuburbs(deliveryRes.data.suburbs);
-            } else {
-                setDeliverySuburbs([]);
-            }
+            const rulesRes = await apiFetch({ path: '/wpd/v1/settings/rules' });
             if (rulesRes?.success && Array.isArray(rulesRes?.data)) {
                 const normalized = rulesRes.data.map((r, i) =>
                     normalizeRuleLeadCutoffObjective({
                         ...r,
                         id: r.id || uuid(),
                         order: i,
-                        conditions: (r.conditions || []).map((c, j) =>
-                            normalizeLoadedCondition({ ...c, id: c.id || `c-${i}-${j}` }, operatorsForType)
-                        ),
+                        conditions: (r.conditions || [])
+                            .filter((c) => WPD_RULE_ALLOWED_CONDITION_TYPES.includes(c?.type))
+                            .map((c, j) =>
+                                normalizeLoadedCondition({ ...c, id: c.id || `c-${i}-${j}` }, operatorsForType)
+                            ),
                     })
                 );
                 setRules(normalized);
@@ -1155,7 +985,7 @@ export default function RulesPage() {
                 setRules([]);
             }
         } catch (e) {
-            setToast({ status: 'error', message: __('Failed to load rules.', 'eux-pad') });
+            setToast({ status: 'error', message: __('Failed to load rules.', 'eux-pickup-delivery') });
         } finally {
             setLoading(false);
         }
@@ -1190,10 +1020,10 @@ export default function RulesPage() {
     };
 
     const requestRemoveRule = (index, rule) => {
-        const name = (rule?.name || '').trim() || __('Untitled rule', 'eux-pad');
+        const name = (rule?.name || '').trim() || __('Untitled rule', 'eux-pickup-delivery');
         const message = sprintf(
             /* translators: %s: rule name */
-            __('Are you sure you want to delete "%s"? This cannot be undone.', 'eux-pad'),
+            __('Are you sure you want to delete "%s"? This cannot be undone.', 'eux-pickup-delivery'),
             name
         );
         if (!window.confirm(message)) {
@@ -1296,29 +1126,10 @@ export default function RulesPage() {
                 status: 'error',
                 message: __(
                     'Every enabled rule must include at least one Days of Week or Specific Dates condition and one Delivery or Pickup condition.',
-                    'eux-pad'
+                    'eux-pickup-delivery'
                 ),
             });
             return;
-        }
-
-        if (rulesPro) {
-            const badLeadCutoffObjective = rules.filter(
-                (r) =>
-                    isRuleEnabledForValidation(r) &&
-                    ruleRequiresDisableObjective(r) &&
-                    r.objective === 'enable_day'
-            );
-            if (badLeadCutoffObjective.length > 0) {
-                setToast({
-                    status: 'error',
-                    message: __(
-                        'Rules that include Preparation Time or Cutoff Time must use the Disable Day objective.',
-                        'eux-pad'
-                    ),
-                });
-                return;
-            }
         }
 
         setApiDefaults();
@@ -1329,12 +1140,7 @@ export default function RulesPage() {
                 name: r.name,
                 enabled: r.enabled,
                 order: i,
-                objective:
-                    rulesPro && ruleRequiresDisableObjective(r)
-                        ? 'disable_day'
-                        : r.objective === 'enable_day'
-                          ? 'enable_day'
-                          : 'disable_day',
+                objective: r.objective === 'enable_day' ? 'enable_day' : 'disable_day',
                 conditions: (r.conditions || []).map((c) => ({
                     id: c.id,
                     type: c.type,
@@ -1360,9 +1166,9 @@ export default function RulesPage() {
                         })
                     )
                 );
-                setToast({ status: 'success', message: __('Rules saved.', 'eux-pad') });
+                setToast({ status: 'success', message: __('Rules saved.', 'eux-pickup-delivery') });
             } else {
-                setToast({ status: 'error', message: __('Failed to save rules.', 'eux-pad') });
+                setToast({ status: 'error', message: __('Failed to save rules.', 'eux-pickup-delivery') });
             }
         } catch (e) {
             const fromRest =
@@ -1382,7 +1188,7 @@ export default function RulesPage() {
             }
             setToast({
                 status: 'error',
-                message: msg || __('Failed to save rules.', 'eux-pad'),
+                message: msg || __('Failed to save rules.', 'eux-pickup-delivery'),
             });
         } finally {
             setSaving(false);
@@ -1394,40 +1200,32 @@ export default function RulesPage() {
             {conditionsHelpOpen && (
                 <Modal
                     className="wpd-rules-conditions-help-modal"
-                    title={__('What each condition does', 'eux-pad')}
+                    title={__('What each condition does', 'eux-pickup-delivery')}
                     onRequestClose={() => setConditionsHelpOpen(false)}
                 >
                     <p className="wpd-rules-conditions-help-intro">
                         {__(
                             'Every condition on a rule determines if a specific date/dates will be disabled or enabled. Rules are evaluated in list order; the first matching rule wins when several could affect the same date. Each enabled rule must include at least one date scope (Days of Week or Specific Dates) and one Delivery or Pickup condition.',
-                            'eux-pad'
+                            'eux-pickup-delivery'
                         )}
                     </p>
                     <dl className="wpd-rules-conditions-help-list">
-                        {getConditionGuideEntries(rulesPro).map(({ id, term, desc }) => (
+                        {getConditionGuideEntries().map(({ id, term, desc }) => (
                             <div key={id} className="wpd-rules-conditions-help-item">
                                 <dt>{term}</dt>
                                 <dd>{desc}</dd>
                             </div>
                         ))}
                     </dl>
-                    {!rulesPro ? (
-                        <p className="wpd-rules-conditions-help-pro-note">
-                            {__(
-                                'Order Value, Total Orders, Suburb, Preparation Time, and Cutoff Time are available with the EUX Pickup & Delivery Pro add-on.',
-                                'eux-pad'
-                            )}
-                        </p>
-                    ) : null}
                 </Modal>
             )}
             <AdminPageLayout
-                title={__('Pickup & Delivery Settings', 'eux-pad')}
+                title={__('Pickup & Delivery Settings', 'eux-pickup-delivery')}
                 description={__(
                     'Configure texts, colors, rules, schedules, and checkout behavior',
-                    'woo-pickup-delivery'
+                    'eux-pickup-delivery'
                 )}
-                pageTitle={__('Rules', 'eux-pad')}
+                pageTitle={__('Rules', 'eux-pickup-delivery')}
                 loading={loading}
                 actions={
                     !loading && (
@@ -1438,7 +1236,7 @@ export default function RulesPage() {
                                 onClick={save}
                                 disabled={saving}
                             >
-                                {saving ? __('Saving...', 'eux-pad') : __('Save Rules', 'eux-pad')}
+                                {saving ? __('Saving...', 'eux-pickup-delivery') : __('Save Rules', 'eux-pickup-delivery')}
                             </button>
                         </Flex>
                     )
@@ -1450,9 +1248,9 @@ export default function RulesPage() {
                             <div className="wpd-admin-section wpd-rules-section">
                                 <div className="wpd-rules-section-header">
                                     <div>
-                                        <div className="wpd-admin-section__title">{__('Delivery Rules', 'eux-pad')}</div>
+                                        <div className="wpd-admin-section__title">{__('Delivery Rules', 'eux-pickup-delivery')}</div>
                                         <div className="wpd-admin-section__subtitle">
-                                            {__('Create conditional rules to enable or disable delivery/pickup days', 'eux-pad')}
+                                            {__('Create conditional rules to enable or disable delivery/pickup days', 'eux-pickup-delivery')}
                                         </div>
                                     </div>
                                     <div className="wpd-rules-section-header-actions">
@@ -1461,14 +1259,14 @@ export default function RulesPage() {
                                             className="wpd-admin-btn wpd-admin-btn--ghost"
                                             onClick={() => setConditionsHelpOpen(true)}
                                         >
-                                            {__('Condition guide', 'eux-pad')}
+                                            {__('Condition guide', 'eux-pickup-delivery')}
                                         </button>
                                         <button
                                             type="button"
                                             className="wpd-admin-btn wpd-admin-btn--primary wpd-rules-add-btn"
                                             onClick={addRule}
                                         >
-                                            {__('Add new rule', 'eux-pad')}
+                                            {__('Add new rule', 'eux-pickup-delivery')}
                                         </button>
                                     </div>
                                 </div>
@@ -1480,7 +1278,7 @@ export default function RulesPage() {
                                     }`}
                                 >
                                     {rules.length === 0 ? (
-                                        <p className="wpd-rules-empty">{__('No rules yet. Click "Add new rule" to create one.', 'eux-pad')}</p>
+                                        <p className="wpd-rules-empty">{__('No rules yet. Click "Add new rule" to create one.', 'eux-pickup-delivery')}</p>
                                     ) : (
                                         rules.map((rule, index) => {
                                             const shiftY =
@@ -1529,7 +1327,6 @@ export default function RulesPage() {
                                                         <RuleCard
                                                             rule={rule}
                                                             selectOptions={selectOptions}
-                                                            deliverySuburbs={deliverySuburbs}
                                                             expanded={expandedRuleId === rule.id}
                                                             onAccordionToggle={toggleAccordion}
                                                             onUpdate={(r) => updateRule(index, r)}

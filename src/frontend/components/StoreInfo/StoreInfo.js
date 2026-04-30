@@ -35,7 +35,7 @@ function formatAddressFromStructuredParts(p) {
     return lines.join('\n');
 }
 
-export default function StoreInfo({ address, pickupSettings, heading }) {
+export default function StoreInfo({ address, pickupSettings, heading, hideTitle = false }) {
     const a = address || {};
     const p = pickupSettings || {};
     const fromParts = formatAddressFromStructuredParts(p).trim();
@@ -63,11 +63,11 @@ export default function StoreInfo({ address, pickupSettings, heading }) {
             : a.hours || 'Monday – Friday : 6:30am – 4:00pm';
     const mapIframe = p.map_iframe || '';
     const title =
-        typeof heading === 'string' && heading.trim().length > 0 ? heading.trim() : __('Pickup Address', 'eux-pad');
+        typeof heading === 'string' && heading.trim().length > 0 ? heading.trim() : __('Pickup Address', 'eux-pickup-delivery');
 
     return (
         <div className="wpd-store-info">
-            <h3>{title}</h3>
+            {!hideTitle ? <h3>{title}</h3> : null}
             <div className="wpd-store-details">
                 <div className="wpd-store-detail-item">
                     <div className="wpd-store-icon">
@@ -79,13 +79,12 @@ export default function StoreInfo({ address, pickupSettings, heading }) {
                         </div>
                     </div>
                 </div>
-                {/* <div className="wpd-store-detail-divider" /> */}
                 <div className="wpd-store-detail-item">
                     <div className="wpd-store-icon">
                         <PhoneIcon />
                     </div>
                     <div className="wpd-store-detail-content">
-                        <div className="wpd-store-detail-label">{__('Phone', 'eux-pad')}</div>
+                        <div className="wpd-store-detail-label">{__('Phone', 'eux-pickup-delivery')}</div>
                         <div className="wpd-store-detail-value">{phone}</div>
                     </div>
                 </div>
@@ -94,7 +93,7 @@ export default function StoreInfo({ address, pickupSettings, heading }) {
                         <ClockIcon />
                     </div>
                     <div className="wpd-store-detail-content">
-                        <div className="wpd-store-detail-label">{__('Opening Hours', 'eux-pad')}</div>
+                        <div className="wpd-store-detail-label">{__('Opening Hours', 'eux-pickup-delivery')}</div>
                         <div className="wpd-store-detail-value" style={{ whiteSpace: 'pre-line' }}>
                             {hours}
                         </div>

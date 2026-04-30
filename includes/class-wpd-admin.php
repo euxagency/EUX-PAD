@@ -83,11 +83,34 @@ class WPD_Admin {
 			'nonce'                  => wp_create_nonce( 'wp_rest' ),
 			'pageSlug'               => $page,
 			'colorHelpImageBase'     => esc_url_raw( trailingslashit( WPD_PLUGIN_URL ) . 'assets/img/color-help/' ),
-			'rulesPro'               => class_exists( 'WPD_Rules' ) && WPD_Rules::has_pro_features(),
 			'multiPickupStoresAddon' => class_exists( 'WPD_Multi_Store' ),
+			'pickupStores'           => array(),
 			'wcCountries'            => array(),
 			'wcCountryStates'        => array(),
 		);
+
+		if ( class_exists( 'WPD_Multi_Store' ) && method_exists( 'WPD_Multi_Store', 'sanitize_stores_list' ) ) {
+			$rows = WPD_Multi_Store::sanitize_stores_list( get_option( 'wpd_multi_pickup_stores', array() ) );
+			$out  = array();
+			foreach ( $rows as $r ) {
+				if ( empty( $r['enabled'] ) ) {
+					continue;
+				}
+				$id   = isset( $r['id'] ) ? (string) $r['id'] : '';
+				$name = isset( $r['name'] ) ? (string) $r['name'] : '';
+				if ( '' === $id ) {
+					continue;
+				}
+				if ( '' === trim( $name ) ) {
+					$name = $id;
+				}
+				$out[] = array(
+					'id'   => $id,
+					'name' => $name,
+				);
+			}
+			$wpd_admin['pickupStores'] = $out;
+		}
 
 		if ( function_exists( 'WC' ) && WC()->countries ) {
 			$wc_countries = WC()->countries->get_countries();
@@ -112,7 +135,7 @@ class WPD_Admin {
 			$wpd_admin['wcCountryStates'] = $states_by_country;
 		} else {
 			$wpd_admin['wcCountries'] = array(
-				'AU' => __( 'Australia', 'eux-pad' ),
+				'AU' => __( 'Australia', 'eux-pickup-delivery' ),
 			);
 		}
 
@@ -138,8 +161,8 @@ class WPD_Admin {
 		$capability = 'manage_options';
 
 		add_menu_page(
-			__( 'Pickup & Delivery', 'eux-pad' ),
-			__( 'Pickup & Delivery', 'eux-pad' ),
+			__( 'Pickup & Delivery', 'eux-pickup-delivery' ),
+			__( 'Pickup & Delivery', 'eux-pickup-delivery' ),
 			$capability,
 			'wpd-pickup-delivery',
 			array( $this, 'render_global_settings_page' ),
@@ -149,8 +172,8 @@ class WPD_Admin {
 
 		add_submenu_page(
 			'wpd-pickup-delivery',
-			__( 'Global Settings', 'eux-pad' ),
-			__( 'Global Settings', 'eux-pad' ),
+			__( 'Global Settings', 'eux-pickup-delivery' ),
+			__( 'Global Settings', 'eux-pickup-delivery' ),
 			$capability,
 			'wpd-pickup-delivery',
 			array( $this, 'render_global_settings_page' )
@@ -158,8 +181,8 @@ class WPD_Admin {
 
 		add_submenu_page(
 			'wpd-pickup-delivery',
-			__( 'Pickup Settings', 'eux-pad' ),
-			__( 'Pickup Settings', 'eux-pad' ),
+			__( 'Pickup Settings', 'eux-pickup-delivery' ),
+			__( 'Pickup Settings', 'eux-pickup-delivery' ),
 			$capability,
 			'wpd-pickup-setting',
 			array( $this, 'render_pickup_settings_page' )
@@ -167,8 +190,8 @@ class WPD_Admin {
 
 		add_submenu_page(
 			'wpd-pickup-delivery',
-			__( 'Delivery Settings', 'eux-pad' ),
-			__( 'Delivery Settings', 'eux-pad' ),
+			__( 'Delivery Settings', 'eux-pickup-delivery' ),
+			__( 'Delivery Settings', 'eux-pickup-delivery' ),
 			$capability,
 			'wpd-delivery-setting',
 			array( $this, 'render_delivery_settings_page' )
@@ -176,8 +199,8 @@ class WPD_Admin {
 
 		add_submenu_page(
 			'wpd-pickup-delivery',
-			__( 'Rules', 'eux-pad' ),
-			__( 'Rules', 'eux-pad' ),
+			__( 'Rules', 'eux-pickup-delivery' ),
+			__( 'Rules', 'eux-pickup-delivery' ),
 			$capability,
 			'wpd-rules',
 			array( $this, 'render_rules_page' )

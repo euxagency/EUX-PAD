@@ -28,6 +28,20 @@ function wpdNormSuburb(s) {
     return String(s).trim().toLowerCase();
 }
 
+/** Single-line summary for pickup store cards (newlines → comma/space). */
+function wpdStoreAddressOneLine(store) {
+    if (!store) {
+        return '';
+    }
+    const raw = store.address && String(store.address).trim().length ? String(store.address).trim() : '';
+    if (raw) {
+        return raw.replace(/\s*\n+\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
+    }
+    const line1 = [store.street_number, store.street_name].filter(Boolean).join(' ').trim();
+    const tail = [store.city, store.state, store.postcode].filter(Boolean).join(' ').trim();
+    return [line1, tail].filter(Boolean).join(', ');
+}
+
 function formatTimeSlot(slot) {
     const [startTime, endTime] = slot.split('-');
     const formatTime = (time) => {
@@ -44,9 +58,9 @@ export default function PADApp() {
     const globalSettings = wpdData.globalSettings || {};
     const enabledDelivery = globalSettings.tabs?.enable_delivery !== false;
     const enabledPickup = globalSettings.tabs?.enable_pickup !== false;
-    const deliveryTitle = globalSettings.labels?.delivery_title || __('DELIVERY', 'eux-pad');
-    const pickupTitle = globalSettings.labels?.pickup_title || __('CLICK & COLLECT', 'eux-pad');
-    const continueText = globalSettings.labels?.continue_button_text || __('Continue', 'eux-pad');
+    const deliveryTitle = globalSettings.labels?.delivery_title || __('DELIVERY', 'eux-pickup-delivery');
+    const pickupTitle = globalSettings.labels?.pickup_title || __('CLICK & COLLECT', 'eux-pickup-delivery');
+    const continueText = globalSettings.labels?.continue_button_text || __('Continue', 'eux-pickup-delivery');
     const pickupIconUrl = globalSettings.icons?.pickup_icon_url || '';
     const deliveryIconUrl = globalSettings.icons?.delivery_icon_url || '';
     const daysDisplayed = parseInt(globalSettings.days_displayed, 10) > 0 ? parseInt(globalSettings.days_displayed, 10) : 15;
@@ -99,6 +113,8 @@ export default function PADApp() {
     const [selectedPickupStoreId, setSelectedPickupStoreId] = useState(() =>
         multiPickupStores[0]?.id ? String(multiPickupStores[0].id) : ''
     );
+    /** Multi-store accordion: which store card has details expanded (empty = all collapsed). */
+    const [expandedPickupStoreId, setExpandedPickupStoreId] = useState('');
 
     useEffect(() => {
         if (multiPickupStores.length === 0) {
@@ -109,6 +125,15 @@ export default function PADApp() {
             setSelectedPickupStoreId(String(multiPickupStores[0].id));
         }
     }, [multiPickupStores, selectedPickupStoreId]);
+
+    useEffect(() => {
+        if (
+            expandedPickupStoreId &&
+            !multiPickupStores.some((s) => String(s.id) === expandedPickupStoreId)
+        ) {
+            setExpandedPickupStoreId('');
+        }
+    }, [multiPickupStores, expandedPickupStoreId]);
 
     const selectedMultiStore = useMemo(
         () => multiPickupStores.find((s) => String(s.id) === String(selectedPickupStoreId)) || null,
@@ -135,10 +160,33 @@ export default function PADApp() {
         };
     }, [pickupSettings, selectedMultiStore]);
 
+    const pickupSettingsForStore = useCallback(
+        (store) => {
+            if (!store) {
+                return pickupSettings;
+            }
+            const oh = store.opening_hours;
+            return {
+                ...pickupSettings,
+                address: wpdFirstNonEmpty(store.address, pickupSettings.address),
+                phone: wpdFirstNonEmpty(store.phone, pickupSettings.phone),
+                opening_hours: Array.isArray(oh) && oh.length ? oh : pickupSettings.opening_hours,
+                map_iframe: wpdFirstNonEmpty(store.map_iframe, pickupSettings.map_iframe),
+                street_number: store.street_number,
+                street_name: store.street_name,
+                city: store.city,
+                state: store.state,
+                postcode: store.postcode,
+                country: store.country,
+            };
+        },
+        [pickupSettings]
+    );
+
     const displayStoreHeading = selectedMultiStore?.name
         ? sprintf(
               /* translators: %s: store name */
-              __('Pickup: %s', 'eux-pad'),
+              __('Pickup: %s', 'eux-pickup-delivery'),
               selectedMultiStore.name
           )
         : '';
@@ -205,13 +253,13 @@ export default function PADApp() {
                     window.wpdDateTimeSlots = dateSlotsMap;
                     setAvailableDates(transformedDates);
                 } else {
-                    setNotice({ type: 'error', message: datesData.data?.message || __('Unable to load pickup dates', 'eux-pad') });
+                    setNotice({ type: 'error', message: datesData.data?.message || __('Unable to load pickup dates', 'eux-pickup-delivery') });
                 }
             } else {
-                setNotice({ type: 'error', message: data.data?.message || __('Local pickup not configured', 'eux-pad') });
+                setNotice({ type: 'error', message: data.data?.message || __('Local pickup not configured', 'eux-pickup-delivery') });
             }
         } catch (error) {
-            setNotice({ type: 'error', message: __('An error occurred. Please try again.', 'eux-pad') });
+            setNotice({ type: 'error', message: __('An error occurred. Please try again.', 'eux-pickup-delivery') });
         }
         setDatesLoading(false);
     }, [multiPickupStores, selectedPickupStoreId]);
@@ -344,13 +392,13 @@ export default function PADApp() {
                     setShowDeliveryDates(true);
                     setTimeRemaining(timerDuration);
                 } else {
-                    setNotice({ type: 'error', message: datesData.data?.message || __('Unable to load delivery dates', 'eux-pad') });
+                    setNotice({ type: 'error', message: datesData.data?.message || __('Unable to load delivery dates', 'eux-pickup-delivery') });
                 }
             } else {
-                setNotice({ type: 'error', message: data.data?.message || __('Unable to calculate shipping', 'eux-pad') });
+                setNotice({ type: 'error', message: data.data?.message || __('Unable to calculate shipping', 'eux-pickup-delivery') });
             }
         } catch (error) {
-            setNotice({ type: 'error', message: __('An error occurred while calculating shipping', 'eux-pad') });
+            setNotice({ type: 'error', message: __('An error occurred while calculating shipping', 'eux-pickup-delivery') });
         }
         setDatesLoading(false);
     };
@@ -362,7 +410,7 @@ export default function PADApp() {
         const timer = setInterval(() => {
             setTimeRemaining((prev) => {
                 if (prev <= 1) {
-                    setNotice({ type: 'info', message: __('Session refreshed - updating available dates...', 'eux-pad') });
+                    setNotice({ type: 'info', message: __('Session refreshed - updating available dates...', 'eux-pickup-delivery') });
                     if (activeTab === 'delivery' && showDeliveryDates) {
                         handleGetDeliveryDays();
                     } else if (activeTab === 'pickup') {
@@ -407,15 +455,15 @@ export default function PADApp() {
 
     const handleProceed = async () => {
         if (!selectedDate) {
-            setNotice({ type: 'error', message: __('Please select a date', 'eux-pad') });
+            setNotice({ type: 'error', message: __('Please select a date', 'eux-pickup-delivery') });
             return;
         }
         if (selectedDate.bookable === false) {
-            setNotice({ type: 'error', message: __('Please select an available date', 'eux-pad') });
+            setNotice({ type: 'error', message: __('Please select an available date', 'eux-pickup-delivery') });
             return;
         }
         if (activeTab === 'pickup' && !selectedTimeSlot) {
-            setNotice({ type: 'error', message: __('Please select a time slot', 'eux-pad') });
+            setNotice({ type: 'error', message: __('Please select a time slot', 'eux-pickup-delivery') });
             return;
         }
         if (activeTab === 'delivery' && !validateDeliveryForm()) {
@@ -457,11 +505,11 @@ export default function PADApp() {
             if (data.success) {
                 window.location.href = data.data.checkout_url;
             } else {
-                setNotice({ type: 'error', message: data.data?.message || __('An error occurred', 'eux-pad') });
+                setNotice({ type: 'error', message: data.data?.message || __('An error occurred', 'eux-pickup-delivery') });
                 setIsLoading(false);
             }
         } catch (error) {
-            setNotice({ type: 'error', message: __('An error occurred. Please try again.', 'eux-pad') });
+            setNotice({ type: 'error', message: __('An error occurred. Please try again.', 'eux-pickup-delivery') });
             setIsLoading(false);
         }
     };
@@ -530,71 +578,154 @@ export default function PADApp() {
                     />
                 ) : (
                     <div className="wpd-pickup-main">
-                        {multiPickupStores.length > 0 && (
-                            <div
-                                className="wpd-pickup-store-picker"
-                                role="radiogroup"
-                                aria-label={__('Choose pickup location', 'eux-pad')}
-                            >
+                        {multiPickupStores.length > 0 ? (
+                            <div className="wpd-pickup-store-picker" role="radiogroup" aria-label={__('Choose pickup location', 'eux-pickup-delivery')}>
                                 {multiPickupStores.map((s) => {
                                     const sid = String(s.id);
                                     const selected = String(selectedPickupStoreId) === sid;
+                                    const expanded = expandedPickupStoreId === sid;
+                                    const name =
+                                        (s.name && String(s.name).trim()) ||
+                                        (s.address && String(s.address).trim().split('\n')[0]) ||
+                                        __('Store', 'eux-pickup-delivery');
+                                    const addrOneLine = wpdStoreAddressOneLine(s);
+                                    const headingForStore = s.name
+                                        ? sprintf(
+                                              /* translators: %s: store name */
+                                              __('Pickup: %s', 'eux-pickup-delivery'),
+                                              String(s.name).trim()
+                                          )
+                                        : '';
+
+                                    const selectThisStore = () => {
+                                        setSelectedPickupStoreId(sid);
+                                        setSelectedDate(null);
+                                        setSelectedTimeSlot(null);
+                                        setNotice(null);
+                                    };
+
+                                    const toggleAccordion = () => {
+                                        if (expandedPickupStoreId === sid) {
+                                            setExpandedPickupStoreId('');
+                                        } else {
+                                            setExpandedPickupStoreId(sid);
+                                            selectThisStore();
+                                        }
+                                    };
+
                                     return (
-                                        <button
+                                        <div
                                             key={sid}
-                                            type="button"
-                                            role="radio"
-                                            aria-checked={selected}
-                                            className={`wpd-pickup-store-option${selected ? ' is-selected' : ''}`}
-                                            onClick={() => {
-                                                setSelectedPickupStoreId(sid);
-                                                setSelectedDate(null);
-                                                setSelectedTimeSlot(null);
-                                                setNotice(null);
-                                            }}
+                                            className={`wpd-pickup-store-card${selected ? ' is-selected' : ''}${expanded ? ' is-expanded' : ''}`}
                                         >
-                                            <span className="wpd-pickup-store-option__name">
-                                                {(s.name && String(s.name).trim()) ||
-                                                    (s.address && String(s.address).trim().split('\n')[0]) ||
-                                                    __('Store', 'eux-pad')}
-                                            </span>
-                                        </button>
+                                            <div className="wpd-pickup-store-card__header">
+                                                <input
+                                                    className="wpd-pickup-store-card__radio"
+                                                    type="radio"
+                                                    name="wpd_pickup_store"
+                                                    checked={selected}
+                                                    onChange={() => {
+                                                        selectThisStore();
+                                                        setExpandedPickupStoreId(sid);
+                                                    }}
+                                                    aria-label={name}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="wpd-pickup-store-card__toggle"
+                                                    aria-expanded={expanded}
+                                                    aria-controls={`wpd-pickup-store-details-${sid}`}
+                                                    onClick={toggleAccordion}
+                                                >
+                                                    <span className="wpd-pickup-store-card__summary">
+                                                        <span className="wpd-pickup-store-card__name">{name}</span>
+                                                        {addrOneLine ? (
+                                                            <span className="wpd-pickup-store-card__sub wpd-pickup-store-card__sub--oneline">
+                                                                {addrOneLine}
+                                                            </span>
+                                                        ) : null}
+                                                    </span>
+                                                    <span className="wpd-pickup-store-card__chevron" aria-hidden="true">
+                                                        {expanded ? '▾' : '▸'}
+                                                    </span>
+                                                </button>
+                                            </div>
+
+                                            {expanded ? (
+                                                <div
+                                                    className="wpd-pickup-store-card__details"
+                                                    id={`wpd-pickup-store-details-${sid}`}
+                                                >
+                                                    <StoreInfo
+                                                        address={storeAddress}
+                                                        pickupSettings={pickupSettingsForStore(s)}
+                                                        heading={headingForStore}
+                                                    />
+                                                </div>
+                                            ) : null}
+                                        </div>
                                     );
                                 })}
                             </div>
+                        ) : (
+                            <StoreInfo address={storeAddress} pickupSettings={displayPickupSettings} heading={displayStoreHeading} />
                         )}
-                        <StoreInfo
-                            address={storeAddress}
-                            pickupSettings={displayPickupSettings}
-                            heading={displayStoreHeading}
-                        />
                     </div>
                 )}
 
-                <DateSelection
-                    dates={(availableDates || []).slice(0, daysDisplayed)}
-                    selectedDate={selectedDate}
-                    onDateSelect={handleDateSelect}
-                    timeSlots={timeSlots}
-                    selectedTimeSlot={selectedTimeSlot}
-                    onTimeSlotSelect={setSelectedTimeSlot}
-                    showTimeSlots={activeTab === 'pickup'}
-                    showDateRefreshTimer={showDateRefreshTimer}
-                    timerWarnSeconds={timerWarnSeconds}
-                    timeRemaining={timeRemaining}
-                    formatTime={formatTime}
-                    progressPercentage={progressPercentage}
-                    datesLoading={datesLoading}
-                    timeSlotsLoading={timeSlotsLoading}
-                    activeTab={activeTab}
-                    isLoading={isLoading}
-                    handleProceed={handleProceed}
-                    showDeliveryDates={showDeliveryDates}
-                    selectedShippingMethod={selectedShippingMethod}
-                    onShippingMethodSelect={setSelectedShippingMethod}
-                    pickupShippingMethod={pickupShippingMethod}
-                    continueText={continueText}
-                />
+                {activeTab === 'pickup' && multiPickupStores.length > 0 ? (
+                    <div className="wpd-pickup-slots">
+                        <DateSelection
+                            dates={(availableDates || []).slice(0, daysDisplayed)}
+                            selectedDate={selectedDate}
+                            onDateSelect={handleDateSelect}
+                            timeSlots={timeSlots}
+                            selectedTimeSlot={selectedTimeSlot}
+                            onTimeSlotSelect={setSelectedTimeSlot}
+                            showTimeSlots
+                            showDateRefreshTimer={showDateRefreshTimer}
+                            timerWarnSeconds={timerWarnSeconds}
+                            timeRemaining={timeRemaining}
+                            formatTime={formatTime}
+                            progressPercentage={progressPercentage}
+                            datesLoading={datesLoading}
+                            timeSlotsLoading={timeSlotsLoading}
+                            activeTab={activeTab}
+                            isLoading={isLoading}
+                            handleProceed={handleProceed}
+                            showDeliveryDates={showDeliveryDates}
+                            selectedShippingMethod={selectedShippingMethod}
+                            onShippingMethodSelect={setSelectedShippingMethod}
+                            pickupShippingMethod={pickupShippingMethod}
+                            continueText={continueText}
+                        />
+                    </div>
+                ) : (
+                    <DateSelection
+                        dates={(availableDates || []).slice(0, daysDisplayed)}
+                        selectedDate={selectedDate}
+                        onDateSelect={handleDateSelect}
+                        timeSlots={timeSlots}
+                        selectedTimeSlot={selectedTimeSlot}
+                        onTimeSlotSelect={setSelectedTimeSlot}
+                        showTimeSlots={activeTab === 'pickup'}
+                        showDateRefreshTimer={showDateRefreshTimer}
+                        timerWarnSeconds={timerWarnSeconds}
+                        timeRemaining={timeRemaining}
+                        formatTime={formatTime}
+                        progressPercentage={progressPercentage}
+                        datesLoading={datesLoading}
+                        timeSlotsLoading={timeSlotsLoading}
+                        activeTab={activeTab}
+                        isLoading={isLoading}
+                        handleProceed={handleProceed}
+                        showDeliveryDates={showDeliveryDates}
+                        selectedShippingMethod={selectedShippingMethod}
+                        onShippingMethodSelect={setSelectedShippingMethod}
+                        pickupShippingMethod={pickupShippingMethod}
+                        continueText={continueText}
+                    />
+                )}
             </div>
         </div>
     );

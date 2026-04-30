@@ -90,7 +90,7 @@ export default function PickupSettings() {
                 setPickupStores(Array.isArray(storesList) ? storesList : []);
             }
         } catch (e) {
-            setNotice({ status: 'error', message: __('Failed to load pickup settings.', 'eux-pad') });
+            setNotice({ status: 'error', message: __('Failed to load pickup settings.', 'eux-pickup-delivery') });
         } finally {
             setLoading(false);
         }
@@ -165,7 +165,7 @@ export default function PickupSettings() {
                 data: buildPickupSavePayload(),
             });
             if (!res?.success) {
-                setToast({ status: 'error', message: __('Failed to save pickup settings.', 'eux-pad') });
+                setToast({ status: 'error', message: __('Failed to save pickup settings.', 'eux-pickup-delivery') });
                 setSaving(false);
                 return;
             }
@@ -195,16 +195,16 @@ export default function PickupSettings() {
                 } else {
                     setToast({
                         status: 'error',
-                        message: __('Pickup tab saved, but pickup stores failed to save.', 'eux-pad'),
+                        message: __('Pickup tab saved, but pickup stores failed to save.', 'eux-pickup-delivery'),
                     });
                     setSaving(false);
                     return;
                 }
             }
 
-            setToast({ status: 'success', message: __('Pickup settings saved.', 'eux-pad') });
+            setToast({ status: 'success', message: __('Pickup settings saved.', 'eux-pickup-delivery') });
         } catch (e) {
-            setToast({ status: 'error', message: __('Failed to save pickup settings.', 'eux-pad') });
+            setToast({ status: 'error', message: __('Failed to save pickup settings.', 'eux-pickup-delivery') });
         } finally {
             setSaving(false);
         }
@@ -234,12 +234,12 @@ export default function PickupSettings() {
                     data.country = 'AU';
                 }
                 setSettings(data);
-                setToast({ status: 'success', message: __('Reset to default.', 'eux-pad') });
+                setToast({ status: 'success', message: __('Reset to default.', 'eux-pickup-delivery') });
             } else {
-                setToast({ status: 'error', message: __('Failed to reset.', 'eux-pad') });
+                setToast({ status: 'error', message: __('Failed to reset.', 'eux-pickup-delivery') });
             }
         } catch (e) {
-            setToast({ status: 'error', message: __('Failed to reset.', 'eux-pad') });
+            setToast({ status: 'error', message: __('Failed to reset.', 'eux-pickup-delivery') });
         } finally {
             setResetting(false);
         }
@@ -248,9 +248,9 @@ export default function PickupSettings() {
     return (
         <>
             <AdminPageLayout
-                title={__('Pickup & Delivery Settings', 'eux-pad')}
-                description={__('Configure texts, colors, rules, schedules, and checkout behavior', 'eux-pad')}
-                pageTitle={__('Pickup Settings', 'eux-pad')}
+                title={__('Pickup & Delivery Settings', 'eux-pickup-delivery')}
+                description={__('Configure texts, colors, rules, schedules, and checkout behavior', 'eux-pickup-delivery')}
+                pageTitle={__('Pickup Settings', 'eux-pickup-delivery')}
                 notice={null}
                 loading={loading}
                 actions={
@@ -263,8 +263,8 @@ export default function PickupSettings() {
                                 disabled={saving || resetting}
                             >
                                 {resetting
-                                    ? __('Resetting...', 'eux-pad')
-                                    : __('Reset to Default', 'eux-pad')}
+                                    ? __('Resetting...', 'eux-pickup-delivery')
+                                    : __('Reset to Default', 'eux-pickup-delivery')}
                             </button>
                             <button
                                 type="button"
@@ -272,7 +272,7 @@ export default function PickupSettings() {
                                 onClick={save}
                                 disabled={saving || resetting}
                             >
-                                {saving ? __('Saving...', 'eux-pad') : __('Save Settings', 'eux-pad')}
+                                {saving ? __('Saving...', 'eux-pickup-delivery') : __('Save Settings', 'eux-pickup-delivery')}
                             </button>
                         </Flex>
                     )
@@ -283,21 +283,21 @@ export default function PickupSettings() {
                         <CardBody>
                             <div className="wpd-admin-section">
                                 <div className="wpd-admin-section__title">
-                                    {__('Pickup & Delivery page —> Pickup tab', 'eux-pad')}
+                                    {__('Pickup & Delivery page —> Pickup tab', 'eux-pickup-delivery')}
                                 </div>
                                 <div className="wpd-admin-section__subtitle">
                                     {__(
                                         'Controls the pickup / click & collect tab on the storefront Pickup & Delivery step.',
-                                        'eux-pad'
+                                        'eux-pickup-delivery'
                                     )}
                                 </div>
                                 <ToggleControl
-                                    label={__('Enable Pickup tab', 'eux-pad')}
+                                    label={__('Enable Pickup tab', 'eux-pickup-delivery')}
                                     checked={settings.tab_enabled !== false}
                                     onChange={(val) => setSettings((prev) => ({ ...prev, tab_enabled: !!val }))}
                                 />
                                 <TextControl
-                                    label={__('Pickup tab title', 'eux-pad')}
+                                    label={__('Pickup tab title', 'eux-pickup-delivery')}
                                     value={settings.tab_title || ''}
                                     onChange={(v) => setSettings((prev) => ({ ...prev, tab_title: v }))}
                                 />
@@ -316,9 +316,9 @@ export default function PickupSettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
-                                <div className="wpd-admin-section__title">{__('Pickup Location', 'eux-pad')}</div>
+                                <div className="wpd-admin-section__title">{__('Pickup Location', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-section__subtitle">
-                                    {__('Configure your pickup address and contact', 'eux-pad')}
+                                    {__('Configure your pickup address and contact', 'eux-pickup-delivery')}
                                 </div>
 
                                 <PickupAddressFields
@@ -334,25 +334,25 @@ export default function PickupSettings() {
                                 />
 
                                 <TextControl
-                                    label={__('Phone', 'eux-pad')}
+                                    label={__('Phone', 'eux-pickup-delivery')}
                                     value={settings.phone || ''}
                                     onChange={(v) => update('phone', v)}
                                 />
                                 <TextControl
                                     type="number"
-                                    label={__('Interval (minutes)', 'eux-pad')}
-                                    help={__('Gap between each pickup time slot.', 'eux-pad')}
+                                    label={__('Interval (minutes)', 'eux-pickup-delivery')}
+                                    help={__('Gap between each pickup time slot.', 'eux-pickup-delivery')}
                                     min={5}
                                     max={360}
                                     value={settings.interval}
                                     onChange={(v) => update('interval', parseInt(v, 10) || 60)}
                                 />
 
-                                <div className="wpd-opening-label">{__('Opening Hours', 'eux-pad')}</div>
+                                <div className="wpd-opening-label">{__('Opening Hours', 'eux-pickup-delivery')}</div>
                                 <p className="wpd-admin-section__subtitle wpd-opening-hours-help">
                                     {__(
                                         'Add up to 7 rows (e.g. one per day). Each row needs a day, open time, and close time.',
-                                        'woo-pickup-delivery'
+                                        'eux-pickup-delivery'
                                     )}
                                 </p>
 
@@ -364,7 +364,7 @@ export default function PickupSettings() {
                                                 .filter(Boolean)
                                         );
                                         const options = [
-                                            { label: __('Select day', 'eux-pad'), value: '' },
+                                            { label: __('Select day', 'eux-pickup-delivery'), value: '' },
                                             ...ALL_DAYS.filter(
                                                 (day) => day === row.day || !used.has(day.toLowerCase())
                                             ).map((day) => ({ label: day, value: day })),
@@ -377,8 +377,8 @@ export default function PickupSettings() {
                                                     value={row.day || ''}
                                                     options={options}
                                                     onChange={(v) => updateOpeningRow(index, { day: v })}
-                                                    placeholder={__('Select day', 'eux-pad')}
-                                                    ariaLabel={__('Day', 'eux-pad')}
+                                                    placeholder={__('Select day', 'eux-pickup-delivery')}
+                                                    ariaLabel={__('Day', 'eux-pickup-delivery')}
                                                 />
                                                 <input
                                                     type="time"
@@ -399,7 +399,7 @@ export default function PickupSettings() {
                                                     isDestructive
                                                     variant="link"
                                                     onClick={() => removeOpeningRow(index)}
-                                                    aria-label={__('Remove row', 'eux-pad')}
+                                                    aria-label={__('Remove row', 'eux-pickup-delivery')}
                                                 >
                                                     <svg
                                                         width="16"
@@ -426,7 +426,7 @@ export default function PickupSettings() {
                                         settings.opening_hours.length >= MAX_OPENING_ROWS
                                     }
                                 >
-                                    {__('+ Add row', 'eux-pad')}
+                                    {__('+ Add row', 'eux-pickup-delivery')}
                                 </Button>
                             </div>
                         </CardBody>

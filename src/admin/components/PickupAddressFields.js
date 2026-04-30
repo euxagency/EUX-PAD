@@ -16,7 +16,7 @@ const wpdAdmin = typeof window !== 'undefined' ? window.wpdAdmin || {} : {};
 export function buildCountrySelectOptions() {
     const c = wpdAdmin.wcCountries;
     if (!c || typeof c !== 'object' || Object.keys(c).length === 0) {
-        return [{ value: 'AU', label: __('Australia', 'eux-pad') }];
+        return [{ value: 'AU', label: __('Australia', 'eux-pickup-delivery') }];
     }
     const pairs = Object.keys(c).map((code) => ({
         value: code,
@@ -39,7 +39,7 @@ export function buildCountrySelectOptions() {
 export function buildStateSelectOptions(countryCode, currentState) {
     const cc = String(countryCode || 'AU').toUpperCase();
     const raw = wpdAdmin.wcCountryStates?.[cc];
-    const emptyOpt = { value: '', label: __('Select state / province', 'eux-pad') };
+    const emptyOpt = { value: '', label: __('Select state / province', 'eux-pickup-delivery') };
     if (raw && typeof raw === 'object') {
         const opts = Object.keys(raw).map((code) => ({
             value: code,
@@ -85,9 +85,9 @@ export default function PickupAddressFields({ values, onChange, sectionTitle, se
         patch({ country: cc, state: nextState });
     };
 
-    const title = sectionTitle || __('Address', 'eux-pad');
+    const title = sectionTitle || __('Address', 'eux-pickup-delivery');
     const help =
-        sectionHelp || __('Shown on the pickup page. Used as the pickup location for checkout when applicable.', 'eux-pad');
+        sectionHelp || __('Shown on the pickup page. Used as the pickup location for checkout when applicable.', 'eux-pickup-delivery');
 
     return (
         <>
@@ -100,24 +100,24 @@ export default function PickupAddressFields({ values, onChange, sectionTitle, se
             <div className="wpd-store-address-grid">
                 <div className="wpd-store-address-pair">
                     <TextControl
-                        label={__('Street number', 'eux-pad')}
+                        label={__('Street number', 'eux-pickup-delivery')}
                         value={v.street_number ?? ''}
                         onChange={(x) => patch({ street_number: x })}
                     />
                     <TextControl
-                        label={__('Street name', 'eux-pad')}
+                        label={__('Street name', 'eux-pickup-delivery')}
                         value={v.street_name ?? ''}
                         onChange={(x) => patch({ street_name: x })}
                     />
                 </div>
                 <div className="wpd-store-address-pair">
                     <TextControl
-                        label={__('City', 'eux-pad')}
+                        label={__('City', 'eux-pickup-delivery')}
                         value={v.city ?? ''}
                         onChange={(x) => patch({ city: x })}
                     />
                     <TextControl
-                        label={__('Postcode', 'eux-pad')}
+                        label={__('Postcode', 'eux-pickup-delivery')}
                         value={v.postcode ?? ''}
                         onChange={(x) => patch({ postcode: x })}
                     />
@@ -126,28 +126,28 @@ export default function PickupAddressFields({ values, onChange, sectionTitle, se
                     {stateOptions ? (
                         <RulesCustomSelect
                             className="wpd-store-address-state-select"
-                            label={__('State', 'eux-pad')}
+                            label={__('State', 'eux-pickup-delivery')}
                             value={v.state ?? ''}
                             options={stateOptions}
                             onChange={(x) => patch({ state: x != null ? String(x) : '' })}
-                            placeholder={__('Select state / province', 'eux-pad')}
+                            placeholder={__('Select state / province', 'eux-pickup-delivery')}
                             portalDropdownClassName="wpd-store-address-dropdown--wide"
                             portalMaxWidth="min(420px, calc(100vw - 24px))"
                         />
                     ) : (
                         <TextControl
-                            label={__('State / province', 'eux-pad')}
+                            label={__('State / province', 'eux-pickup-delivery')}
                             value={v.state ?? ''}
                             onChange={(x) => patch({ state: x })}
                         />
                     )}
                     <RulesCustomSelect
                         className="wpd-store-address-country-select"
-                        label={__('Country', 'eux-pad')}
+                        label={__('Country', 'eux-pickup-delivery')}
                         value={v.country && String(v.country).length ? String(v.country).toUpperCase() : 'AU'}
                         options={countryOptions}
                         onChange={onCountryChange}
-                        placeholder={__('Select country', 'eux-pad')}
+                        placeholder={__('Select country', 'eux-pickup-delivery')}
                         portalDropdownClassName="wpd-store-address-dropdown--wide"
                         portalMaxWidth="min(480px, calc(100vw - 24px))"
                     />

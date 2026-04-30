@@ -1101,6 +1101,7 @@ border: 1px solid #E0E4EA;
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
+    transform: translateY(5px);
 }
 
 .wpd-rules-rule-delete {
@@ -1122,6 +1123,16 @@ border: 1px solid #E0E4EA;
 
 .wpd-rules-toggle .components-base-control__field {
     margin-bottom: 0;
+}
+
+.wpd-rules-toggle .components-toggle-control__label {
+    display: none;
+}
+
+.wpd-rules-toggle-wrap .components-base-control,
+.wpd-rules-toggle-wrap .components-base-control__field,
+.wpd-rules-toggle-wrap .components-toggle-control {
+    margin: 0;
 }
 
 .wpd-rules-rule-body {
