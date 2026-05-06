@@ -3,7 +3,7 @@ Contributors: eux, euxdigital
 Tags: woocommerce, pickup, delivery, checkout, scheduling
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -144,7 +144,7 @@ The uninstall script removes the auto-created PAD page and deletes the four sett
 == Changelog ==
 
 
-= 1.0.2 =
+= 1.0.3 =
 * Nomenclature change
 
 = 1.0.1 =
