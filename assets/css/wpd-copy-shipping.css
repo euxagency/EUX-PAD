@@ -3,13 +3,13 @@
 	margin-bottom: 0;
 }
 
-.wpd-copy-shipping-wrapper {
+.euxpide-copy-shipping-wrapper {
 	position: relative;
 	bottom: 40px;
 	left: 640px;
 }
 
-.wpd-copy-shipping-button {
+.euxpide-copy-shipping-button {
 	background: #2e5f29 !important;
 	color: #fff !important;
 	border: none !important;
@@ -24,17 +24,17 @@
 	gap: 8px !important;
 }
 
-.wpd-copy-shipping-button:hover {
+.euxpide-copy-shipping-button:hover {
 	background: #234a21 !important;
 	transform: translateY(-1px);
 	box-shadow: 0 2px 8px rgba(46, 95, 41, 0.3) !important;
 }
 
-.wpd-copy-icon {
+.euxpide-copy-icon {
 	font-size: 16px;
 }
 
-.wpd-copy-success {
+.euxpide-copy-success {
 	display: none;
 	margin-left: 10px;
 	color: #2e5f29;
@@ -52,7 +52,7 @@
 }
 
 @media (max-width: 768px) {
-	.wpd-copy-shipping-wrapper {
+	.euxpide-copy-shipping-wrapper {
 		left: 0;
 		bottom: 10px;
 		margin-top: 20px;

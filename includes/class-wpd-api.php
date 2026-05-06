@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class EUX_PAD_API {
+class EUXPIDE_PAD_API {
 
 	private static $instance = null;
 
@@ -33,7 +33,7 @@ class EUX_PAD_API {
 	public function register_routes() {
 		// Pickup dates endpoint
 		register_rest_route(
-			'eux-pad/v1',
+			'euxpide/v1',
 			'/pickup-dates',
 			array(
 				'methods'             => 'POST',
@@ -56,7 +56,7 @@ class EUX_PAD_API {
 
 		// Delivery dates endpoint
 		register_rest_route(
-			'eux-pad/v1',
+			'euxpide/v1',
 			'/delivery-dates',
 			array(
 				'methods'             => 'POST',
@@ -177,11 +177,11 @@ class EUX_PAD_API {
 	 */
 	private function get_global_days_displayed() {
 		$fallback = 15;
-		if ( ! class_exists( 'WPD_Settings' ) ) {
+		if ( ! class_exists( 'EUXPIDE_Settings' ) ) {
 			return $fallback;
 		}
-		$defaults = WPD_Settings::get_instance()->get_global_defaults();
-		$saved    = get_option( WPD_Settings::OPTION_GLOBAL, array() );
+		$defaults = EUXPIDE_Settings::get_instance()->get_global_defaults();
+		$saved    = get_option( EUXPIDE_Settings::OPTION_GLOBAL, array() );
 		$n        = isset( $saved['days_displayed'] ) ? (int) $saved['days_displayed'] : ( isset( $defaults['days_displayed'] ) ? (int) $defaults['days_displayed'] : $fallback );
 		return max( 1, min( 60, $n ) );
 	}
@@ -262,10 +262,10 @@ class EUX_PAD_API {
 		// Load pickup settings (opening hours + interval).
 		$interval = 60;
 		$opening  = array();
-		if ( class_exists( 'WPD_Settings' ) ) {
-			$settings = get_option( WPD_Settings::OPTION_PICKUP, array() );
-			$defaults = WPD_Settings::get_instance()->get_pickup_defaults();
-			$merged   = WPD_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $settings ) ? $settings : array() );
+		if ( class_exists( 'EUXPIDE_Settings' ) ) {
+			$settings = get_option( EUXPIDE_Settings::OPTION_PICKUP, array() );
+			$defaults = EUXPIDE_Settings::get_instance()->get_pickup_defaults();
+			$merged   = EUXPIDE_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $settings ) ? $settings : array() );
 			$store_id = isset( $this->pickup_store_id ) ? (string) $this->pickup_store_id : '';
 			/**
 			 * Adjust merged pickup settings used to build time slots (e.g. per-store hours).
@@ -274,7 +274,7 @@ class EUX_PAD_API {
 			 * @param array  $cart_items Cart line payload.
 			 * @param string $store_id   Store id from pickup-dates request, if any.
 			 */
-			$merged   = apply_filters( 'wpd_pickup_time_slot_settings', $merged, $cart_items, $store_id );
+			$merged   = apply_filters( 'euxpide_pickup_time_slot_settings', $merged, $cart_items, $store_id );
 			$interval = max( 5, (int) $merged['interval'] );
 			$opening  = isset( $merged['opening_hours'] ) && is_array( $merged['opening_hours'] ) ? $merged['opening_hours'] : array();
 		}
@@ -324,7 +324,7 @@ class EUX_PAD_API {
 	}
 
 	/**
-	 * Apply rules to filter dates. Delegates to WPD_Rules.
+	 * Apply rules to filter dates. Delegates to EUXPIDE_Rules.
 	 *
 	 * @param array  $dates            Dates from generate_*.
 	 * @param string $type             'pickup' or 'delivery'.
@@ -333,10 +333,10 @@ class EUX_PAD_API {
 	 * @return array Filtered dates.
 	 */
 	private function apply_rules_to_dates( $dates, $type, $cart_items, $delivery_address = null ) {
-		if ( ! class_exists( 'WPD_Rules' ) ) {
+		if ( ! class_exists( 'EUXPIDE_Rules' ) ) {
 			return $dates;
 		}
-		return WPD_Rules::get_instance()->apply_rules( $dates, $type, $cart_items, $delivery_address );
+		return EUXPIDE_Rules::get_instance()->apply_rules( $dates, $type, $cart_items, $delivery_address );
 	}
 
 	/**
@@ -437,7 +437,7 @@ class EUX_PAD_API {
 	 */
 	private function get_holidays() {
 		return apply_filters(
-			'eux_pad_holidays',
+			'euxpide_pad_holidays',
 			array(
 				'2025-01-01', // New Year's Day
 				'2025-01-27', // Australia Day
@@ -489,4 +489,4 @@ class EUX_PAD_API {
 }
 
 // Initialize the API
-EUX_PAD_API::get_instance();
+EUXPIDE_PAD_API::get_instance();

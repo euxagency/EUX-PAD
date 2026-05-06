@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class WPD_Checkout_Handler {
+class EUXPIDE_Checkout_Handler {
 
 	/**
 	 * Single instance
@@ -31,18 +31,18 @@ class WPD_Checkout_Handler {
 	 */
 	private function __construct() {
 		// Handle AJAX requests
-		add_action( 'wp_ajax_wpd_save_selection', array( $this, 'save_pad_selection' ) );
-		add_action( 'wp_ajax_nopriv_wpd_save_selection', array( $this, 'save_pad_selection' ) );
+		add_action( 'wp_ajax_euxpide_save_selection', array( $this, 'save_pad_selection' ) );
+		add_action( 'wp_ajax_nopriv_euxpide_save_selection', array( $this, 'save_pad_selection' ) );
 
-		add_action( 'wp_ajax_wpd_calculate_shipping', array( $this, 'calculate_shipping' ) );
-		add_action( 'wp_ajax_nopriv_wpd_calculate_shipping', array( $this, 'calculate_shipping' ) );
+		add_action( 'wp_ajax_euxpide_calculate_shipping', array( $this, 'calculate_shipping' ) );
+		add_action( 'wp_ajax_nopriv_euxpide_calculate_shipping', array( $this, 'calculate_shipping' ) );
 
 		// NEW: API handlers for dates
-		add_action( 'wp_ajax_wpd_get_pickup_dates', array( $this, 'get_pickup_dates_from_api' ) );
-		add_action( 'wp_ajax_nopriv_wpd_get_pickup_dates', array( $this, 'get_pickup_dates_from_api' ) );
+		add_action( 'wp_ajax_euxpide_get_pickup_dates', array( $this, 'get_pickup_dates_from_api' ) );
+		add_action( 'wp_ajax_nopriv_euxpide_get_pickup_dates', array( $this, 'get_pickup_dates_from_api' ) );
 
-		add_action( 'wp_ajax_wpd_get_delivery_dates', array( $this, 'get_delivery_dates_from_api' ) );
-		add_action( 'wp_ajax_nopriv_wpd_get_delivery_dates', array( $this, 'get_delivery_dates_from_api' ) );
+		add_action( 'wp_ajax_euxpide_get_delivery_dates', array( $this, 'get_delivery_dates_from_api' ) );
+		add_action( 'wp_ajax_nopriv_euxpide_get_delivery_dates', array( $this, 'get_delivery_dates_from_api' ) );
 
 		// Add hidden fields to checkout
 		add_action( 'woocommerce_after_order_notes', array( $this, 'add_checkout_fields' ) );
@@ -53,32 +53,85 @@ class WPD_Checkout_Handler {
 	 *
 	 * @return string[]
 	 */
-	private function get_allowed_delivery_suburbs() {
-		if ( ! class_exists( 'WPD_Settings' ) ) {
+	private function get_merged_delivery_settings() {
+		if ( ! class_exists( 'EUXPIDE_Settings' ) ) {
 			return array();
 		}
-		$settings = get_option( WPD_Settings::OPTION_DELIVERY, array() );
-		$defaults = WPD_Settings::get_instance()->get_delivery_defaults();
-		$merged   = WPD_Settings::get_instance()->merge_delivery_settings(
+		$settings = get_option( EUXPIDE_Settings::OPTION_DELIVERY, array() );
+		$defaults = EUXPIDE_Settings::get_instance()->get_delivery_defaults();
+		return EUXPIDE_Settings::get_instance()->merge_delivery_settings(
 			$defaults,
 			is_array( $settings ) ? $settings : array()
 		);
-		$list     = isset( $merged['suburbs'] ) && is_array( $merged['suburbs'] ) ? $merged['suburbs'] : array();
+	}
+
+	private function allows_free_suburb_input() {
+		$merged = $this->get_merged_delivery_settings();
+		return ! empty( $merged['allow_free_suburb_input'] );
+	}
+
+	private function get_allowed_delivery_suburbs() {
+		$merged = $this->get_merged_delivery_settings();
+		$list   = isset( $merged['suburbs'] ) && is_array( $merged['suburbs'] ) ? $merged['suburbs'] : array();
 		return array_values( array_filter( array_map( 'trim', array_map( 'strval', $list ) ) ) );
 	}
 
 	/**
-	 * When suburbs are configured, only those values are accepted (case-insensitive). Returns canonical spelling or empty.
+	 * Custom state list from Delivery settings. Empty = use WooCommerce / default AU states on the PAD form.
+	 *
+	 * @return string[]
+	 */
+	private function get_allowed_delivery_states() {
+		$merged = $this->get_merged_delivery_settings();
+		if ( empty( $merged['restrict_delivery_states'] ) ) {
+			return array();
+		}
+		$list = isset( $merged['delivery_states'] ) && is_array( $merged['delivery_states'] ) ? $merged['delivery_states'] : array();
+		$out  = array();
+		foreach ( $list as $s ) {
+			$s = is_string( $s ) ? trim( $s ) : '';
+			if ( '' !== $s ) {
+				$out[] = $s;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * When suburbs are configured and free suburb input is off, only those values are accepted (case-insensitive). Returns canonical spelling or empty.
 	 *
 	 * @param string $suburb Posted suburb.
 	 * @return string
 	 */
 	private function resolve_delivery_suburb( $suburb ) {
+		if ( $this->allows_free_suburb_input() ) {
+			return trim( (string) $suburb );
+		}
 		$allowed = $this->get_allowed_delivery_suburbs();
 		if ( empty( $allowed ) ) {
 			return trim( (string) $suburb );
 		}
 		$want = trim( (string) $suburb );
+		foreach ( $allowed as $a ) {
+			if ( strtolower( $a ) === strtolower( $want ) ) {
+				return $a;
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * When a custom state list is configured, only those values are accepted (case-insensitive).
+	 *
+	 * @param string $state Posted state.
+	 * @return string
+	 */
+	private function resolve_delivery_state( $state ) {
+		$allowed = $this->get_allowed_delivery_states();
+		if ( empty( $allowed ) ) {
+			return trim( (string) $state );
+		}
+		$want = trim( (string) $state );
 		foreach ( $allowed as $a ) {
 			if ( strtolower( $a ) === strtolower( $want ) ) {
 				return $a;
@@ -125,7 +178,7 @@ class WPD_Checkout_Handler {
 	public function get_pickup_dates_from_api() {
 		// Verify nonce
 		$nonce = $this->get_post_string( 'nonce' );
-		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wpd_nonce' ) ) {
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'euxpide_nonce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pickup-delivery' ) ) );
 		}
 
@@ -137,7 +190,7 @@ class WPD_Checkout_Handler {
 		}
 
 		// Call REST API
-		$api_url = rest_url( 'eux-pad/v1/pickup-dates' );
+		$api_url = rest_url( 'euxpide/v1/pickup-dates' );
 
 		$body            = array(
 			'cart_items' => $cart_items,
@@ -185,7 +238,7 @@ class WPD_Checkout_Handler {
 	public function get_delivery_dates_from_api() {
 		// Verify nonce
 		$nonce = $this->get_post_string( 'nonce' );
-		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wpd_nonce' ) ) {
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'euxpide_nonce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pickup-delivery' ) ) );
 		}
 
@@ -204,6 +257,7 @@ class WPD_Checkout_Handler {
 			'postcode'       => $this->get_post_string( 'postcode' ),
 		);
 		$delivery_address['suburb'] = $this->resolve_delivery_suburb( $delivery_address['suburb'] );
+		$delivery_address['state']  = $this->resolve_delivery_state( $delivery_address['state'] );
 
 		// Validate address
 		if ( empty( $delivery_address['street_address'] ) || empty( $delivery_address['suburb'] ) ||
@@ -212,7 +266,7 @@ class WPD_Checkout_Handler {
 		}
 
 		// Call REST API
-		$api_url = rest_url( 'eux-pad/v1/delivery-dates' );
+		$api_url = rest_url( 'euxpide/v1/delivery-dates' );
 
 		$response = wp_remote_post(
 			$api_url,
@@ -297,7 +351,7 @@ class WPD_Checkout_Handler {
 	public function calculate_shipping() {
 		// Verify nonce
 		$nonce = $this->get_post_string( 'nonce' );
-		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wpd_nonce' ) ) {
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'euxpide_nonce' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed', 'eux-pickup-delivery' ) ) );
 		}
 
@@ -309,10 +363,11 @@ class WPD_Checkout_Handler {
 		$postcode       = $this->get_post_string( 'postcode' );
 		if ( 'delivery' === $type ) {
 			$suburb = $this->resolve_delivery_suburb( $suburb );
+			$state  = $this->resolve_delivery_state( $state );
 		}
 
 		// For delivery, validate address
-		if ( 'delivery' === $type && ( empty( $street_address ) || empty( $suburb ) || empty( $postcode ) ) ) {
+		if ( 'delivery' === $type && ( empty( $street_address ) || empty( $suburb ) || empty( $state ) || empty( $postcode ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please fill all required fields', 'eux-pickup-delivery' ) ) );
 		}
 
@@ -539,7 +594,7 @@ class WPD_Checkout_Handler {
 		$store_row       = null;
 
 		if ( class_exists( 'WPD_Multi_Store' ) ) {
-			$list = WPD_Multi_Store::sanitize_stores_list( get_option( 'wpd_multi_pickup_stores', array() ) );
+			$list = WPD_Multi_Store::sanitize_stores_list( get_option( 'euxpide_multi_pickup_stores', array() ) );
 			if ( '' !== $pickup_store_id ) {
 				foreach ( $list as $cand ) {
 					if ( empty( $cand['enabled'] ) ) {
@@ -563,12 +618,12 @@ class WPD_Checkout_Handler {
 			}
 		}
 
-		$saved    = get_option( WPD_Settings::OPTION_PICKUP, array() );
-		$defaults = WPD_Settings::get_instance()->get_pickup_defaults();
-		$merged   = WPD_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $saved ) ? $saved : array() );
-		$merged   = WPD_Settings::get_instance()->apply_inactive_multi_store_pickup_fallback( $merged );
+		$saved    = get_option( EUXPIDE_Settings::OPTION_PICKUP, array() );
+		$defaults = EUXPIDE_Settings::get_instance()->get_pickup_defaults();
+		$merged   = EUXPIDE_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $saved ) ? $saved : array() );
+		$merged   = EUXPIDE_Settings::get_instance()->apply_inactive_multi_store_pickup_fallback( $merged );
 
-		return WPD_Settings::get_instance()->pickup_location_to_checkout_address( $merged );
+		return EUXPIDE_Settings::get_instance()->pickup_location_to_checkout_address( $merged );
 	}
 
 	/**
@@ -576,7 +631,7 @@ class WPD_Checkout_Handler {
 	 */
 	public function save_pad_selection() {
 		// Verify nonce
-		if ( ! check_ajax_referer( 'wpd_nonce', 'nonce', false ) ) {
+		if ( ! check_ajax_referer( 'euxpide_nonce', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'eux-pickup-delivery' ) ) );
 			return;
 		}
@@ -598,6 +653,7 @@ class WPD_Checkout_Handler {
 				'instructions'   => $this->get_post_textarea( 'instructions' ),
 			);
 			$address_data['suburb'] = $this->resolve_delivery_suburb( $address_data['suburb'] );
+			$address_data['state']  = $this->resolve_delivery_state( $address_data['state'] );
 			if ( empty( $address_data['street_address'] ) || empty( $address_data['suburb'] ) || empty( $address_data['state'] ) || empty( $address_data['postcode'] ) ) {
 				wp_send_json_error( array( 'message' => __( 'Please choose a valid delivery suburb and complete the address.', 'eux-pickup-delivery' ) ) );
 				return;
@@ -630,7 +686,7 @@ class WPD_Checkout_Handler {
 			$selection_data['address'] = $this->build_pickup_session_checkout_address( $pickup_store_id );
 		}
 
-		WC()->session->set( 'wpd_pad_selection', $selection_data );
+		WC()->session->set( 'euxpide_pad_selection', $selection_data );
 
 		// IMPORTANT: Set the chosen shipping method immediately
 		if ( ! empty( $shipping_method ) ) {
@@ -668,7 +724,7 @@ class WPD_Checkout_Handler {
 		}
 
 		// Set flag that user is coming from PAD page
-		WC()->session->set( 'wpd_from_pad_page', true );
+		WC()->session->set( 'euxpide_from_pad_page', true );
 
 		// Return checkout URL
 		wp_send_json_success(
@@ -683,49 +739,49 @@ class WPD_Checkout_Handler {
 	 * Add hidden fields to checkout
 	 */
 	public function add_checkout_fields( $checkout ) {
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( empty( $selection ) ) {
 			return;
 		}
 
-		echo '<div id="wpd_checkout_fields" style="display:none;">';
+		echo '<div id="euxpide_checkout_fields" style="display:none;">';
 
 		woocommerce_form_field(
-			'wpd_type',
+			'euxpide_type',
 			array(
 				'type'     => 'hidden',
-				'class'    => array( 'wpd-hidden-field' ),
+				'class'    => array( 'euxpide-hidden-field' ),
 				'required' => true,
 			),
 			$selection['type']
 		);
 
 		woocommerce_form_field(
-			'wpd_date',
+			'euxpide_date',
 			array(
 				'type'     => 'hidden',
-				'class'    => array( 'wpd-hidden-field' ),
+				'class'    => array( 'euxpide-hidden-field' ),
 				'required' => true,
 			),
 			$selection['date']
 		);
 
 		woocommerce_form_field(
-			'wpd_time_slot',
+			'euxpide_time_slot',
 			array(
 				'type'  => 'hidden',
-				'class' => array( 'wpd-hidden-field' ),
+				'class' => array( 'euxpide-hidden-field' ),
 			),
 			$selection['time_slot']
 		);
 
 		if ( ! empty( $selection['address'] ) ) {
 			woocommerce_form_field(
-				'wpd_address',
+				'euxpide_address',
 				array(
 					'type'  => 'hidden',
-					'class' => array( 'wpd-hidden-field' ),
+					'class' => array( 'euxpide-hidden-field' ),
 				),
 				wp_json_encode( $selection['address'] )
 			);

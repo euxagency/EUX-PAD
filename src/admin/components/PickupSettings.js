@@ -39,7 +39,7 @@ const MAX_OPENING_ROWS = 7;
 
 export default function PickupSettings() {
     const multiPickupStoresAddon =
-        typeof window !== 'undefined' && !!window.wpdAdmin?.multiPickupStoresAddon;
+        typeof window !== 'undefined' && !!window.euxpideAdmin?.multiPickupStoresAddon;
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -54,7 +54,7 @@ export default function PickupSettings() {
             return [];
         }
         try {
-            const res = await apiFetch({ path: '/wpd/v1/settings/pickup-stores' });
+            const res = await apiFetch({ path: '/euxpide/v1/settings/pickup-stores' });
             if (res?.success && Array.isArray(res?.data)) {
                 return res.data;
             }
@@ -69,7 +69,10 @@ export default function PickupSettings() {
         setLoading(true);
         setNotice(null);
         try {
-            const [res, storesList] = await Promise.all([apiFetch({ path: '/wpd/v1/settings/pickup' }), loadStores()]);
+            const [res, storesList] = await Promise.all([
+                apiFetch({ path: '/euxpide/v1/settings/pickup' }),
+                loadStores(),
+            ]);
             if (res?.success && res?.data) {
                 const data = { ...res.data };
                 if (Array.isArray(data.opening_hours) && data.opening_hours.length > MAX_OPENING_ROWS) {
@@ -160,7 +163,7 @@ export default function PickupSettings() {
         setNotice(null);
         try {
             const res = await apiFetch({
-                path: '/wpd/v1/settings/pickup',
+                path: '/euxpide/v1/settings/pickup',
                 method: 'POST',
                 data: buildPickupSavePayload(),
             });
@@ -186,7 +189,7 @@ export default function PickupSettings() {
 
             if (multiPickupStoresAddon) {
                 const resStores = await apiFetch({
-                    path: '/wpd/v1/settings/pickup-stores',
+                    path: '/euxpide/v1/settings/pickup-stores',
                     method: 'POST',
                     data: { stores: pickupStores },
                 });
@@ -216,7 +219,7 @@ export default function PickupSettings() {
         setNotice(null);
         try {
             const res = await apiFetch({
-                path: '/wpd/v1/settings/pickup/reset',
+                path: '/euxpide/v1/settings/pickup/reset',
                 method: 'POST',
             });
             if (res?.success) {

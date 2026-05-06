@@ -166,6 +166,19 @@ box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
     margin: 0 0 12px 0;
 }
 
+.wpd-delivery-allow-suburb-toggle {
+    margin-top: 1.25rem;
+}
+
+.wpd-delivery-states-multiselect {
+    margin-top: 12px;
+    max-width: 100%;
+}
+
+.wpd-delivery-states-multiselect .wpd-rules-multiselect {
+    max-width: min(520px, 100%);
+}
+
 .wpd-pad-setup__loading {
     display: flex;
     align-items: center;
@@ -1097,7 +1110,8 @@ border: 1px solid #E0E4EA;
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
-    transform: translateY(5px);
+    transform: none;
+    height: 32px;
 }
 
 .wpd-rules-rule-delete {
@@ -1107,6 +1121,11 @@ border: 1px solid #E0E4EA;
     background: transparent;
     cursor: pointer;
     color: var(--wpd-admin-text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    width: 32px;
 }
 
 .wpd-rules-rule-delete:hover {

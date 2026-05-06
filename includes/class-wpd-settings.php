@@ -6,38 +6,38 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class WPD_Settings {
+class EUXPIDE_Settings {
 	/**
 	 * Single instance
 	 *
-	 * @var WPD_Settings|null
+	 * @var EUXPIDE_Settings|null
 	 */
 	private static $instance = null;
 
 	/**
 	 * Option name for global settings.
 	 */
-	const OPTION_GLOBAL = 'wpd_global_settings';
+	const OPTION_GLOBAL = 'euxpide_global_settings';
 
 	/**
 	 * Option name for pickup settings.
 	 */
-	const OPTION_PICKUP = 'wpd_pickup_settings';
+	const OPTION_PICKUP = 'euxpide_pickup_settings';
 
 	/**
 	 * Option name for delivery settings (allowed suburbs for rules / PAD).
 	 */
-	const OPTION_DELIVERY = 'wpd_delivery_settings';
+	const OPTION_DELIVERY = 'euxpide_delivery_settings';
 
 	/**
 	 * Option name for delivery/pickup rules.
 	 */
-	const OPTION_RULES = 'wpd_rules';
+	const OPTION_RULES = 'euxpide_rules';
 
 	/**
 	 * Get instance
 	 *
-	 * @return WPD_Settings
+	 * @return EUXPIDE_Settings
 	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
@@ -58,7 +58,7 @@ class WPD_Settings {
 	 */
 	public function register_routes() {
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/settings/global',
 			array(
 				array(
@@ -75,7 +75,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/settings/global/reset',
 			array(
 				'methods'             => 'POST',
@@ -85,7 +85,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/pages/pad',
 			array(
 				'methods'             => 'GET',
@@ -95,7 +95,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/pad-page',
 			array(
 				'methods'             => 'GET',
@@ -105,7 +105,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/pad-page/ensure',
 			array(
 				'methods'             => 'POST',
@@ -115,7 +115,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/settings/pickup',
 			array(
 				array(
@@ -132,7 +132,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/settings/pickup/reset',
 			array(
 				'methods'             => 'POST',
@@ -142,7 +142,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/settings/delivery',
 			array(
 				array(
@@ -159,7 +159,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/settings/delivery/reset',
 			array(
 				'methods'             => 'POST',
@@ -169,7 +169,7 @@ class WPD_Settings {
 		);
 
 		register_rest_route(
-			'wpd/v1',
+			'euxpide/v1',
 			'/settings/rules',
 			array(
 				array(
@@ -396,9 +396,12 @@ class WPD_Settings {
 	 */
 	public function get_delivery_defaults() {
 		return array(
-			'suburbs'     => array(),
-			'tab_enabled' => true,
-			'tab_title'   => 'Delivery',
+			'suburbs'                  => array(),
+			'allow_free_suburb_input'  => false,
+			'restrict_delivery_states' => false,
+			'delivery_states'          => array(),
+			'tab_enabled'              => true,
+			'tab_title'                => 'Delivery',
 		);
 	}
 
@@ -413,6 +416,35 @@ class WPD_Settings {
 		$out = $defaults;
 		if ( isset( $saved['suburbs'] ) && is_array( $saved['suburbs'] ) ) {
 			$out['suburbs'] = $this->normalize_suburbs_list( $saved['suburbs'] );
+		}
+		if ( is_array( $saved ) && array_key_exists( 'allow_free_suburb_input', $saved ) ) {
+			$out['allow_free_suburb_input'] = (bool) $saved['allow_free_suburb_input'];
+		}
+		if ( is_array( $saved ) && array_key_exists( 'restrict_delivery_states', $saved ) ) {
+			$out['restrict_delivery_states'] = (bool) $saved['restrict_delivery_states'];
+		} elseif ( is_array( $saved ) ) {
+			// Legacy: a non-empty delivery_states list implied restriction before restrict_delivery_states existed.
+			$ds  = isset( $saved['delivery_states'] ) && is_array( $saved['delivery_states'] ) ? $saved['delivery_states'] : array();
+			$has = false;
+			foreach ( $ds as $x ) {
+				if ( is_string( $x ) && '' !== trim( $x ) ) {
+					$has = true;
+					break;
+				}
+			}
+			if ( $has ) {
+				$out['restrict_delivery_states'] = true;
+			}
+		}
+		if ( isset( $saved['delivery_states'] ) && is_array( $saved['delivery_states'] ) ) {
+			if ( ! empty( $out['restrict_delivery_states'] ) ) {
+				$out['delivery_states'] = $this->sanitize_delivery_state_codes_for_wc_country(
+					$saved['delivery_states'],
+					$this->get_store_base_country()
+				);
+			} else {
+				$out['delivery_states'] = array();
+			}
 		}
 		if ( is_array( $saved ) && array_key_exists( 'tab_enabled', $saved ) ) {
 			$out['tab_enabled'] = (bool) $saved['tab_enabled'];
@@ -522,7 +554,7 @@ class WPD_Settings {
 		);
 		// Also update the PAD page option used by the frontend/router.
 		if ( isset( $clean['pad_page_id'] ) ) {
-			update_option( 'wpd_pad_page_id', absint( $clean['pad_page_id'] ), false );
+			update_option( 'euxpide_pad_page_id', absint( $clean['pad_page_id'] ), false );
 		}
 
 		return rest_ensure_response(
@@ -600,7 +632,7 @@ class WPD_Settings {
 			return $data;
 		}
 		// Option name matches WPD_Multi_Store::OPTION in the Multi-Store add-on.
-		$raw = get_option( 'wpd_multi_pickup_stores', array() );
+		$raw = get_option( 'euxpide_multi_pickup_stores', array() );
 		if ( ! is_array( $raw ) || empty( $raw ) ) {
 			return $data;
 		}
@@ -796,7 +828,7 @@ class WPD_Settings {
 	public function get_rules() {
 		$rules = get_option( self::OPTION_RULES, array() );
 		$rules = is_array( $rules ) ? $rules : array();
-		if ( class_exists( 'WPD_Rules' ) ) {
+		if ( class_exists( 'EUXPIDE_Rules' ) ) {
 			$rules = $this->strip_disallowed_conditions_from_rules( $rules );
 		}
 		return rest_ensure_response(
@@ -814,10 +846,10 @@ class WPD_Settings {
 	 * @return array
 	 */
 	private function strip_disallowed_conditions_from_rules( $rules ) {
-		if ( ! class_exists( 'WPD_Rules' ) ) {
+		if ( ! class_exists( 'EUXPIDE_Rules' ) ) {
 			return $rules;
 		}
-		$allowed = WPD_Rules::get_allowed_condition_types();
+		$allowed = EUXPIDE_Rules::get_allowed_condition_types();
 		$out     = array();
 		foreach ( $rules as $rule ) {
 			if ( ! is_array( $rule ) ) {
@@ -897,7 +929,7 @@ class WPD_Settings {
 			}
 			if ( ! $has_date_scope || ! $has_method ) {
 				return new WP_Error(
-					'wpd_rules_primary_required',
+					'euxpide_rules_primary_required',
 					__( 'Every enabled rule must include at least one Days of Week or Specific Dates condition and one Method condition.', 'eux-pickup-delivery' ),
 					array( 'status' => 400 )
 				);
@@ -913,7 +945,7 @@ class WPD_Settings {
 	 * @return true|WP_Error
 	 */
 	private function validate_rules_lead_cutoff_objective( $rules ) {
-		if ( ! class_exists( 'WPD_Rules' ) ) {
+		if ( ! class_exists( 'EUXPIDE_Rules' ) ) {
 			return true;
 		}
 		foreach ( $rules as $rule ) {
@@ -931,7 +963,7 @@ class WPD_Settings {
 			}
 			if ( $has && isset( $rule['objective'] ) && 'disable_day' !== $rule['objective'] ) {
 				return new WP_Error(
-					'wpd_rules_lead_cutoff_objective',
+					'euxpide_rules_lead_cutoff_objective',
 					__( 'Rules that include Lead Time or Cutoff Time must use the Disable Day objective.', 'eux-pickup-delivery' ),
 					array( 'status' => 400 )
 				);
@@ -947,8 +979,9 @@ class WPD_Settings {
 	 * @return array
 	 */
 	private function sanitize_rules( $rules ) {
-		$out = array();
-		$i   = 0;
+		$out               = array();
+		$i                 = 0;
+		$allow_free_suburb = $this->delivery_settings_allow_free_suburb_input();
 		foreach ( $rules as $rule ) {
 			if ( ! is_array( $rule ) ) {
 				continue;
@@ -967,14 +1000,28 @@ class WPD_Settings {
 						continue;
 					}
 					$ctype = sanitize_text_field( wp_unslash( $c['type'] ) );
-					if ( class_exists( 'WPD_Rules' ) && ! WPD_Rules::is_allowed_condition_type( $ctype ) ) {
+					if ( class_exists( 'EUXPIDE_Rules' ) && ! EUXPIDE_Rules::is_allowed_condition_type( $ctype ) ) {
 						continue;
 					}
 					$cop = isset( $c['operator'] ) ? sanitize_text_field( wp_unslash( $c['operator'] ) ) : 'matches_any_of';
-					if ( 'suburb' === $ctype && ! in_array( $cop, array( 'equal', 'not_equal' ), true ) ) {
+					if ( 'suburb' === $ctype ) {
+						$sub_ops = $allow_free_suburb
+							? array( 'like', 'not_like' )
+							: array( 'equal', 'not_equal' );
+						if ( ! in_array( $cop, $sub_ops, true ) ) {
+							$cop = $sub_ops[0];
+						}
+					}
+					if ( 'delivery_state' === $ctype && ! in_array( $cop, array( 'equal', 'not_equal' ), true ) ) {
 						$cop = 'equal';
 					}
-					$clean_val         = $this->sanitize_condition_value( isset( $c['value'] ) ? $c['value'] : '', $ctype, $cop );
+					if ( 'postcode' === $ctype && ! in_array( $cop, array( 'equal', 'not_equal' ), true ) ) {
+						$cop = 'equal';
+					}
+					if ( ( 'product_category' === $ctype || 'product' === $ctype ) && ! in_array( $cop, array( 'equal', 'not_equal' ), true ) ) {
+						$cop = 'equal';
+					}
+					$clean_val         = $this->sanitize_condition_value( isset( $c['value'] ) ? $c['value'] : '', $ctype, $cop, $allow_free_suburb );
 					$r['conditions'][] = array(
 						'type'     => $ctype,
 						'operator' => $cop,
@@ -994,9 +1041,10 @@ class WPD_Settings {
 	 * @param mixed  $value    Raw value.
 	 * @param string $type     Condition type.
 	 * @param string $operator Operator (e.g. between).
+	 * @param bool   $allow_free_suburb_input When true, suburb rules may use like/not_like with a string pattern.
 	 * @return mixed Sanitized value.
 	 */
-	private function sanitize_condition_value( $value, $type, $operator ) {
+	private function sanitize_condition_value( $value, $type, $operator, $allow_free_suburb_input = false ) {
 		if ( is_array( $value ) ) {
 			if ( 'between' === $operator && count( $value ) >= 2 ) {
 				if ( 'specific_dates' === $type ) {
@@ -1012,6 +1060,21 @@ class WPD_Settings {
 					(float) ( isset( $value[1] ) ? $value[1] : 0 ),
 				);
 			}
+			if ( 'product' === $type ) {
+				return $this->sanitize_product_rule_condition_value( $value );
+			}
+			if ( 'postcode' === $type ) {
+				return $this->sanitize_postcode_condition_value( $value );
+			}
+			if ( 'product_category' === $type ) {
+				return $this->sanitize_product_category_condition_value( $value );
+			}
+			if ( 'suburb' === $type ) {
+				return $this->sanitize_suburb_condition_value( $value, $operator, $allow_free_suburb_input );
+			}
+			if ( 'delivery_state' === $type ) {
+				return $this->sanitize_delivery_state_condition_value( $value );
+			}
 			$out = array();
 			foreach ( $value as $v ) {
 				$out[] = sanitize_text_field( wp_unslash( (string) $v ) );
@@ -1026,15 +1089,127 @@ class WPD_Settings {
 			return preg_match( '/^\d{1,2}:\d{2}$/', $v ) ? $v : '';
 		}
 		if ( 'suburb' === $type ) {
-			return $this->sanitize_suburb_condition_value( $value );
+			return $this->sanitize_suburb_condition_value( $value, $operator, $allow_free_suburb_input );
+		}
+		if ( 'delivery_state' === $type ) {
+			return $this->sanitize_delivery_state_condition_value( $value );
+		}
+		if ( 'postcode' === $type ) {
+			return $this->sanitize_postcode_condition_value( $value );
+		}
+		if ( 'product_category' === $type ) {
+			return $this->sanitize_product_category_condition_value( $value );
+		}
+		if ( 'product' === $type ) {
+			return $this->sanitize_product_rule_condition_value( $value );
 		}
 		return sanitize_text_field( wp_unslash( (string) $value ) );
 	}
 
 	/**
+	 * Sanitize postcode list for rules (PAD delivery postcode).
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string[]
+	 */
+	private function sanitize_postcode_condition_value( $value ) {
+		$raw = is_array( $value ) ? $value : ( is_string( $value ) ? array_map( 'trim', explode( ',', $value ) ) : array() );
+		$out = array();
+		foreach ( $raw as $p ) {
+			$p = is_scalar( $p ) ? sanitize_text_field( wp_unslash( (string) $p ) ) : '';
+			$p = strtoupper( preg_replace( '/\s+/', '', $p ) );
+			if ( '' === $p || strlen( $p ) > 16 ) {
+				continue;
+			}
+			if ( ! in_array( $p, $out, true ) ) {
+				$out[] = $p;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Sanitize product category term ids for rules.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return int[]
+	 */
+	private function sanitize_product_category_condition_value( $value ) {
+		$raw = is_array( $value ) ? $value : array();
+		$out = array();
+		foreach ( $raw as $row ) {
+			$tid = 0;
+			if ( is_array( $row ) && isset( $row['id'] ) ) {
+				$tid = absint( $row['id'] );
+			} elseif ( is_numeric( $row ) ) {
+				$tid = absint( $row );
+			}
+			if ( $tid < 1 ) {
+				continue;
+			}
+			$t = get_term( $tid, 'product_cat' );
+			if ( ! $t || is_wp_error( $t ) ) {
+				continue;
+			}
+			if ( ! in_array( $tid, $out, true ) ) {
+				$out[] = $tid;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Sanitize product rule payload: list of { id, label } (label optional, for admin display).
+	 *
+	 * @param mixed $value Raw value.
+	 * @return array<int, array{id:int, label:string}>
+	 */
+	private function sanitize_product_rule_condition_value( $value ) {
+		$raw = is_array( $value ) ? $value : array();
+		$out = array();
+		foreach ( $raw as $row ) {
+			$pid = 0;
+			$lab = '';
+			if ( is_array( $row ) ) {
+				$pid = isset( $row['id'] ) ? absint( $row['id'] ) : 0;
+				$lab = isset( $row['label'] ) ? sanitize_text_field( wp_unslash( (string) $row['label'] ) ) : '';
+				if ( '' === $lab && isset( $row['name'] ) ) {
+					$lab = sanitize_text_field( wp_unslash( (string) $row['name'] ) );
+				}
+			} elseif ( is_numeric( $row ) ) {
+				$pid = absint( $row );
+			}
+			if ( $pid < 1 ) {
+				continue;
+			}
+			if ( ! function_exists( 'wc_get_product' ) || ! wc_get_product( $pid ) ) {
+				continue;
+			}
+			$seen = false;
+			foreach ( $out as $e ) {
+				if ( (int) $e['id'] === $pid ) {
+					$seen = true;
+					break;
+				}
+			}
+			if ( $seen ) {
+				continue;
+			}
+			if ( '' === $lab ) {
+				$lab = '#' . (string) $pid;
+			}
+			$out[] = array(
+				'id'    => $pid,
+				'label' => $lab,
+			);
+		}
+		return $out;
+	}
+
+	/**
 	 * Shortcode token used on the PAD page.
 	 */
-	const PAD_SHORTCODE_TOKEN = 'wpd_pickup_delivery';
+	const PAD_SHORTCODE_TOKEN = 'euxpide_pickup_delivery';
 
 	/**
 	 * Find a published page whose content includes the PAD shortcode.
@@ -1072,7 +1247,7 @@ class WPD_Settings {
 		if ( $page_id <= 0 ) {
 			return;
 		}
-		update_option( 'wpd_pad_page_id', $page_id, false );
+		update_option( 'euxpide_pad_page_id', $page_id, false );
 		$saved = get_option( self::OPTION_GLOBAL, array() );
 		if ( ! is_array( $saved ) ) {
 			$saved = array();
@@ -1136,7 +1311,7 @@ class WPD_Settings {
 			array(
 				'post_title'     => 'PAD',
 				'post_name'      => 'pad',
-				'post_content'   => '[wpd_pickup_delivery]',
+				'post_content'   => '[euxpide_pickup_delivery]',
 				'post_status'    => 'publish',
 				'post_type'      => 'page',
 				'post_author'    => get_current_user_id(),
@@ -1148,7 +1323,7 @@ class WPD_Settings {
 
 		if ( is_wp_error( $page_id ) ) {
 			return new WP_Error(
-				'wpd_pad_create_failed',
+				'euxpide_pad_create_failed',
 				$page_id->get_error_message(),
 				array( 'status' => 500 )
 			);
@@ -1156,7 +1331,7 @@ class WPD_Settings {
 
 		if ( ! $page_id ) {
 			return new WP_Error(
-				'wpd_pad_create_failed',
+				'euxpide_pad_create_failed',
 				__( 'Could not create the PAD page.', 'eux-pickup-delivery' ),
 				array( 'status' => 500 )
 			);
@@ -1407,12 +1582,181 @@ class WPD_Settings {
 	}
 
 	/**
-	 * Restrict rule suburb values to names configured in Delivery settings.
+	 * Whether Delivery settings allow free-typed suburbs (no pick list).
+	 *
+	 * @return bool
+	 */
+	private function delivery_settings_allow_free_suburb_input() {
+		$saved    = get_option( self::OPTION_DELIVERY, array() );
+		$defaults = $this->get_delivery_defaults();
+		$merged   = $this->merge_delivery_settings( $defaults, is_array( $saved ) ? $saved : array() );
+		return ! empty( $merged['allow_free_suburb_input'] );
+	}
+
+	/**
+	 * WooCommerce store base country (ISO 2).
+	 *
+	 * @return string
+	 */
+	public function get_store_base_country() {
+		if ( function_exists( 'wc_get_base_location' ) ) {
+			$loc = wc_get_base_location();
+			if ( is_array( $loc ) && ! empty( $loc['country'] ) && is_string( $loc['country'] ) ) {
+				$c = strtoupper( substr( trim( $loc['country'] ), 0, 2 ) );
+				if ( 2 === strlen( $c ) ) {
+					return $c;
+				}
+			}
+		}
+		return 'AU';
+	}
+
+	/**
+	 * State code => label for the store base country (WooCommerce), or Australian fallback.
+	 *
+	 * @return array<string, string>
+	 */
+	public function get_wc_states_for_store_country() {
+		$cc = $this->get_store_base_country();
+		if ( function_exists( 'WC' ) && WC()->countries ) {
+			$st = WC()->countries->get_states( $cc );
+			if ( is_array( $st ) && ! empty( $st ) ) {
+				return $st;
+			}
+		}
+		return array(
+			'NSW' => __( 'New South Wales', 'eux-pickup-delivery' ),
+			'VIC' => __( 'Victoria', 'eux-pickup-delivery' ),
+			'QLD' => __( 'Queensland', 'eux-pickup-delivery' ),
+			'WA'  => __( 'Western Australia', 'eux-pickup-delivery' ),
+			'SA'  => __( 'South Australia', 'eux-pickup-delivery' ),
+			'TAS' => __( 'Tasmania', 'eux-pickup-delivery' ),
+			'ACT' => __( 'Australian Capital Territory', 'eux-pickup-delivery' ),
+			'NT'  => __( 'Northern Territory', 'eux-pickup-delivery' ),
+		);
+	}
+
+	/**
+	 * Keep only codes that exist for the given WooCommerce country.
+	 *
+	 * @param array  $arr     Raw codes.
+	 * @param string $country ISO2 country.
+	 * @return string[]
+	 */
+	private function sanitize_delivery_state_codes_for_wc_country( $arr, $country ) {
+		$country = strtoupper( substr( (string) $country, 0, 2 ) );
+		$valid   = array();
+		if ( function_exists( 'WC' ) && WC()->countries ) {
+			$st = WC()->countries->get_states( $country );
+			if ( is_array( $st ) && ! empty( $st ) ) {
+				$valid = $st;
+			}
+		}
+		if ( empty( $valid ) ) {
+			$valid = $this->get_wc_states_for_store_country();
+		}
+		$valid_lc = array();
+		foreach ( array_keys( $valid ) as $code ) {
+			$valid_lc[ strtolower( (string) $code ) ] = (string) $code;
+		}
+		$out  = array();
+		$seen = array();
+		foreach ( is_array( $arr ) ? $arr : array() as $raw ) {
+			$s = sanitize_text_field( wp_unslash( (string) $raw ) );
+			$k = strtolower( $s );
+			if ( '' === $k || ! isset( $valid_lc[ $k ] ) ) {
+				continue;
+			}
+			$canon = $valid_lc[ $k ];
+			$lk    = strtolower( $canon );
+			if ( isset( $seen[ $lk ] ) ) {
+				continue;
+			}
+			$seen[ $lk ] = true;
+			$out[]       = $canon;
+			if ( count( $out ) >= 64 ) {
+				break;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Allowed state codes when "restrict delivery states" is on; empty when off (full WC list on storefront).
+	 *
+	 * @return string[]
+	 */
+	private function get_allowed_delivery_states_for_validation() {
+		$saved    = get_option( self::OPTION_DELIVERY, array() );
+		$defaults = $this->get_delivery_defaults();
+		$merged   = $this->merge_delivery_settings( $defaults, is_array( $saved ) ? $saved : array() );
+		if ( empty( $merged['restrict_delivery_states'] ) ) {
+			return array();
+		}
+		$list = isset( $merged['delivery_states'] ) && is_array( $merged['delivery_states'] ) ? $merged['delivery_states'] : array();
+		return $this->sanitize_delivery_state_codes_for_wc_country( $list, $this->get_store_base_country() );
+	}
+
+	/**
+	 * Map lowercase state string to canonical spelling for rule sanitization.
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_delivery_state_rule_whitelist_map() {
+		$custom = $this->get_allowed_delivery_states_for_validation();
+		$map    = array();
+		if ( ! empty( $custom ) ) {
+			foreach ( $custom as $a ) {
+				$map[ strtolower( (string) $a ) ] = $a;
+			}
+			return $map;
+		}
+		foreach ( array_keys( $this->get_wc_states_for_store_country() ) as $code ) {
+			$map[ strtolower( (string) $code ) ] = (string) $code;
+		}
+		return $map;
+	}
+
+	/**
+	 * Sanitize delivery_state rule value (multi-select against configured or default AU codes).
 	 *
 	 * @param mixed $value Raw condition value.
 	 * @return array
 	 */
-	private function sanitize_suburb_condition_value( $value ) {
+	private function sanitize_delivery_state_condition_value( $value ) {
+		$map = $this->get_delivery_state_rule_whitelist_map();
+		$arr = is_array( $value ) ? $value : ( is_string( $value ) ? array_map( 'trim', explode( ',', $value ) ) : array() );
+		$out = array();
+		foreach ( $arr as $raw ) {
+			$s = sanitize_text_field( wp_unslash( (string) $raw ) );
+			$k = strtolower( $s );
+			if ( isset( $map[ $k ] ) ) {
+				$out[] = $map[ $k ];
+			}
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
+	 * Restrict rule suburb values to names configured in Delivery settings, or a plain string for like/not_like when free suburb input is enabled.
+	 *
+	 * @param mixed  $value Raw condition value.
+	 * @param string $operator Condition operator.
+	 * @param bool   $allow_free_suburb_input Delivery setting.
+	 * @return array|string
+	 */
+	private function sanitize_suburb_condition_value( $value, $operator = 'equal', $allow_free_suburb_input = false ) {
+		if ( $allow_free_suburb_input && in_array( (string) $operator, array( 'like', 'not_like' ), true ) ) {
+			if ( is_array( $value ) ) {
+				$value = ! empty( $value ) ? (string) reset( $value ) : '';
+			}
+			$s = sanitize_text_field( wp_unslash( (string) $value ) );
+			if ( strlen( $s ) > 200 ) {
+				$s = substr( $s, 0, 200 );
+			}
+			return $s;
+		}
+
 		$saved    = get_option( self::OPTION_DELIVERY, array() );
 		$defaults = $this->get_delivery_defaults();
 		$merged   = $this->merge_delivery_settings( $defaults, is_array( $saved ) ? $saved : array() );
@@ -1444,6 +1788,22 @@ class WPD_Settings {
 		$out = $defaults;
 		if ( isset( $params['suburbs'] ) && is_array( $params['suburbs'] ) ) {
 			$out['suburbs'] = $this->normalize_suburbs_list( $params['suburbs'] );
+		}
+		if ( array_key_exists( 'allow_free_suburb_input', $params ) ) {
+			$out['allow_free_suburb_input'] = (bool) $params['allow_free_suburb_input'];
+		}
+		if ( array_key_exists( 'restrict_delivery_states', $params ) ) {
+			$out['restrict_delivery_states'] = (bool) $params['restrict_delivery_states'];
+		}
+		if ( isset( $params['delivery_states'] ) && is_array( $params['delivery_states'] ) ) {
+			if ( ! empty( $out['restrict_delivery_states'] ) ) {
+				$out['delivery_states'] = $this->sanitize_delivery_state_codes_for_wc_country(
+					$params['delivery_states'],
+					$this->get_store_base_country()
+				);
+			} else {
+				$out['delivery_states'] = array();
+			}
 		}
 		if ( array_key_exists( 'tab_enabled', $params ) ) {
 			$out['tab_enabled'] = (bool) $params['tab_enabled'];

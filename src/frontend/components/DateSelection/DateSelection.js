@@ -72,7 +72,7 @@ export default function DateSelection({
         }
     };
 
-    const shippingMethods = typeof window !== 'undefined' ? window.wpdShippingMethods : null;
+    const shippingMethods = typeof window !== 'undefined' ? window.euxpideShippingMethods : null;
 
     return (
         <div className={`wpd-date-selection ${activeTab === 'delivery' && !showDeliveryDates ? 'wpd-no-dates-state' : ''}`}>

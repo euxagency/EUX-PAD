@@ -8,7 +8,7 @@ import { useMemo } from '@wordpress/element';
 import { TextControl } from '@wordpress/components';
 import RulesCustomSelect from './RulesCustomSelect';
 
-const wpdAdmin = typeof window !== 'undefined' ? window.wpdAdmin || {} : {};
+const wpdAdmin = typeof window !== 'undefined' ? window.euxpideAdmin || {} : {};
 
 /**
  * @returns {{ value: string, label: string }[]}

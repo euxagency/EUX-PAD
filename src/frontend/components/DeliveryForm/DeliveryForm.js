@@ -9,10 +9,25 @@ function normSuburb(s) {
     return String(s).trim().toLowerCase();
 }
 
+function resolveListLabel(item, labelMap) {
+    if (item == null || item === '') {
+        return '';
+    }
+    const k = String(item);
+    if (labelMap && typeof labelMap === 'object' && Object.prototype.hasOwnProperty.call(labelMap, k)) {
+        const n = labelMap[k];
+        if (n != null && String(n).trim() !== '') {
+            return String(n);
+        }
+    }
+    return k;
+}
+
 /**
  * Searchable single-select; same visual treatment as other `.wpd-form-group input` fields.
+ * Pass labelMap (e.g. WooCommerce state code → name) to show names while value stays the code.
  */
-function SuburbSearchSelect({ value, onChange, suburbs, hasError }) {
+function SuburbSearchSelect({ value, onChange, suburbs, hasError, placeholder, labelMap }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const rootRef = useRef(null);
@@ -37,8 +52,11 @@ function SuburbSearchSelect({ value, onChange, suburbs, hasError }) {
     };
 
     const options = useMemo(
-        () => [...suburbs].sort((a, b) => String(a).localeCompare(String(b))),
-        [suburbs]
+        () =>
+            [...suburbs].sort((a, b) =>
+                resolveListLabel(a, labelMap).localeCompare(resolveListLabel(b, labelMap))
+            ),
+        [suburbs, labelMap]
     );
 
     const filtered = useMemo(() => {
@@ -46,8 +64,11 @@ function SuburbSearchSelect({ value, onChange, suburbs, hasError }) {
         if (!q) {
             return options;
         }
-        return options.filter((s) => normSuburb(s).includes(q));
-    }, [options, query]);
+        return options.filter((s) => {
+            const disp = resolveListLabel(s, labelMap);
+            return normSuburb(disp).includes(q) || normSuburb(s).includes(q);
+        });
+    }, [options, query, labelMap]);
 
     useEffect(() => {
         if (!open) {
@@ -69,11 +90,13 @@ function SuburbSearchSelect({ value, onChange, suburbs, hasError }) {
     const openMenu = () => {
         cancelBlurClose();
         setOpen(true);
-        setQuery(value || '');
+        // Empty query while open so the list shows every option; typing filters. Prefilling with the
+        // selected label made `.includes(query)` match only that row (e.g. one state).
+        setQuery('');
     };
 
-    /** Search text while open; closed shows only the saved choice (never free-typed suburb). */
-    const displayValue = open ? query : value || '';
+    /** While open: empty until user types (search). Closed: show selected label / suburb name. */
+    const displayValue = open ? query : value ? resolveListLabel(value, labelMap) : '';
 
     return (
         <div className="wpd-suburb-combobox" ref={rootRef}>
@@ -93,7 +116,7 @@ function SuburbSearchSelect({ value, onChange, suburbs, hasError }) {
                 }}
                 onFocus={openMenu}
                 onBlur={scheduleBlurClose}
-                placeholder={__('Search or select suburb', 'eux-pickup-delivery')}
+                placeholder={placeholder || __('Search or select suburb', 'eux-pickup-delivery')}
                 className={hasError ? 'wpd-field-error' : ''}
             />
             {open && (
@@ -121,7 +144,7 @@ function SuburbSearchSelect({ value, onChange, suburbs, hasError }) {
                                     inputRef.current?.blur();
                                 }}
                             >
-                                {s}
+                                {resolveListLabel(s, labelMap)}
                             </li>
                         ))
                     )}
@@ -138,8 +161,10 @@ export default function DeliveryForm({
     onGetDays,
     fieldErrors = {},
     deliverySuburbs = [],
+    deliveryStateOptions = [],
 }) {
     const useSuburbList = Array.isArray(deliverySuburbs) && deliverySuburbs.length > 0;
+    const useStatePicklist = Array.isArray(deliveryStateOptions) && deliveryStateOptions.length > 0;
 
     return (
         <div className="wpd-delivery-form">
@@ -168,6 +193,7 @@ export default function DeliveryForm({
                             onChange={(v) => onChange('suburb', v)}
                             suburbs={deliverySuburbs}
                             hasError={!!fieldErrors.suburb}
+                            placeholder={__('Search or select suburb', 'eux-pickup-delivery')}
                         />
                     ) : (
                         <input
@@ -181,13 +207,31 @@ export default function DeliveryForm({
                 </div>
                 <div className="wpd-form-group">
                     <label>{__('State', 'eux-pickup-delivery')} *</label>
-                    <select value={form.state} onChange={(e) => onChange('state', e.target.value)}>
-                        {Object.entries(states || {}).map(([code, name]) => (
-                            <option key={code} value={code}>
-                                {name}
+                    {useStatePicklist ? (
+                        <SuburbSearchSelect
+                            value={form.state}
+                            onChange={(v) => onChange('state', v)}
+                            suburbs={deliveryStateOptions}
+                            labelMap={states}
+                            hasError={!!fieldErrors.state}
+                            placeholder={__('Search or select state', 'eux-pickup-delivery')}
+                        />
+                    ) : (
+                        <select
+                            value={form.state}
+                            onChange={(e) => onChange('state', e.target.value)}
+                            className={fieldErrors.state ? 'wpd-field-error' : ''}
+                        >
+                            <option value="">
+                                {__('Select a state', 'eux-pickup-delivery')}
                             </option>
-                        ))}
-                    </select>
+                            {Object.entries(states || {}).map(([code, name]) => (
+                                <option key={code} value={code}>
+                                    {name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
                 </div>
                 <div className="wpd-form-group">
                     <label>{__('Postcode', 'eux-pickup-delivery')} *</label>

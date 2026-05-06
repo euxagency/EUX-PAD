@@ -15,7 +15,7 @@
  * Plugin Name:             EUX Pickup & Delivery
  * Plugin URI:              https://eux.com.au/product/improved-delivery-and-pick-up-for-woocommerce/
  * Description:             Enhance your WooCommerce store with a Pickup & Delivery system for your customers.
- * Version:                 1.0.1
+ * Version:                 1.0.2
  * Requires at least:       5.0
  * Requires PHP:            7.4
  * Tested up to:            6.9
@@ -35,11 +35,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Define plugin constants
-define( 'WPD_VERSION', '1.0.1' );
-define( 'WPD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'WPD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'WPD_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+// Define plugin constants (unique prefix for WordPress.org).
+define( 'EUXPIDE_VERSION', '1.0.2' );
+define( 'EUXPIDE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'EUXPIDE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'EUXPIDE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 
 add_action(
@@ -117,9 +117,6 @@ class EUXPIDE_PickupDelivery {
 	 * Initialize plugin
 	 */
 	public function init() {
-		// Load text domain
-		load_plugin_textdomain( 'eux-pickup-delivery', false, dirname( WPD_PLUGIN_BASENAME ) . '/languages' );
-
 		// Include required files
 		$this->includes();
 
@@ -131,15 +128,15 @@ class EUXPIDE_PickupDelivery {
 	 * Include required files
 	 */
 	private function includes() {
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-page-manager.php';
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-cart-redirect.php';
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-checkout-handler.php';
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-order-meta.php';
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-admin.php';
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-settings.php';
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-rules.php';
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-frontend.php';
-		require_once WPD_PLUGIN_DIR . 'includes/class-wpd-api.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-page-manager.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-cart-redirect.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-checkout-handler.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-order-meta.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-admin.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-settings.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-rules.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-frontend.php';
+		require_once EUXPIDE_PLUGIN_DIR . 'includes/class-wpd-api.php';
 	}
 
 	/**
@@ -147,13 +144,13 @@ class EUXPIDE_PickupDelivery {
 	 */
 	private function init_hooks() {
 		// Initialize classes
-		WPD_Page_Manager::get_instance();
-		WPD_Cart_Redirect::get_instance();
-		WPD_Checkout_Handler::get_instance();
-		WPD_Order_Meta::get_instance();
-		WPD_Admin::get_instance();
-		WPD_Settings::get_instance();
-		WPD_Frontend::get_instance();
+		EUXPIDE_Page_Manager::get_instance();
+		EUXPIDE_Cart_Redirect::get_instance();
+		EUXPIDE_Checkout_Handler::get_instance();
+		EUXPIDE_Order_Meta::get_instance();
+		EUXPIDE_Admin::get_instance();
+		EUXPIDE_Settings::get_instance();
+		EUXPIDE_Frontend::get_instance();
 	}
 
 	/**
@@ -172,7 +169,7 @@ class EUXPIDE_PickupDelivery {
 	 */
 	private function create_pad_page() {
 		// Check if page already exists
-		$pad_page_id = get_option( 'wpd_pad_page_id' );
+		$pad_page_id = get_option( 'euxpide_pad_page_id' );
 
 		if ( $pad_page_id && get_post( $pad_page_id ) ) {
 			return;
@@ -182,7 +179,7 @@ class EUXPIDE_PickupDelivery {
 		$page_data = array(
 			'post_title'     => 'PAD',
 			'post_name'      => 'pad',
-			'post_content'   => '[wpd_pickup_delivery]',
+			'post_content'   => '[euxpide_pickup_delivery]',
 			'post_status'    => 'publish',
 			'post_type'      => 'page',
 			'post_author'    => get_current_user_id(),
@@ -193,7 +190,7 @@ class EUXPIDE_PickupDelivery {
 		$page_id = wp_insert_post( $page_data );
 
 		if ( $page_id && ! is_wp_error( $page_id ) ) {
-			update_option( 'wpd_pad_page_id', $page_id );
+			update_option( 'euxpide_pad_page_id', $page_id );
 		}
 	}
 

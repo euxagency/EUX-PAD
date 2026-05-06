@@ -151,7 +151,7 @@ function toHex8String(parsed) {
 }
 
 function colorHelpImageUrl(filename) {
-    const base = typeof window !== 'undefined' ? window.wpdAdmin?.colorHelpImageBase : '';
+    const base = typeof window !== 'undefined' ? window.euxpideAdmin?.colorHelpImageBase : '';
     if (!base || !filename) {
         return '';
     }
@@ -353,7 +353,7 @@ export default function GlobalSettings() {
         setLoading(true);
         setNotice(null);
         try {
-            const res = await apiFetch({ path: '/wpd/v1/settings/global' });
+            const res = await apiFetch({ path: '/euxpide/v1/settings/global' });
             if (res?.success && res?.data) {
                 setSettings(res.data);
             }
@@ -368,7 +368,7 @@ export default function GlobalSettings() {
         setApiDefaults();
         setPadStatusLoading(true);
         try {
-            const res = await apiFetch({ path: '/wpd/v1/pad-page' });
+            const res = await apiFetch({ path: '/euxpide/v1/pad-page' });
             if (res?.success && res?.data) {
                 setPadStatus(res.data);
             }
@@ -409,7 +409,7 @@ export default function GlobalSettings() {
         setNotice(null);
         try {
             const res = await apiFetch({
-                path: '/wpd/v1/settings/global',
+                path: '/euxpide/v1/settings/global',
                 method: 'POST',
                 data: settings,
             });
@@ -431,7 +431,7 @@ export default function GlobalSettings() {
         setEnsuringPad(true);
         try {
             const res = await apiFetch({
-                path: '/wpd/v1/pad-page/ensure',
+                path: '/euxpide/v1/pad-page/ensure',
                 method: 'POST',
             });
             if (res?.success && res?.data) {
@@ -470,7 +470,7 @@ export default function GlobalSettings() {
         setNotice(null);
         try {
             const res = await apiFetch({
-                path: '/wpd/v1/settings/global/reset',
+                path: '/euxpide/v1/settings/global/reset',
                 method: 'POST',
             });
             if (res?.success) {

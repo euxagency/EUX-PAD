@@ -7,11 +7,11 @@ import RulesPage from './components/RulesPage';
 import './css/wpd-admin-app.css';
 
 function mountAdminApp() {
-    const globalEl = document.getElementById('wpd-admin-global-settings');
-    const pickupEl = document.getElementById('wpd-admin-pickup-settings');
-    const deliveryEl = document.getElementById('wpd-admin-delivery-settings');
-    const rulesEl = document.getElementById('wpd-admin-rules');
-    const appEl = document.getElementById('wpd-admin-app');
+    const globalEl = document.getElementById('euxpide-admin-global-settings');
+    const pickupEl = document.getElementById('euxpide-admin-pickup-settings');
+    const deliveryEl = document.getElementById('euxpide-admin-delivery-settings');
+    const rulesEl = document.getElementById('euxpide-admin-rules');
+    const appEl = document.getElementById('euxpide-admin-app');
 
     if (globalEl) {
         render(<GlobalSettings />, globalEl);
@@ -30,14 +30,14 @@ function mountAdminApp() {
         return;
     }
 
-    // Single container: mount by page slug from PHP (`wpdAdmin.pageSlug`).
+    // Single container: mount by page slug from PHP (`euxpideAdmin.pageSlug`).
     if (appEl) {
-        const slug = (window.wpdAdmin && window.wpdAdmin.pageSlug) || '';
-        if (slug === 'wpd-pickup-setting') {
+        const slug = (window.euxpideAdmin && window.euxpideAdmin.pageSlug) || '';
+        if (slug === 'euxpide-pickup-setting') {
             render(<PickupSettings />, appEl);
-        } else if (slug === 'wpd-delivery-setting') {
+        } else if (slug === 'euxpide-delivery-setting') {
             render(<DeliverySettings />, appEl);
-        } else if (slug === 'wpd-rules') {
+        } else if (slug === 'euxpide-rules') {
             render(<RulesPage />, appEl);
         } else {
             render(<GlobalSettings />, appEl);

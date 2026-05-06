@@ -5,7 +5,7 @@
 	'use strict';
 
 	$(function () {
-		$('#wpd-copy-shipping').on('click', function (e) {
+		$('#euxpide-copy-shipping').on('click', function (e) {
 			e.preventDefault();
 			var fieldMapping = {
 				shipping_first_name: 'billing_first_name',
@@ -26,7 +26,7 @@
 					$billingInput.val(value).trigger('change');
 				}
 			});
-			$('.wpd-copy-success').fadeIn().delay(2000).fadeOut();
+			$('.euxpide-copy-success').fadeIn().delay(2000).fadeOut();
 			$('body').trigger('update_checkout');
 		});
 	});

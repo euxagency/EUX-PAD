@@ -3,7 +3,7 @@ Contributors: eux, euxdigital
 Tags: woocommerce, pickup, delivery, checkout, scheduling
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -142,6 +142,10 @@ If the session has expired (older than 5 minutes) or the customer tried to reach
 The uninstall script removes the auto-created PAD page and deletes the four settings options (`wpd_global_settings`, `wpd_pickup_settings`, `wpd_delivery_settings`, `wpd_rules`). Order meta saved against existing orders is preserved.
 
 == Changelog ==
+
+
+= 1.0.2 =
+* Nomenclature change
 
 = 1.0.1 =
 * WordPress.org compliance: unique main class name, text domain aligned with plugin slug, no trialware rule locks, no raw inline script/style in flagged locations, readme external-services documentation for optional map embeds, contributor list.

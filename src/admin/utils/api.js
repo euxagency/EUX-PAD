@@ -1,6 +1,6 @@
 /**
  * Shared API helpers for admin screens.
- * Uses wp.apiFetch with REST nonce from wpdAdmin.
+ * Uses wp.apiFetch with REST nonce from euxpideAdmin.
  */
 
 const apiFetch = window.wp?.apiFetch;
@@ -11,7 +11,7 @@ const apiFetch = window.wp?.apiFetch;
  */
 export function setApiDefaults() {
     if (!apiFetch) return;
-    const nonce = window.wpdAdmin?.nonce;
+    const nonce = window.euxpideAdmin?.nonce;
     if (!nonce) return;
     apiFetch.use(apiFetch.createNonceMiddleware(nonce));
 }

@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class WPD_Page_Manager {
+class EUXPIDE_Page_Manager {
 
 	/**
 	 * Single instance
@@ -30,7 +30,7 @@ class WPD_Page_Manager {
 	 * Constructor
 	 */
 	private function __construct() {
-		add_shortcode( 'wpd_pickup_delivery', array( $this, 'render_pad_page' ) );
+		add_shortcode( 'euxpide_pickup_delivery', array( $this, 'render_pad_page' ) );
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_checkout_progress_script' ), 25 );
 	}
@@ -39,18 +39,18 @@ class WPD_Page_Manager {
 	 * Checkout progress step indicator (cart → PAD → checkout → complete).
 	 */
 	public function enqueue_checkout_progress_script() {
-		if ( class_exists( 'WPD_Settings' ) && ! WPD_Settings::get_instance()->is_checkout_progress_bar_enabled() ) {
+		if ( class_exists( 'EUXPIDE_Settings' ) && ! EUXPIDE_Settings::get_instance()->is_checkout_progress_bar_enabled() ) {
 			return;
 		}
 
-		$pad_page_id = (int) get_option( 'wpd_pad_page_id', 0 );
+		$pad_page_id = (int) get_option( 'euxpide_pad_page_id', 0 );
 		if ( ! is_cart() && ! is_checkout() && ! is_page( $pad_page_id ) ) {
 			return;
 		}
 
 		$pad_step_enabled = true;
-		if ( class_exists( 'WPD_Settings' ) ) {
-			$pad_step_enabled = WPD_Settings::get_instance()->is_pad_step_enabled();
+		if ( class_exists( 'EUXPIDE_Settings' ) ) {
+			$pad_step_enabled = EUXPIDE_Settings::get_instance()->is_pad_step_enabled();
 		}
 
 		$current_page = 'cart';
@@ -62,22 +62,22 @@ class WPD_Page_Manager {
 			$current_page = 'complete';
 		}
 
-		$script_path = WPD_PLUGIN_DIR . 'assets/js/wpd-checkout-progress.js';
+		$script_path = EUXPIDE_PLUGIN_DIR . 'assets/js/wpd-checkout-progress.js';
 		if ( ! file_exists( $script_path ) ) {
 			return;
 		}
 
 		wp_enqueue_script(
-			'wpd-checkout-progress',
-			WPD_PLUGIN_URL . 'assets/js/wpd-checkout-progress.js',
+			'euxpide-checkout-progress',
+			EUXPIDE_PLUGIN_URL . 'assets/js/wpd-checkout-progress.js',
 			array( 'jquery' ),
 			(string) filemtime( $script_path ),
 			true
 		);
 
 		wp_localize_script(
-			'wpd-checkout-progress',
-			'wpdCheckoutProgress',
+			'euxpide-checkout-progress',
+			'euxpideCheckoutProgress',
 			array(
 				'currentPage'    => $current_page,
 				'padStepEnabled' => (bool) $pad_step_enabled,
@@ -92,7 +92,7 @@ class WPD_Page_Manager {
 	 * Get PAD page ID
 	 */
 	public static function get_pad_page_id() {
-		return get_option( 'wpd_pad_page_id', 0 );
+		return get_option( 'euxpide_pad_page_id', 0 );
 	}
 
 	/**
@@ -122,7 +122,7 @@ class WPD_Page_Manager {
 		}
 
 		// If both pickup and delivery are disabled, skip PAD page entirely.
-		if ( class_exists( 'WPD_Settings' ) && ! WPD_Settings::get_instance()->is_pad_step_enabled() ) {
+		if ( class_exists( 'EUXPIDE_Settings' ) && ! EUXPIDE_Settings::get_instance()->is_pad_step_enabled() ) {
 			wp_safe_redirect( wc_get_checkout_url() );
 			exit;
 		}
@@ -136,7 +136,7 @@ class WPD_Page_Manager {
 		ob_start();
 
 		// Include template
-		include WPD_PLUGIN_DIR . 'templates/pad-page.php';
+		include EUXPIDE_PLUGIN_DIR . 'templates/pad-page.php';
 
 		return ob_get_clean();
 	}

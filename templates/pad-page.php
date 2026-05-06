@@ -10,6 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 
-<div class="wpd-pad-container">
-	<div id="wpd-pad-app" class="wpd-app"></div>
+<div class="euxpide-pad-container">
+	<div id="euxpide-pad-app" class="euxpide-app"></div>
 </div>

@@ -11,7 +11,7 @@ import DateSelection from './DateSelection/DateSelection';
 import DeliveryIcon from './icons/DeliveryIcon';
 import PickupIcon from './icons/PickupIcon';
 
-const wpdData = typeof window !== 'undefined' ? window.wpdData || {} : {};
+const wpdData = typeof window !== 'undefined' ? window.euxpideData || {} : {};
 
 /** Prefer first non-whitespace string (handles `''` unlike `??`). */
 function wpdFirstNonEmpty(...vals) {
@@ -87,21 +87,37 @@ export default function PADApp() {
     const [timeSlots, setTimeSlots] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
 
+    const storeCountryStates = useMemo(() => {
+        const a = wpdData.storeCountryStates;
+        const b = wpdData.australianStates;
+        if (a && typeof a === 'object' && !Array.isArray(a)) {
+            return a;
+        }
+        if (b && typeof b === 'object' && !Array.isArray(b)) {
+            return b;
+        }
+        return {};
+    }, []);
     const [deliveryForm, setDeliveryForm] = useState({
         streetAddress: '',
         streetAddressBackend: '',
         suburb: '',
-        state: 'NSW',
+        state: '',
         postcode: '',
         instructions: '',
     });
 
     const storeAddress = wpdData.storeAddress || {};
     const pickupSettings = wpdData.pickupSettings || {};
-    const australianStates = wpdData.australianStates || {};
+    const australianStates = storeCountryStates;
     const customerAddress = wpdData.customerAddress || {};
     const deliverySuburbs = useMemo(
         () => (Array.isArray(wpdData.deliverySuburbs) ? wpdData.deliverySuburbs : []),
+        []
+    );
+    const restrictDeliveryStates = !!wpdData.restrictDeliveryStates;
+    const deliveryStateOptions = useMemo(
+        () => (Array.isArray(wpdData.deliveryStates) ? wpdData.deliveryStates : []),
         []
     );
 
@@ -202,7 +218,7 @@ export default function PADApp() {
         setAvailableDates([]);
         try {
             const formData = new FormData();
-            formData.append('action', 'wpd_calculate_shipping');
+            formData.append('action', 'euxpide_calculate_shipping');
             formData.append('nonce', wpdData.nonce);
             formData.append('type', 'pickup');
 
@@ -213,10 +229,10 @@ export default function PADApp() {
                 const shippingMethod = data.data.shipping_method;
                 setSelectedShippingMethod(shippingMethod.id);
                 setPickupShippingMethod(shippingMethod);
-                window.wpdShippingMethod = shippingMethod;
+                window.euxpideShippingMethod = shippingMethod;
 
                 const datesFormData = new FormData();
-                datesFormData.append('action', 'wpd_get_pickup_dates');
+                datesFormData.append('action', 'euxpide_get_pickup_dates');
                 datesFormData.append('nonce', wpdData.nonce);
                 if (multiPickupStores.length > 0 && selectedPickupStoreId) {
                     datesFormData.append('pickup_store_id', String(selectedPickupStoreId));
@@ -250,7 +266,7 @@ export default function PADApp() {
                         });
                         dateSlotsMap[dateObj.date] = slotsObject;
                     });
-                    window.wpdDateTimeSlots = dateSlotsMap;
+                    window.euxpideDateTimeSlots = dateSlotsMap;
                     setAvailableDates(transformedDates);
                 } else {
                     setNotice({ type: 'error', message: datesData.data?.message || __('Unable to load pickup dates', 'eux-pickup-delivery') });
@@ -282,11 +298,23 @@ export default function PADApp() {
                 const hit = deliverySuburbs.find((s) => wpdNormSuburb(s) === wpdNormSuburb(rawSub));
                 suburb = hit !== undefined ? hit : '';
             }
+            const rawSt = customerAddress.state || '';
+            const stateKeys = Object.keys(storeCountryStates || {});
+            let stateVal = '';
+            if (String(rawSt).trim()) {
+                if (restrictDeliveryStates && deliveryStateOptions.length > 0) {
+                    const stHit = deliveryStateOptions.find((s) => wpdNormSuburb(s) === wpdNormSuburb(rawSt));
+                    stateVal = stHit !== undefined ? stHit : '';
+                } else if (stateKeys.length > 0) {
+                    const hitKey = stateKeys.find((k) => wpdNormSuburb(k) === wpdNormSuburb(rawSt));
+                    stateVal = hitKey !== undefined ? hitKey : '';
+                }
+            }
             setDeliveryForm((prev) => ({
                 ...prev,
                 streetAddress: customerAddress.street_address || '',
                 suburb,
-                state: customerAddress.state || 'NSW',
+                state: stateVal,
                 postcode: customerAddress.postcode || '',
             }));
         }
@@ -331,6 +359,21 @@ export default function PADApp() {
             errors.suburb = true;
         }
         if (!deliveryForm.postcode.trim()) errors.postcode = true;
+        const st = String(deliveryForm.state || '').trim();
+        if (!st) {
+            errors.state = true;
+        } else if (
+            restrictDeliveryStates &&
+            deliveryStateOptions.length > 0 &&
+            !deliveryStateOptions.some((s) => wpdNormSuburb(s) === wpdNormSuburb(st))
+        ) {
+            errors.state = true;
+        } else if (
+            Object.keys(storeCountryStates).length > 0 &&
+            !Object.prototype.hasOwnProperty.call(storeCountryStates, st)
+        ) {
+            errors.state = true;
+        }
         setFieldErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -348,7 +391,7 @@ export default function PADApp() {
         try {
             const streetForAPI = deliveryForm.streetAddressBackend || deliveryForm.streetAddress;
             const formData = new FormData();
-            formData.append('action', 'wpd_calculate_shipping');
+            formData.append('action', 'euxpide_calculate_shipping');
             formData.append('nonce', wpdData.nonce);
             formData.append('type', 'delivery');
             formData.append('street_address', streetForAPI);
@@ -360,9 +403,9 @@ export default function PADApp() {
             const data = await response.json();
 
             if (data.success && data.data.shipping_methods) {
-                window.wpdShippingMethods = data.data.shipping_methods;
+                window.euxpideShippingMethods = data.data.shipping_methods;
                 const datesFormData = new FormData();
-                datesFormData.append('action', 'wpd_get_delivery_dates');
+                datesFormData.append('action', 'euxpide_get_delivery_dates');
                 datesFormData.append('nonce', wpdData.nonce);
                 datesFormData.append('street_address', streetForAPI);
                 datesFormData.append('suburb', deliveryForm.suburb);
@@ -435,8 +478,8 @@ export default function PADApp() {
         setSelectedTimeSlot(null);
         if (activeTab === 'pickup') {
             setTimeSlotsLoading(true);
-            if (window.wpdDateTimeSlots && window.wpdDateTimeSlots[date.date]) {
-                setTimeSlots(window.wpdDateTimeSlots[date.date]);
+            if (window.euxpideDateTimeSlots && window.euxpideDateTimeSlots[date.date]) {
+                setTimeSlots(window.euxpideDateTimeSlots[date.date]);
             } else {
                 setTimeSlots({});
             }
@@ -475,7 +518,7 @@ export default function PADApp() {
         setNotice(null);
         try {
             const formData = new FormData();
-            formData.append('action', 'wpd_save_selection');
+            formData.append('action', 'euxpide_save_selection');
             formData.append('nonce', wpdData.nonce);
             formData.append('type', activeTab);
             // Use machine-readable Y-m-d so server stores consistent _wpd_date meta.
@@ -516,7 +559,7 @@ export default function PADApp() {
 
     return (
         <div
-            className="wpd-app"
+            className="euxpide-app"
             style={{
                 '--wpd-tab-hover-bg': globalSettings.colors?.tab_hover_bg,
                 '--wpd-tab-selected-bg': globalSettings.colors?.tab_selected_bg,
@@ -575,6 +618,7 @@ export default function PADApp() {
                         onGetDays={handleGetDeliveryDays}
                         fieldErrors={fieldErrors}
                         deliverySuburbs={deliverySuburbs}
+                        deliveryStateOptions={deliveryStateOptions}
                     />
                 ) : (
                     <div className="wpd-pickup-main">
@@ -622,7 +666,7 @@ export default function PADApp() {
                                                 <input
                                                     className="wpd-pickup-store-card__radio"
                                                     type="radio"
-                                                    name="wpd_pickup_store"
+                                                    name="euxpide_pickup_store"
                                                     checked={selected}
                                                     onChange={() => {
                                                         selectThisStore();
@@ -651,18 +695,17 @@ export default function PADApp() {
                                                 </button>
                                             </div>
 
-                                            {expanded ? (
-                                                <div
-                                                    className="wpd-pickup-store-card__details"
-                                                    id={`wpd-pickup-store-details-${sid}`}
-                                                >
-                                                    <StoreInfo
-                                                        address={storeAddress}
-                                                        pickupSettings={pickupSettingsForStore(s)}
-                                                        heading={headingForStore}
-                                                    />
-                                                </div>
-                                            ) : null}
+                                            <div
+                                                className={`wpd-pickup-store-card__details${expanded ? ' is-open' : ''}`}
+                                                id={`wpd-pickup-store-details-${sid}`}
+                                                aria-hidden={expanded ? undefined : true}
+                                            >
+                                                <StoreInfo
+                                                    address={storeAddress}
+                                                    pickupSettings={pickupSettingsForStore(s)}
+                                                    heading={headingForStore}
+                                                />
+                                            </div>
                                         </div>
                                     );
                                 })}

@@ -503,25 +503,64 @@ video {
    ------------------------------------------------------------------------- */
 
 /* Day selector background (default state) */
-.wpd-app .wpd-date-box {
+.euxpide-app .wpd-date-box {
     background: var(--wpd-day-selector-bg, #FFF) !important;
 }
 
 /* Day selector background (selected state) */
-.wpd-app .wpd-date-box.selected {
+.euxpide-app .wpd-date-box.selected {
     background: var(--wpd-day-selector-bg-selected, #000) !important;
 }
 
 /* Day selector hover should match selected styles */
-.wpd-app .wpd-date-box:hover {
+.euxpide-app .wpd-date-box:hover {
     background: var(--wpd-day-selector-bg-selected, #000) !important;
     color: var(--wpd-day-name-selected, #FFF) !important;
 }
 
 /* Time selector selected + hover colors */
-.wpd-app .wpd-time-slot:hover,
-.wpd-app .wpd-time-slot.selected {
+.euxpide-app .wpd-time-slot:hover,
+.euxpide-app .wpd-time-slot.selected {
     background: var(--wpd-time-bg-selected, #000) !important;
     color: var(--wpd-time-text-selected, #FFF) !important;
+}
+
+/* Time buttons font size */
+.euxpide-app .wpd-time-slot {
+    font-size: 14px !important;
+}
+
+/* Multi-store accordion: smooth open/close */
+.euxpide-app .wpd-pickup-store-card__details {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 320ms cubic-bezier(0.4, 0, 0.2, 1), opacity 220ms ease;
+    will-change: max-height, opacity;
+}
+
+.euxpide-app .wpd-pickup-store-card.is-expanded .wpd-pickup-store-card__details,
+.euxpide-app .wpd-pickup-store-card__details.is-open {
+    max-height: 2000px;
+    opacity: 1;
+}
+
+/* Store details: match header font + square corners */
+.euxpide-app .wpd-pickup-store-card__details .wpd-store-address-text,
+.euxpide-app .wpd-pickup-store-card__details .wpd-store-detail-label,
+.euxpide-app .wpd-pickup-store-card__details .wpd-store-detail-value {
+    font-family: inherit !important;
+}
+
+.euxpide-app .wpd-pickup-store-card__details .wpd-store-info h3,
+.euxpide-app .wpd-pickup-store-card__details .wpd-store-details {
+    border-radius: 0 !important;
+}
+
+/* Remove extra spacing around/below Google maps */
+.euxpide-app .wpd-store-map {
+    height: auto !important;
+    margin-top: 12px !important;
+    margin-bottom: 0 !important;
 }
 

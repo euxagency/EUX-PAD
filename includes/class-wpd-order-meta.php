@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class WPD_Order_Meta {
+class EUXPIDE_Order_Meta {
 
 	/**
 	 * Single instance
@@ -74,8 +74,8 @@ class WPD_Order_Meta {
 
 		// Add columns in My Account > Orders list.
 		add_filter( 'woocommerce_my_account_my_orders_columns', array( $this, 'add_my_account_order_columns' ), 20 );
-		add_action( 'woocommerce_my_account_my_orders_column_wpd_type', array( $this, 'render_my_account_type_column' ) );
-		add_action( 'woocommerce_my_account_my_orders_column_wpd_date', array( $this, 'render_my_account_date_column' ) );
+		add_action( 'woocommerce_my_account_my_orders_column_euxpide_type', array( $this, 'render_my_account_type_column' ) );
+		add_action( 'woocommerce_my_account_my_orders_column_euxpide_date', array( $this, 'render_my_account_date_column' ) );
 
 		add_action( 'woocommerce_before_checkout_billing_form', array( $this, 'add_copy_shipping_button' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_copy_shipping_assets' ), 20 );
@@ -99,24 +99,24 @@ class WPD_Order_Meta {
 		if ( ! function_exists( 'WC' ) || ! WC()->session ) {
 			return;
 		}
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 		if ( empty( $selection ) || ! isset( $selection['type'] ) || 'delivery' !== $selection['type'] ) {
 			return;
 		}
-		$css_path = WPD_PLUGIN_DIR . 'assets/css/wpd-copy-shipping.css';
-		$js_path  = WPD_PLUGIN_DIR . 'assets/js/wpd-copy-shipping.js';
+		$css_path = EUXPIDE_PLUGIN_DIR . 'assets/css/wpd-copy-shipping.css';
+		$js_path  = EUXPIDE_PLUGIN_DIR . 'assets/js/wpd-copy-shipping.js';
 		if ( file_exists( $css_path ) ) {
 			wp_enqueue_style(
-				'wpd-copy-shipping',
-				WPD_PLUGIN_URL . 'assets/css/wpd-copy-shipping.css',
+				'euxpide-copy-shipping',
+				EUXPIDE_PLUGIN_URL . 'assets/css/wpd-copy-shipping.css',
 				array(),
 				(string) filemtime( $css_path )
 			);
 		}
 		if ( file_exists( $js_path ) ) {
 			wp_enqueue_script(
-				'wpd-copy-shipping',
-				WPD_PLUGIN_URL . 'assets/js/wpd-copy-shipping.js',
+				'euxpide-copy-shipping',
+				EUXPIDE_PLUGIN_URL . 'assets/js/wpd-copy-shipping.js',
 				array( 'jquery' ),
 				(string) filemtime( $js_path ),
 				true
@@ -136,13 +136,13 @@ class WPD_Order_Meta {
 		if ( ! in_array( $screen->id, $allowed, true ) ) {
 			return;
 		}
-		$path = WPD_PLUGIN_DIR . 'assets/js/wpd-admin-order-pad.js';
+		$path = EUXPIDE_PLUGIN_DIR . 'assets/js/wpd-admin-order-pad.js';
 		if ( ! file_exists( $path ) ) {
 			return;
 		}
 		wp_enqueue_script(
-			'wpd-admin-order-pad',
-			WPD_PLUGIN_URL . 'assets/js/wpd-admin-order-pad.js',
+			'euxpide-admin-order-pad',
+			EUXPIDE_PLUGIN_URL . 'assets/js/wpd-admin-order-pad.js',
 			array(),
 			(string) filemtime( $path ),
 			true
@@ -236,7 +236,7 @@ class WPD_Order_Meta {
 			$data['meta_data'] = array();
 		}
 
-		$keys = apply_filters( 'wpd_rest_order_meta_keys', $this->get_pad_order_meta_keys() );
+		$keys = apply_filters( 'euxpide_rest_order_meta_keys', $this->get_pad_order_meta_keys() );
 
 		foreach ( $keys as $key ) {
 			$value = $order->get_meta( $key, true );
@@ -274,8 +274,8 @@ class WPD_Order_Meta {
 		foreach ( $columns as $key => $label ) {
 			$new[ $key ] = $label;
 			if ( 'order_status' === $key ) {
-				$new['wpd_type'] = __( 'Type', 'eux-pickup-delivery' );
-				$new['wpd_date'] = __( 'Shipping/Pickup Date', 'eux-pickup-delivery' );
+				$new['euxpide_type'] = __( 'Type', 'eux-pickup-delivery' );
+				$new['euxpide_date'] = __( 'Shipping/Pickup Date', 'eux-pickup-delivery' );
 			}
 		}
 		return $new;
@@ -285,7 +285,7 @@ class WPD_Order_Meta {
 	 * Render admin order list columns (legacy post list table).
 	 */
 	public function render_admin_order_columns( $column, $post_id ) {
-		if ( 'wpd_type' === $column ) {
+		if ( 'euxpide_type' === $column ) {
 			$order = function_exists( 'wc_get_order' ) ? wc_get_order( $post_id ) : null;
 			$type  = $order ? (string) $order->get_meta( '_wpd_type', true ) : (string) get_post_meta( $post_id, '_wpd_type', true );
 			if ( $type ) {
@@ -297,7 +297,7 @@ class WPD_Order_Meta {
 				echo '<mark class="order-status ' . esc_attr( $status_class ) . '"><span>' . esc_html( $label ) . '</span></mark>';
 			}
 		}
-		if ( 'wpd_date' === $column ) {
+		if ( 'euxpide_date' === $column ) {
 			$order = function_exists( 'wc_get_order' ) ? wc_get_order( $post_id ) : null;
 			if ( $order ) {
 				$type = (string) $order->get_meta( '_wpd_type', true );
@@ -324,7 +324,7 @@ class WPD_Order_Meta {
 			return;
 		}
 		$order_id = $order->get_id();
-		if ( 'wpd_type' === $column ) {
+		if ( 'euxpide_type' === $column ) {
 			$type = (string) $order->get_meta( '_wpd_type', true );
 			if ( $type ) {
 				$label        = ucfirst( $type );
@@ -335,7 +335,7 @@ class WPD_Order_Meta {
 				echo '<mark class="order-status ' . esc_attr( $status_class ) . '"><span>' . esc_html( $label ) . '</span></mark>';
 			}
 		}
-		if ( 'wpd_date' === $column ) {
+		if ( 'euxpide_date' === $column ) {
 			$type = (string) $order->get_meta( '_wpd_type', true );
 			$date = (string) $order->get_meta( '_wpd_date', true );
 			$slot = (string) $order->get_meta( '_wpd_time_slot', true );
@@ -355,14 +355,14 @@ class WPD_Order_Meta {
 		foreach ( $columns as $key => $label ) {
 			$new[ $key ] = $label;
 			if ( 'order-status' === $key || 'order-status' === str_replace( '_', '-', $key ) ) {
-				$new['wpd_type'] = __( 'Type', 'eux-pickup-delivery' );
-				$new['wpd_date'] = __( 'Shipping/Pickup Date', 'eux-pickup-delivery' );
+				$new['euxpide_type'] = __( 'Type', 'eux-pickup-delivery' );
+				$new['euxpide_date'] = __( 'Shipping/Pickup Date', 'eux-pickup-delivery' );
 			}
 		}
 		// Fallback: if no status key matched, append.
-		if ( ! isset( $new['wpd_type'] ) ) {
-			$new['wpd_type'] = __( 'Type', 'eux-pickup-delivery' );
-			$new['wpd_date'] = __( 'Shipping/Pickup Date', 'eux-pickup-delivery' );
+		if ( ! isset( $new['euxpide_type'] ) ) {
+			$new['euxpide_type'] = __( 'Type', 'eux-pickup-delivery' );
+			$new['euxpide_date'] = __( 'Shipping/Pickup Date', 'eux-pickup-delivery' );
 		}
 		return $new;
 	}
@@ -392,7 +392,7 @@ class WPD_Order_Meta {
 	 * Force our chosen shipping method
 	 */
 	public function force_chosen_shipping_method( $chosen_method, $rates, $package_key ) {
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( ! empty( $selection ) && ! empty( $selection['shipping_method'] ) ) {
 			// Check if our method exists in available rates
@@ -408,7 +408,7 @@ class WPD_Order_Meta {
 	 * Check "ship to different address" checkbox for delivery orders
 	 */
 	public function check_ship_to_different_for_delivery( $checked ) {
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		// For delivery orders, check the box by default
 		if ( ! empty( $selection ) && 'delivery' === $selection['type'] ) {
@@ -426,7 +426,7 @@ class WPD_Order_Meta {
 			return;
 		}
 
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( empty( $selection ) || empty( $selection['shipping_method'] ) ) {
 			return;
@@ -463,7 +463,7 @@ class WPD_Order_Meta {
 	 * Hide shipping address section for pickup orders
 	 */
 	public function maybe_hide_shipping_address( $needs_address ) {
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		// Hide shipping address for pickup orders
 		if ( ! empty( $selection ) && 'pickup' === $selection['type'] ) {
@@ -477,7 +477,7 @@ class WPD_Order_Meta {
 	 * Pre-fill shipping address on checkout page with delivery form data
 	 */
 	public function prefill_shipping_address( $value, $input ) {
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( empty( $selection ) || empty( $selection['address'] ) || ! is_array( $selection['address'] ) ) {
 			return $value;
@@ -530,7 +530,7 @@ class WPD_Order_Meta {
 			return;
 		}
 
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( empty( $selection ) || empty( $selection['shipping_method'] ) ) {
 			return;
@@ -605,7 +605,7 @@ class WPD_Order_Meta {
 	 * Display PAD details on checkout page
 	 */
 	public function display_checkout_details() {
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( empty( $selection ) ) {
 			return;
@@ -661,7 +661,7 @@ class WPD_Order_Meta {
 	 * Update shipping address with delivery form data
 	 */
 	public function update_shipping_address( $order, $data ) {
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( empty( $selection ) ) {
 			return;
@@ -706,7 +706,7 @@ class WPD_Order_Meta {
 	 * Save order meta
 	 */
 	public function save_order_meta( $order_id ) {
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( empty( $selection ) ) {
 			return;
@@ -754,7 +754,7 @@ class WPD_Order_Meta {
 		$order->save();
 
 		// Clear session
-		WC()->session->__unset( 'wpd_pad_selection' );
+		WC()->session->__unset( 'euxpide_pad_selection' );
 	}
 
 	/**
@@ -829,8 +829,8 @@ class WPD_Order_Meta {
 
 		// Type dropdown.
 		echo '<p class="form-field">';
-		echo '<label for="wpd_type"><strong>' . esc_html__( 'Type', 'eux-pickup-delivery' ) . '</strong></label> ';
-		echo '<select name="_wpd_type" id="wpd_type" class="short">';
+		echo '<label for="euxpide_type"><strong>' . esc_html__( 'Type', 'eux-pickup-delivery' ) . '</strong></label> ';
+		echo '<select name="_wpd_type" id="euxpide_type" class="short">';
 		echo '<option value="">' . esc_html__( '— Select —', 'eux-pickup-delivery' ) . '</option>';
 		echo '<option value="pickup"' . selected( $type, 'pickup', false ) . '>' . esc_html__( 'Pickup', 'eux-pickup-delivery' ) . '</option>';
 		echo '<option value="delivery"' . selected( $type, 'delivery', false ) . '>' . esc_html__( 'Delivery', 'eux-pickup-delivery' ) . '</option>';
@@ -839,8 +839,8 @@ class WPD_Order_Meta {
 
 		// Date selector.
 		echo '<p class="form-field">';
-		echo '<label for="wpd_date"><strong>' . esc_html__( 'Date', 'eux-pickup-delivery' ) . '</strong></label> ';
-		echo '<input type="date" name="_wpd_date" id="wpd_date" class="short" value="' . esc_attr( $date_value ) . '" />';
+		echo '<label for="euxpide_date"><strong>' . esc_html__( 'Date', 'eux-pickup-delivery' ) . '</strong></label> ';
+		echo '<input type="date" name="_wpd_date" id="euxpide_date" class="short" value="' . esc_attr( $date_value ) . '" />';
 		if ( ! empty( $date_raw ) && $date_raw !== $date_value ) {
 			echo '<span class="description" style="margin-left:8px;">' . sprintf(
 				/* translators: %s: previously stored date string */
@@ -855,9 +855,9 @@ class WPD_Order_Meta {
 		echo '<p class="form-field" id="' . esc_attr( $time_row_id ) . '" style="' . esc_attr( $time_row_style ) . '">';
 		echo '<label><strong>' . esc_html__( 'Time slot', 'eux-pickup-delivery' ) . '</strong></label> ';
 		echo '<span>';
-		echo '<input type="time" name="_wpd_time_from" id="wpd_time_from" class="short" value="' . esc_attr( $time_from ) . '" /> ';
+		echo '<input type="time" name="_wpd_time_from" id="euxpide_time_from" class="short" value="' . esc_attr( $time_from ) . '" /> ';
 		echo esc_html__( 'to', 'eux-pickup-delivery' ) . ' ';
-		echo '<input type="time" name="_wpd_time_to" id="wpd_time_to" class="short" value="' . esc_attr( $time_to ) . '" />';
+		echo '<input type="time" name="_wpd_time_to" id="euxpide_time_to" class="short" value="' . esc_attr( $time_to ) . '" />';
 		echo '</span>';
 		if ( ! empty( $time_slot ) ) {
 			echo '<span class="description" style="margin-left:8px;">' . sprintf(
@@ -871,12 +871,12 @@ class WPD_Order_Meta {
 		// Pickup store selector (multi-store only).
 		$store_row_style = ( 'pickup' === $type && class_exists( 'WPD_Multi_Store' ) ) ? '' : 'display:none;';
 		echo '<p class="form-field" id="' . esc_attr( $store_row_id ) . '" style="' . esc_attr( $store_row_style ) . '">';
-		echo '<label for="wpd_pickup_store_id"><strong>' . esc_html__( 'Pickup store', 'eux-pickup-delivery' ) . '</strong></label> ';
-		echo '<select name="_wpd_pickup_store_id" id="wpd_pickup_store_id" class="short">';
+		echo '<label for="euxpide_pickup_store_id"><strong>' . esc_html__( 'Pickup store', 'eux-pickup-delivery' ) . '</strong></label> ';
+		echo '<select name="_wpd_pickup_store_id" id="euxpide_pickup_store_id" class="short">';
 		echo '<option value="">' . esc_html__( '— Select —', 'eux-pickup-delivery' ) . '</option>';
 		if ( class_exists( 'WPD_Multi_Store' ) ) {
 			$current_store_id = (string) $order->get_meta( '_wpd_pickup_store_id', true );
-			$stores           = WPD_Multi_Store::sanitize_stores_list( get_option( 'wpd_multi_pickup_stores', array() ) );
+			$stores           = WPD_Multi_Store::sanitize_stores_list( get_option( 'euxpide_multi_pickup_stores', array() ) );
 			foreach ( $stores as $row ) {
 				if ( empty( $row['enabled'] ) ) {
 					continue;
@@ -1006,11 +1006,18 @@ class WPD_Order_Meta {
 
 		$date      = (string) $order->get_meta( '_wpd_date', true );
 		$time_slot = (string) $order->get_meta( '_wpd_time_slot', true );
+		$store     = (string) $order->get_meta( '_wpd_pickup_store_name', true );
+		if ( '' === $store ) {
+			$store = (string) $order->get_meta( '_wpd_pickup_store_id', true );
+		}
 
 		if ( $plain_text ) {
 			echo "\n" . esc_html( strtoupper( __( 'Pickup & Delivery Details', 'eux-pickup-delivery' ) ) ) . "\n\n";
 			echo esc_html( __( 'Type:', 'eux-pickup-delivery' ) . ' ' . ucfirst( (string) $type ) ) . "\n";
 			echo esc_html( __( 'Date:', 'eux-pickup-delivery' ) . ' ' . (string) $date ) . "\n";
+			if ( 'pickup' === $type && '' !== trim( $store ) ) {
+				echo esc_html( __( 'Pickup Store:', 'eux-pickup-delivery' ) . ' ' . (string) $store ) . "\n";
+			}
 			if ( ! empty( $time_slot ) ) {
 				echo esc_html( __( 'Time Slot:', 'eux-pickup-delivery' ) . ' ' . (string) $time_slot ) . "\n";
 			}
@@ -1018,6 +1025,9 @@ class WPD_Order_Meta {
 			echo '<h2>' . esc_html__( 'Pickup & Delivery Details', 'eux-pickup-delivery' ) . '</h2>';
 			echo '<p><strong>' . esc_html__( 'Type:', 'eux-pickup-delivery' ) . '</strong> ' . esc_html( ucfirst( $type ) ) . '</p>';
 			echo '<p><strong>' . esc_html__( 'Date:', 'eux-pickup-delivery' ) . '</strong> ' . esc_html( $date ) . '</p>';
+			if ( 'pickup' === $type && '' !== trim( $store ) ) {
+				echo '<p><strong>' . esc_html__( 'Pickup Store:', 'eux-pickup-delivery' ) . '</strong> ' . esc_html( $store ) . '</p>';
+			}
 			if ( ! empty( $time_slot ) ) {
 				echo '<p><strong>' . esc_html__( 'Time Slot:', 'eux-pickup-delivery' ) . '</strong> ' . esc_html( $time_slot ) . '</p>';
 			}
@@ -1040,6 +1050,10 @@ class WPD_Order_Meta {
 
 		$date      = (string) $order->get_meta( '_wpd_date', true );
 		$time_slot = (string) $order->get_meta( '_wpd_time_slot', true );
+		$store     = (string) $order->get_meta( '_wpd_pickup_store_name', true );
+		if ( '' === $store ) {
+			$store = (string) $order->get_meta( '_wpd_pickup_store_id', true );
+		}
 
 		echo '<section class="woocommerce-order-pad-details">';
 		echo '<h2 class="woocommerce-order-pad-details__title">' . esc_html__( 'Pickup & Delivery Details', 'eux-pickup-delivery' ) . '</h2>';
@@ -1047,6 +1061,9 @@ class WPD_Order_Meta {
 		echo '<tbody>';
 		echo '<tr><th>' . esc_html__( 'Type:', 'eux-pickup-delivery' ) . '</th><td>' . esc_html( ucfirst( $type ) ) . '</td></tr>';
 		echo '<tr><th>' . esc_html__( 'Date:', 'eux-pickup-delivery' ) . '</th><td>' . esc_html( $date ) . '</td></tr>';
+		if ( 'pickup' === $type && '' !== trim( $store ) ) {
+			echo '<tr><th>' . esc_html__( 'Pickup Store:', 'eux-pickup-delivery' ) . '</th><td>' . esc_html( $store ) . '</td></tr>';
+		}
 		if ( ! empty( $time_slot ) ) {
 			echo '<tr><th>' . esc_html__( 'Time Slot:', 'eux-pickup-delivery' ) . '</th><td>' . esc_html( $time_slot ) . '</td></tr>';
 		}
@@ -1060,16 +1077,16 @@ class WPD_Order_Meta {
 	 */
 	public function add_copy_shipping_button() {
 		// Check if this is a delivery order
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		if ( empty( $selection ) || 'delivery' !== $selection['type'] ) {
 			return; // Only show for delivery
 		}
 
 		?>
-		<div class="wpd-copy-shipping-wrapper">
-			<button type="button" id="wpd-copy-shipping" class="button wpd-copy-shipping-button">
-				<span class="wpd-copy-icon"><svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<div class="euxpide-copy-shipping-wrapper">
+			<button type="button" id="euxpide-copy-shipping" class="button euxpide-copy-shipping-button">
+				<span class="euxpide-copy-icon"><svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
 	<g clip-path="url(#clip0_1097_7649)">
 	<path d="M9.75 15.8333C10.7442 15.8321 11.6973 15.4146 12.4003 14.6726C13.1033 13.9305 13.4988 12.9244 13.5 11.875V4.94239C13.5012 4.52626 13.4241 4.11402 13.2732 3.72957C13.1223 3.34512 12.9006 2.99611 12.621 2.70276L10.9395 0.927847C10.6616 0.632693 10.331 0.398699 9.96674 0.23943C9.60252 0.0801601 9.21198 -0.00121755 8.81775 1.37668e-05H5.25C4.2558 0.00127082 3.30267 0.418712 2.59967 1.16077C1.89666 1.90283 1.50119 2.90892 1.5 3.95835V11.875C1.50119 12.9244 1.89666 13.9305 2.59967 14.6726C3.30267 15.4146 4.2558 15.8321 5.25 15.8333H9.75ZM3 11.875V3.95835C3 3.32846 3.23705 2.72437 3.65901 2.27897C4.08097 1.83357 4.65326 1.58335 5.25 1.58335C5.25 1.58335 8.93925 1.59443 9 1.60235V3.16668C9 3.58661 9.15804 3.98933 9.43934 4.28627C9.72064 4.5832 10.1022 4.75001 10.5 4.75001H11.982C11.9895 4.81414 12 11.875 12 11.875C12 12.5049 11.7629 13.109 11.341 13.5544C10.919 13.9998 10.3467 14.25 9.75 14.25H5.25C4.65326 14.25 4.08097 13.9998 3.65901 13.5544C3.23705 13.109 3 12.5049 3 11.875ZM16.5 6.33335V15.0417C16.4988 16.0911 16.1033 17.0972 15.4003 17.8393C14.6973 18.5813 13.7442 18.9988 12.75 19H6C5.80109 19 5.61032 18.9166 5.46967 18.7681C5.32902 18.6197 5.25 18.4183 5.25 18.2083C5.25 17.9984 5.32902 17.797 5.46967 17.6486C5.61032 17.5001 5.80109 17.4167 6 17.4167H12.75C13.3467 17.4167 13.919 17.1665 14.341 16.7211C14.7629 16.2757 15 15.6716 15 15.0417V6.33335C15 6.12338 15.079 5.92202 15.2197 5.77355C15.3603 5.62509 15.5511 5.54168 15.75 5.54168C15.9489 5.54168 16.1397 5.62509 16.2803 5.77355C16.421 5.92202 16.5 6.12338 16.5 6.33335Z" fill="white"/>
 	</g>
@@ -1081,7 +1098,7 @@ class WPD_Order_Meta {
 </svg></span>
 				<?php esc_html_e( 'Copy from Shipping Address', 'eux-pickup-delivery' ); ?>
 			</button>
-			<span class="wpd-copy-success">✓ <?php esc_html_e( 'Copied!', 'eux-pickup-delivery' ); ?></span>
+			<span class="euxpide-copy-success">✓ <?php esc_html_e( 'Copied!', 'eux-pickup-delivery' ); ?></span>
 		</div>
 		<?php
 	}

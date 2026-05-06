@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class WPD_Frontend {
+class EUXPIDE_Frontend {
 
 	/**
 	 * Single instance
@@ -57,7 +57,7 @@ class WPD_Frontend {
 			return;
 		}
 
-		$selection = WC()->session->get( 'wpd_pad_selection' );
+		$selection = WC()->session->get( 'euxpide_pad_selection' );
 
 		// Only hide selector if shipping method already selected
 		if ( ! empty( $selection ) && ! empty( $selection['shipping_method'] ) ) {
@@ -188,19 +188,19 @@ class WPD_Frontend {
 	 * Enqueue scripts and styles
 	 */
 	public function enqueue_scripts() {
-		$pad_page_id   = WPD_Page_Manager::get_pad_page_id();
+		$pad_page_id   = EUXPIDE_Page_Manager::get_pad_page_id();
 		$on_pad_page   = $pad_page_id && is_page( $pad_page_id );
 		$on_flow_pages = is_cart() || is_checkout() || is_order_received_page();
 
-		$show_progress = ! class_exists( 'WPD_Settings' ) || WPD_Settings::get_instance()->is_checkout_progress_bar_enabled();
+		$show_progress = ! class_exists( 'EUXPIDE_Settings' ) || EUXPIDE_Settings::get_instance()->is_checkout_progress_bar_enabled();
 
 		// Checkout step indicator (JS in class-wpd-page-manager.php) needs CSS on cart / checkout / thank-you — not only PAD.
-		$steps_css_path          = WPD_PLUGIN_DIR . 'assets/css/wpd-checkout-steps.css';
+		$steps_css_path          = EUXPIDE_PLUGIN_DIR . 'assets/css/wpd-checkout-steps.css';
 		$have_checkout_steps_css = file_exists( $steps_css_path );
 		if ( $show_progress && ( $on_pad_page || $on_flow_pages ) && $have_checkout_steps_css ) {
 			wp_enqueue_style(
-				'wpd-checkout-steps',
-				WPD_PLUGIN_URL . 'assets/css/wpd-checkout-steps.css',
+				'euxpide-checkout-steps',
+				EUXPIDE_PLUGIN_URL . 'assets/css/wpd-checkout-steps.css',
 				array(),
 				(string) filemtime( $steps_css_path )
 			);
@@ -219,57 +219,63 @@ class WPD_Frontend {
 		$pad_style_deps = array( 'wp-components' );
 		// Must match the enqueue above: only depend on wpd-checkout-steps when that handle is registered.
 		if ( $show_progress && $have_checkout_steps_css ) {
-			$pad_style_deps[] = 'wpd-checkout-steps';
+			$pad_style_deps[] = 'euxpide-checkout-steps';
 		}
 
 		wp_enqueue_style(
-			'wpd-styles',
-			WPD_PLUGIN_URL . 'assets/css/pad-styles.css',
+			'euxpide-styles',
+			EUXPIDE_PLUGIN_URL . 'assets/css/pad-styles.css',
 			$pad_style_deps,
-			file_exists( WPD_PLUGIN_DIR . 'assets/css/pad-styles.css' ) ? (string) filemtime( WPD_PLUGIN_DIR . 'assets/css/pad-styles.css' ) : ( defined( 'WPD_VERSION' ) ? WPD_VERSION : time() )
+			file_exists( EUXPIDE_PLUGIN_DIR . 'assets/css/pad-styles.css' ) ? (string) filemtime( EUXPIDE_PLUGIN_DIR . 'assets/css/pad-styles.css' ) : ( defined( 'EUXPIDE_VERSION' ) ? EUXPIDE_VERSION : time() )
 		);
-		$pad_app_css = WPD_PLUGIN_DIR . 'assets/css/pad-app.css';
+		$pad_app_css = EUXPIDE_PLUGIN_DIR . 'assets/css/pad-app.css';
 		if ( file_exists( $pad_app_css ) ) {
 			wp_enqueue_style(
-				'wpd-pad-app',
-				WPD_PLUGIN_URL . 'assets/css/pad-app.css',
-				array( 'wp-components', 'wpd-styles' ),
+				'euxpide-pad-app',
+				EUXPIDE_PLUGIN_URL . 'assets/css/pad-app.css',
+				array( 'wp-components', 'euxpide-styles' ),
 				(string) filemtime( $pad_app_css )
 			);
 		}
 
 		wp_enqueue_script(
-			'wpd-pad-app',
-			WPD_PLUGIN_URL . 'assets/js/pad-app.js',
+			'euxpide-pad-app',
+			EUXPIDE_PLUGIN_URL . 'assets/js/pad-app.js',
 			array( 'wp-element', 'wp-components', 'wp-i18n' ),
-			file_exists( WPD_PLUGIN_DIR . 'assets/js/pad-app.js' ) ? (string) filemtime( WPD_PLUGIN_DIR . 'assets/js/pad-app.js' ) : ( defined( 'WPD_VERSION' ) ? WPD_VERSION : time() ),
+			file_exists( EUXPIDE_PLUGIN_DIR . 'assets/js/pad-app.js' ) ? (string) filemtime( EUXPIDE_PLUGIN_DIR . 'assets/js/pad-app.js' ) : ( defined( 'EUXPIDE_VERSION' ) ? EUXPIDE_VERSION : time() ),
 			true
 		);
 
-		$pad_data = array(
-			'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-			'nonce'            => wp_create_nonce( 'wpd_nonce' ),
-			'checkoutUrl'      => wc_get_checkout_url(),
-			'storeAddress'     => $this->get_store_address(),
-			'australianStates' => $this->get_australian_states(),
-			'customerAddress'  => $this->get_customer_shipping_address(),
-			'shippingMethods'  => $this->get_shipping_methods(),
-			'globalSettings'   => $this->get_global_settings(),
-			'pickupSettings'   => $this->get_pickup_settings(),
-			'deliverySuburbs'  => $this->get_delivery_suburbs_for_pad(),
+		$merged_delivery = $this->get_merged_delivery_for_pad();
+		$pad_data        = array(
+			'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
+			'nonce'                  => wp_create_nonce( 'euxpide_nonce' ),
+			'checkoutUrl'            => wc_get_checkout_url(),
+			'storeAddress'           => $this->get_store_address(),
+			'australianStates'       => $this->get_australian_states(),
+			'storeCountryStates'     => $this->get_australian_states(),
+			'shippingCountry'        => $this->get_store_country_for_pad(),
+			'customerAddress'        => $this->get_customer_shipping_address(),
+			'shippingMethods'        => $this->get_shipping_methods(),
+			'globalSettings'         => $this->get_global_settings(),
+			'pickupSettings'         => $this->get_pickup_settings(),
+			'deliverySuburbs'        => $this->get_delivery_suburbs_for_pad(),
+			'allowFreeSuburbInput'   => $this->get_allow_free_suburb_input(),
+			'restrictDeliveryStates' => ! empty( $merged_delivery['restrict_delivery_states'] ),
+			'deliveryStates'         => $this->get_delivery_states_for_pad(),
 		);
 
 		/**
-		 * Extend PAD localized `wpdData` (e.g. multi-store add-on).
+		 * Extend PAD localized `euxpideData` (e.g. multi-store add-on).
 		 *
 		 * @param array $pad_data Localized data.
 		 * @return array
 		 */
-		$pad_data = apply_filters( 'wpd_pad_localize_script_data', $pad_data );
+		$pad_data = apply_filters( 'euxpide_pad_localize_script_data', $pad_data );
 
 		wp_localize_script(
-			'wpd-pad-app',
-			'wpdData',
+			'euxpide-pad-app',
+			'euxpideData',
 			$pad_data
 		);
 	}
@@ -280,8 +286,8 @@ class WPD_Frontend {
 	 * @return array
 	 */
 	private function get_global_settings() {
-		if ( class_exists( 'WPD_Settings' ) ) {
-			return WPD_Settings::get_instance()->get_effective_global_for_pad();
+		if ( class_exists( 'EUXPIDE_Settings' ) ) {
+			return EUXPIDE_Settings::get_instance()->get_effective_global_for_pad();
 		}
 
 		return array();
@@ -293,12 +299,12 @@ class WPD_Frontend {
 	 * @return array
 	 */
 	private function get_pickup_settings() {
-		if ( class_exists( 'WPD_Settings' ) ) {
-			$settings             = get_option( WPD_Settings::OPTION_PICKUP, array() );
-			$defaults             = WPD_Settings::get_instance()->get_pickup_defaults();
-			$merged               = WPD_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $settings ) ? $settings : array() );
-			$merged               = WPD_Settings::get_instance()->apply_inactive_multi_store_pickup_fallback( $merged );
-			$merged['address']    = WPD_Settings::get_instance()->format_pickup_location_multiline( $merged );
+		if ( class_exists( 'EUXPIDE_Settings' ) ) {
+			$settings             = get_option( EUXPIDE_Settings::OPTION_PICKUP, array() );
+			$defaults             = EUXPIDE_Settings::get_instance()->get_pickup_defaults();
+			$merged               = EUXPIDE_Settings::get_instance()->merge_pickup_settings( $defaults, is_array( $settings ) ? $settings : array() );
+			$merged               = EUXPIDE_Settings::get_instance()->apply_inactive_multi_store_pickup_fallback( $merged );
+			$merged['address']    = EUXPIDE_Settings::get_instance()->format_pickup_location_multiline( $merged );
 			$iframe               = self::pickup_map_iframe_html( isset( $merged['address'] ) ? $merged['address'] : '' );
 			$merged['map_iframe'] = wp_kses(
 				$iframe,
@@ -325,18 +331,66 @@ class WPD_Frontend {
 	 *
 	 * @return string[] Non-empty unique suburbs in saved order.
 	 */
-	private function get_delivery_suburbs_for_pad() {
-		if ( ! class_exists( 'WPD_Settings' ) ) {
+	private function get_merged_delivery_for_pad() {
+		if ( ! class_exists( 'EUXPIDE_Settings' ) ) {
 			return array();
 		}
-		$settings = get_option( WPD_Settings::OPTION_DELIVERY, array() );
-		$defaults = WPD_Settings::get_instance()->get_delivery_defaults();
-		$merged   = WPD_Settings::get_instance()->merge_delivery_settings(
+		$settings = get_option( EUXPIDE_Settings::OPTION_DELIVERY, array() );
+		$defaults = EUXPIDE_Settings::get_instance()->get_delivery_defaults();
+		return EUXPIDE_Settings::get_instance()->merge_delivery_settings(
 			$defaults,
 			is_array( $settings ) ? $settings : array()
 		);
-		$list     = isset( $merged['suburbs'] ) && is_array( $merged['suburbs'] ) ? $merged['suburbs'] : array();
-		$out      = array();
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function get_allow_free_suburb_input() {
+		$merged = $this->get_merged_delivery_for_pad();
+		return ! empty( $merged['allow_free_suburb_input'] );
+	}
+
+	/**
+	 * Custom state options for PAD delivery (empty = use australianStates).
+	 *
+	 * @return string[]
+	 */
+	private function get_delivery_states_for_pad() {
+		$merged = $this->get_merged_delivery_for_pad();
+		if ( empty( $merged['restrict_delivery_states'] ) ) {
+			return array();
+		}
+		$list = isset( $merged['delivery_states'] ) && is_array( $merged['delivery_states'] ) ? $merged['delivery_states'] : array();
+		$out  = array();
+		foreach ( $list as $s ) {
+			$s = is_string( $s ) ? trim( $s ) : '';
+			if ( '' !== $s ) {
+				$out[] = $s;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Store base country for PAD (WooCommerce).
+	 *
+	 * @return string ISO2
+	 */
+	private function get_store_country_for_pad() {
+		if ( class_exists( 'EUXPIDE_Settings' ) ) {
+			return EUXPIDE_Settings::get_instance()->get_store_base_country();
+		}
+		return 'AU';
+	}
+
+	private function get_delivery_suburbs_for_pad() {
+		$merged = $this->get_merged_delivery_for_pad();
+		if ( ! empty( $merged['allow_free_suburb_input'] ) ) {
+			return array();
+		}
+		$list = isset( $merged['suburbs'] ) && is_array( $merged['suburbs'] ) ? $merged['suburbs'] : array();
+		$out  = array();
 		foreach ( $list as $s ) {
 			$s = is_string( $s ) ? trim( $s ) : '';
 			if ( '' !== $s ) {
@@ -395,18 +449,23 @@ class WPD_Frontend {
 	*/
 
 	/**
-	 * Get Australian states
+	 * States for the WooCommerce store base country (legacy key name: australianStates).
+	 *
+	 * @return array<string, string> Code => label.
 	 */
 	private function get_australian_states() {
+		if ( class_exists( 'EUXPIDE_Settings' ) ) {
+			return EUXPIDE_Settings::get_instance()->get_wc_states_for_store_country();
+		}
 		return array(
-			'NSW' => 'New South Wales',
-			'VIC' => 'Victoria',
-			'QLD' => 'Queensland',
-			'WA'  => 'Western Australia',
-			'SA'  => 'South Australia',
-			'TAS' => 'Tasmania',
-			'ACT' => 'Australian Capital Territory',
-			'NT'  => 'Northern Territory',
+			'NSW' => __( 'New South Wales', 'eux-pickup-delivery' ),
+			'VIC' => __( 'Victoria', 'eux-pickup-delivery' ),
+			'QLD' => __( 'Queensland', 'eux-pickup-delivery' ),
+			'WA'  => __( 'Western Australia', 'eux-pickup-delivery' ),
+			'SA'  => __( 'South Australia', 'eux-pickup-delivery' ),
+			'TAS' => __( 'Tasmania', 'eux-pickup-delivery' ),
+			'ACT' => __( 'Australian Capital Territory', 'eux-pickup-delivery' ),
+			'NT'  => __( 'Northern Territory', 'eux-pickup-delivery' ),
 		);
 	}
 

@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class WPD_Cart_Redirect {
+class EUXPIDE_Cart_Redirect {
 
 	/**
 	 * Single instance
@@ -46,8 +46,8 @@ class WPD_Cart_Redirect {
 	 * @return bool
 	 */
 	private function is_pad_enabled() {
-		if ( class_exists( 'WPD_Settings' ) ) {
-			return WPD_Settings::get_instance()->is_pad_step_enabled();
+		if ( class_exists( 'EUXPIDE_Settings' ) ) {
+			return EUXPIDE_Settings::get_instance()->is_pad_step_enabled();
 		}
 		return true;
 	}
@@ -64,8 +64,8 @@ class WPD_Cart_Redirect {
 		// Check if we're on checkout page (but not order-received endpoint)
 		if ( is_checkout() && ! is_wc_endpoint_url( 'order-received' ) && ! is_wc_endpoint_url( 'order-pay' ) ) {
 			// Check if coming from PAD page with valid selection
-			$pad_selection = WC()->session->get( 'wpd_pad_selection' );
-			$from_pad_page = WC()->session->get( 'wpd_from_pad_page' );
+			$pad_selection = WC()->session->get( 'euxpide_pad_selection' );
+			$from_pad_page = WC()->session->get( 'euxpide_from_pad_page' );
 
 			// Check if session has expired (5 minutes = 300 seconds)
 			$session_expired = false;
@@ -74,18 +74,18 @@ class WPD_Cart_Redirect {
 				if ( $time_elapsed > 300 ) {
 					$session_expired = true;
 					// Clear expired session
-					WC()->session->__unset( 'wpd_pad_selection' );
-					WC()->session->__unset( 'wpd_from_pad_page' );
+					WC()->session->__unset( 'euxpide_pad_selection' );
+					WC()->session->__unset( 'euxpide_from_pad_page' );
 				}
 			}
 
 			// If no selection OR not coming from PAD page OR session expired, redirect
 			if ( empty( $pad_selection ) || empty( $from_pad_page ) || $session_expired ) {
 				// Clear the flag
-				WC()->session->__unset( 'wpd_from_pad_page' );
+				WC()->session->__unset( 'euxpide_from_pad_page' );
 
 				// Redirect to PAD page
-				$pad_url = WPD_Page_Manager::get_pad_page_url();
+				$pad_url = EUXPIDE_Page_Manager::get_pad_page_url();
 				if ( $pad_url ) {
 					wp_safe_redirect( $pad_url );
 					exit;
@@ -93,7 +93,7 @@ class WPD_Cart_Redirect {
 			}
 
 			// Clear the flag after successful access
-			WC()->session->__unset( 'wpd_from_pad_page' );
+			WC()->session->__unset( 'euxpide_from_pad_page' );
 		}
 	}
 
@@ -113,7 +113,7 @@ class WPD_Cart_Redirect {
 			if ( ! $this->is_pad_enabled() ) {
 				return $checkout_url;
 			}
-			$pad_url = WPD_Page_Manager::get_pad_page_url();
+			$pad_url = EUXPIDE_Page_Manager::get_pad_page_url();
 			if ( $pad_url ) {
 				return $pad_url;
 			}

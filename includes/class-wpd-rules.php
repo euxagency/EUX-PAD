@@ -8,21 +8,38 @@
  * several would affect the same date.
  *
  * Condition types: days of week, specific dates, method (pickup/delivery), store (multi-store).
+ * Add-ons may append types via {@see 'euxpide_rules_allowed_condition_types'} and evaluate them with
+ * {@see 'euxpide_rules_evaluate_extended_condition'}.
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class WPD_Rules {
+class EUXPIDE_Rules {
 	private static $instance = null;
 
 	/**
-	 * Condition types supported by this plugin (WordPress.org distribution).
+	 * Condition types supported by the base plugin.
+	 *
+	 * Add-ons filter `euxpide_rules_allowed_condition_types` to register additional slugs (REST sanitize
+	 * and rule engine use the merged list).
 	 *
 	 * @return string[]
 	 */
 	public static function get_allowed_condition_types() {
-		return array( 'days_of_week', 'specific_dates', 'method', 'store' );
+		$base   = array( 'days_of_week', 'specific_dates', 'method', 'store' );
+		$merged = apply_filters( 'euxpide_rules_allowed_condition_types', $base );
+		if ( ! is_array( $merged ) ) {
+			return $base;
+		}
+		$out = array();
+		foreach ( $merged as $t ) {
+			$s = is_string( $t ) ? trim( $t ) : '';
+			if ( '' !== $s && ! in_array( $s, $out, true ) ) {
+				$out[] = $s;
+			}
+		}
+		return $out;
 	}
 
 	/**
@@ -242,6 +259,43 @@ class WPD_Rules {
 				return ( '' !== $ctx_store && $ctx_store === $target_store );
 
 			default:
+				/**
+				 * Evaluate a condition type not built into EUXPIDE_Rules. Return a boolean to handle the
+				 * condition; return null (or any non-boolean) to fall through to “no match”.
+				 *
+				 * @param null|bool $result            Prior result (always null on first call).
+				 * @param string    $type              Condition type slug.
+				 * @param string    $operator          Operator.
+				 * @param mixed     $value             Stored value.
+				 * @param string    $date_str          Y-m-d.
+				 * @param string    $day_name          Weekday name.
+				 * @param string    $method_type       pickup|delivery.
+				 * @param float     $cart_total        Cart total.
+				 * @param array     $cart_items        Cart line items.
+				 * @param array|null $delivery_address Context (suburb, store_id, etc.).
+				 * @param int       $days_ahead        Whole days from today to date; -1 if past.
+				 * @param \DateTime $today_now         Now in WP timezone.
+				 * @param EUXPIDE_Rules $rules_engine      Rules instance.
+				 */
+				$handled = apply_filters(
+					'euxpide_rules_evaluate_extended_condition',
+					null,
+					$type,
+					$operator,
+					$value,
+					$date_str,
+					$day_name,
+					$method_type,
+					$cart_total,
+					$cart_items,
+					$delivery_address,
+					$days_ahead,
+					$today_now,
+					$this
+				);
+				if ( is_bool( $handled ) ) {
+					return $handled;
+				}
 				return false;
 		}
 	}
@@ -293,10 +347,10 @@ class WPD_Rules {
 	}
 
 	private function get_rules() {
-		if ( ! class_exists( 'WPD_Settings' ) ) {
+		if ( ! class_exists( 'EUXPIDE_Settings' ) ) {
 			return array();
 		}
-		$rules = get_option( WPD_Settings::OPTION_RULES, array() );
+		$rules = get_option( EUXPIDE_Settings::OPTION_RULES, array() );
 		return is_array( $rules ) ? $rules : array();
 	}
 }

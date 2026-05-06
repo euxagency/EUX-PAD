@@ -1,12 +1,12 @@
 /**
  * Checkout progress bar: PAD step visibility and active state (cart / PAD / checkout / complete).
- * Localized as `wpdCheckoutProgress` from PHP.
+ * Localized as `euxpideCheckoutProgress` from PHP.
  */
 (function ($) {
 	'use strict';
 
 	$(function () {
-		var cfg = window.wpdCheckoutProgress || {};
+		var cfg = window.euxpideCheckoutProgress || {};
 		var currentPage = cfg.currentPage || 'cart';
 		var wpdPadStepEnabled = !!cfg.padStepEnabled;
 		var padUrl = cfg.padUrl || '';

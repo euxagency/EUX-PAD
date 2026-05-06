@@ -3,16 +3,7 @@
  * Layout matches Global/Pickup settings. Rules enable/disable dates on the frontend.
  */
 import { __, sprintf } from '@wordpress/i18n';
-import {
-    useEffect,
-    useState,
-    useCallback,
-    useMemo,
-    useRef,
-    useId,
-    useLayoutEffect,
-    createPortal,
-} from '@wordpress/element';
+import { useEffect, useState, useCallback, useMemo, useRef, useId } from '@wordpress/element';
 import {
     Card,
     CardBody,
@@ -23,6 +14,7 @@ import {
     Modal,
 } from '@wordpress/components';
 import AdminPageLayout from './AdminPageLayout';
+import CheckboxPortalMultiSelect from './CheckboxPortalMultiSelect';
 import RulesCustomSelect from './RulesCustomSelect';
 import { setApiDefaults } from '../utils/api';
 
@@ -103,12 +95,24 @@ function getReorderShiftY(i, from, to, stride) {
 /** Date scope: at least one of these is required together with Delivery or Pickup. */
 const DATE_SCOPE_CONDITION_TYPES = ['days_of_week', 'specific_dates'];
 
-/** Condition types persisted and evaluated by the plugin (matches PHP `WPD_Rules::get_allowed_condition_types`). */
-const WPD_RULE_ALLOWED_CONDITION_TYPES = ['days_of_week', 'specific_dates', 'method', 'store'];
+/** Base condition types in the WordPress.org plugin; add-ons append via localized `ruleExtensions`. */
+const WPD_RULE_BASE_CONDITION_TYPES = ['days_of_week', 'specific_dates', 'method', 'store'];
 
-/** Static copy for the “condition guide” modal (aligned with `WPD_Rules` behavior). */
+/**
+ * Merged allowed types (base + `euxpideAdmin.ruleExtensions.conditionTypes`), matches PHP after filters.
+ *
+ * @return {string[]}
+ */
+function getEffectiveAllowedConditionTypes() {
+    const wpd = typeof window !== 'undefined' ? window.euxpideAdmin || {} : {};
+    const ext = wpd.ruleExtensions && Array.isArray(wpd.ruleExtensions.conditionTypes) ? wpd.ruleExtensions.conditionTypes : [];
+    const extra = ext.map((x) => (x && x.value ? String(x.value) : '')).filter(Boolean);
+    return [...new Set([...WPD_RULE_BASE_CONDITION_TYPES, ...extra])];
+}
+
+/** Condition guide modal: base entries plus add-on entries from localized `ruleExtensions`. */
 function getConditionGuideEntries() {
-    return [
+    const base = [
         {
             id: 'days_of_week',
             term: __('Days of Week', 'eux-pickup-delivery'),
@@ -142,6 +146,10 @@ function getConditionGuideEntries() {
             ),
         },
     ];
+    const wpd = typeof window !== 'undefined' ? window.euxpideAdmin || {} : {};
+    const extra =
+        wpd.ruleExtensions && Array.isArray(wpd.ruleExtensions.conditionGuide) ? wpd.ruleExtensions.conditionGuide : [];
+    return [...base, ...extra];
 }
 
 /** Rule is considered enabled unless explicitly turned off (REST / toggles). */
@@ -163,7 +171,15 @@ function ruleMeetsMandatoryConditions(rule) {
     return hasDateScope && hasMethod;
 }
 
+/** Lead / cutoff conditions are only valid with Disable Day (matches PHP runtime). */
+function ruleRequiresDisableObjective(rule) {
+    return (rule?.conditions || []).some((c) => c?.type === 'lead_time' || c?.type === 'cutoff_time');
+}
+
 function normalizeRuleLeadCutoffObjective(rule) {
+    if (ruleRequiresDisableObjective(rule) && rule.objective !== 'disable_day') {
+        return { ...rule, objective: 'disable_day' };
+    }
     return rule;
 }
 
@@ -176,199 +192,6 @@ const WEEKDAY_NAMES = [
     'Saturday',
     'Sunday',
 ];
-
-/**
- * Portaled checkbox list – shared by Days of week and Suburb rule conditions.
- *
- * @param {string} [dropdownMaxHeight] CSS max-height for scroll (e.g. suburbs long list).
- * @param {boolean} [searchable] When true, show a filter field above the checkbox list (e.g. suburbs).
- */
-function CheckboxPortalMultiSelect({
-    selected = [],
-    onChange,
-    options,
-    triggerPlaceholder,
-    dropdownMaxHeight,
-    searchable = false,
-}) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [filterQuery, setFilterQuery] = useState('');
-    const [coords, setCoords] = useState(null);
-    const wrapRef = useRef(null);
-    const triggerRef = useRef(null);
-    const portalRef = useRef(null);
-    const searchInputRef = useRef(null);
-    const optList = Array.isArray(options) ? options : [];
-
-    const filteredOptions = useMemo(() => {
-        if (!searchable) {
-            return optList;
-        }
-        const q = filterQuery.trim().toLowerCase();
-        if (!q) {
-            return optList;
-        }
-        return optList.filter(({ value: val, label }) => {
-            const text = (label != null && String(label).trim() !== '' ? String(label) : String(val)).toLowerCase();
-            return text.includes(q);
-        });
-    }, [searchable, filterQuery, options]);
-
-    const updatePosition = useCallback(() => {
-        const el = triggerRef.current;
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        setCoords({
-            top: rect.bottom + 4,
-            left: rect.left,
-            minWidth: rect.width,
-        });
-    }, []);
-
-    useLayoutEffect(() => {
-        if (!isOpen) {
-            setCoords(null);
-            return;
-        }
-        updatePosition();
-        window.addEventListener('scroll', updatePosition, true);
-        window.addEventListener('resize', updatePosition);
-        return () => {
-            window.removeEventListener('scroll', updatePosition, true);
-            window.removeEventListener('resize', updatePosition);
-        };
-    }, [isOpen, updatePosition]);
-
-    useEffect(() => {
-        if (!isOpen) {
-            setFilterQuery('');
-        }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (!isOpen || !searchable) return;
-        const t = window.setTimeout(() => searchInputRef.current?.focus(), 0);
-        return () => window.clearTimeout(t);
-    }, [isOpen, searchable]);
-
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleMouseDown = (e) => {
-            if (wrapRef.current?.contains(e.target)) return;
-            if (portalRef.current?.contains(e.target)) return;
-            setIsOpen(false);
-        };
-        document.addEventListener('mousedown', handleMouseDown);
-        return () => document.removeEventListener('mousedown', handleMouseDown);
-    }, [isOpen]);
-
-    const toggleValue = (val) => {
-        const next = selected.includes(val) ? selected.filter((d) => d !== val) : [...selected, val];
-        onChange(next);
-    };
-
-    const displayText = selected.length > 0 ? selected.join(', ') : triggerPlaceholder;
-
-    const dropdownStyle = {
-        position: 'fixed',
-        top: coords ? `${coords.top}px` : 0,
-        left: coords ? `${coords.left}px` : 0,
-        minWidth: coords ? `${coords.minWidth}px` : undefined,
-        width: 'max-content',
-        maxWidth: 'min(340px, calc(100vw - 24px))',
-        zIndex: 100000,
-        backgroundColor: '#fff',
-        border: '1px solid #eceef2',
-    };
-    if (dropdownMaxHeight) {
-        dropdownStyle.maxHeight = dropdownMaxHeight;
-        dropdownStyle.overflowY = 'auto';
-    }
-
-    const portalClass =
-        'wpd-rules-multiselect-dropdown wpd-rules-multiselect-dropdown--portal' +
-        (searchable ? ' wpd-rules-multiselect-dropdown--with-search' : '');
-
-    const dropdown =
-        isOpen &&
-        coords &&
-        createPortal(
-            <div ref={portalRef} className={portalClass} role="listbox" style={dropdownStyle}>
-                {searchable && (
-                    <div className="wpd-rules-multiselect-dropdown__search">
-                        <input
-                            ref={searchInputRef}
-                            type="search"
-                            className="components-text-control__input wpd-rules-multiselect-search-input"
-                            value={filterQuery}
-                            onChange={(e) => setFilterQuery(e.target.value)}
-                            placeholder={__('Search suburbs…', 'eux-pickup-delivery')}
-                            aria-label={__('Search suburbs', 'eux-pickup-delivery')}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Escape') {
-                                    setIsOpen(false);
-                                }
-                            }}
-                        />
-                    </div>
-                )}
-                {filteredOptions.length === 0 ? (
-                    <div className="wpd-rules-multiselect-dropdown__empty">
-                        {searchable && filterQuery.trim()
-                            ? __('No matching suburbs.', 'eux-pickup-delivery')
-                            : __('No options.', 'eux-pickup-delivery')}
-                    </div>
-                ) : (
-                    filteredOptions.map(({ value: val, label }) => (
-                        <label
-                            key={val}
-                            className="wpd-rules-multiselect-option"
-                            role="option"
-                            aria-selected={selected.includes(val)}
-                        >
-                            <input
-                                type="checkbox"
-                                checked={selected.includes(val)}
-                                onChange={() => toggleValue(val)}
-                            />
-                            <span>{label != null && String(label).trim() !== '' ? label : val}</span>
-                        </label>
-                    ))
-                )}
-            </div>,
-            document.body
-        );
-
-    return (
-        <>
-            <div className="wpd-rules-multiselect" ref={wrapRef}>
-                <button
-                    ref={triggerRef}
-                    type="button"
-                    className="wpd-rules-multiselect-trigger"
-                    onClick={() => setIsOpen((o) => !o)}
-                    aria-haspopup="listbox"
-                    aria-expanded={isOpen}
-                >
-                    <span
-                        className={
-                            selected.length === 0
-                                ? 'wpd-rules-multiselect-placeholder wpd-rules-multiselect-trigger__text'
-                                : 'wpd-rules-multiselect-trigger__text'
-                        }
-                    >
-                        {displayText}
-                    </span>
-                    <span className="wpd-rules-multiselect-arrow" aria-hidden="true">
-                        ▼
-                    </span>
-                </button>
-            </div>
-            {dropdown}
-        </>
-    );
-}
 
 function DaysOfWeekMultiSelect({ selected = [], onChange, options }) {
     return (
@@ -387,47 +210,81 @@ const OPERATOR_KEYS_BY_CONDITION_TYPE = {
     specific_dates: ['matches_any_of', 'between'],
     method: ['equal'],
     store: ['equal'],
+    order_value: ['greater_than', 'lower_than', 'equal', 'not_equal', 'between'],
+    total_orders: ['greater_than', 'lower_than', 'equal', 'not_equal', 'between'],
+    suburb: ['equal', 'not_equal'],
+    delivery_state: ['equal', 'not_equal'],
+    postcode: ['equal', 'not_equal'],
+    product_category: ['equal', 'not_equal'],
+    product: ['equal', 'not_equal'],
+    lead_time: ['equal'],
+    cutoff_time: ['equal'],
 };
 
-function useRuleFormSelectOptions() {
+/**
+ * @param {boolean} allowFreeSuburbInput From Delivery settings (free-typed suburbs).
+ */
+function buildOperatorsForType(allowFreeSuburbInput) {
+    const allOperators = [
+        { value: 'greater_than', label: __('Greater than', 'eux-pickup-delivery') },
+        { value: 'lower_than', label: __('Lower than', 'eux-pickup-delivery') },
+        { value: 'equal', label: __('Equal', 'eux-pickup-delivery') },
+        { value: 'not_equal', label: __('Not equal', 'eux-pickup-delivery') },
+        { value: 'like', label: __('Like (contains text)', 'eux-pickup-delivery') },
+        { value: 'not_like', label: __('Not like (excludes text)', 'eux-pickup-delivery') },
+        { value: 'contain', label: __('Contain', 'eux-pickup-delivery') },
+        { value: 'matches_any_of', label: __('Matches any of', 'eux-pickup-delivery') },
+        { value: 'between', label: __('Between', 'eux-pickup-delivery') },
+    ];
+    const opByValue = Object.fromEntries(allOperators.map((o) => [o.value, o]));
+    return (type) => {
+        let keys;
+        if (type === 'suburb') {
+            keys = allowFreeSuburbInput ? ['like', 'not_like'] : ['equal', 'not_equal'];
+        } else if (type === 'delivery_state') {
+            keys = ['equal', 'not_equal'];
+        } else {
+            keys = OPERATOR_KEYS_BY_CONDITION_TYPE[type];
+        }
+        if (!keys) {
+            return allOperators;
+        }
+        return keys
+            .map((k) => {
+                const op = opByValue[k];
+                if (!op) {
+                    return null;
+                }
+                if (
+                    (type === 'days_of_week' ||
+                        type === 'method' ||
+                        type === 'store' ||
+                        type === 'lead_time' ||
+                        type === 'cutoff_time') &&
+                    k === 'equal'
+                ) {
+                    return { ...op, label: __('is', 'eux-pickup-delivery') };
+                }
+                return op;
+            })
+            .filter(Boolean);
+    };
+}
+
+/**
+ * @param {{ value: string, label: string }[]} deliverySuburbOptions Allowed suburbs for rule UI.
+ * @param {{ value: string, label: string }[]} productCategoryOptions WooCommerce categories (Rules checkbox list).
+ * @param {{ value: string, label: string }[]} productOptions WooCommerce products (Rules checkbox list).
+ */
+function useRuleFormSelectOptions(allowFreeSuburbInput, deliverySuburbOptions, deliveryStateRuleOptions, productCategoryOptions, productOptions) {
     return useMemo(() => {
-        const allOperators = [
-            { value: 'greater_than', label: __('Greater than', 'eux-pickup-delivery') },
-            { value: 'lower_than', label: __('Lower than', 'eux-pickup-delivery') },
-            { value: 'equal', label: __('Equal', 'eux-pickup-delivery') },
-            { value: 'not_equal', label: __('Not equal', 'eux-pickup-delivery') },
-            { value: 'contain', label: __('Contain', 'eux-pickup-delivery') },
-            { value: 'matches_any_of', label: __('Matches any of', 'eux-pickup-delivery') },
-            { value: 'between', label: __('Between', 'eux-pickup-delivery') },
-        ];
-        const opByValue = Object.fromEntries(allOperators.map((o) => [o.value, o]));
-        const operatorsForType = (type) => {
-            const keys = OPERATOR_KEYS_BY_CONDITION_TYPE[type];
-            if (!keys) {
-                return allOperators;
-            }
-            return keys
-                .map((k) => {
-                    const op = opByValue[k];
-                    if (!op) {
-                        return null;
-                    }
-                    if (
-                        (type === 'days_of_week' || type === 'method' || type === 'store') &&
-                        k === 'equal'
-                    ) {
-                        return { ...op, label: __('is', 'eux-pickup-delivery') };
-                    }
-                    return op;
-                })
-                .filter(Boolean);
-        };
+        const operatorsForType = buildOperatorsForType(allowFreeSuburbInput);
         const freeConditionTypes = [
             { value: 'days_of_week', label: __('Days of Week', 'eux-pickup-delivery') },
             { value: 'specific_dates', label: __('Specific Dates', 'eux-pickup-delivery') },
             { value: 'method', label: __('Delivery or Pickup', 'eux-pickup-delivery') },
         ];
-        const wpdAdmin = typeof window !== 'undefined' ? window.wpdAdmin || {} : {};
+        const wpdAdmin = typeof window !== 'undefined' ? window.euxpideAdmin || {} : {};
         const pickupStoresAddon = !!wpdAdmin.multiPickupStoresAddon;
         const pickupStores = Array.isArray(wpdAdmin.pickupStores) ? wpdAdmin.pickupStores : [];
         const pickupStoreOptions =
@@ -437,12 +294,31 @@ function useRuleFormSelectOptions() {
         if (pickupStoreOptions.length) {
             freeConditionTypes.push({ value: 'store', label: __('Store', 'eux-pickup-delivery') });
         }
-        const conditionTypes = [...freeConditionTypes];
+        const extTypes =
+            wpdAdmin.ruleExtensions && Array.isArray(wpdAdmin.ruleExtensions.conditionTypes)
+                ? wpdAdmin.ruleExtensions.conditionTypes
+                : [];
+        const conditionTypes = [...freeConditionTypes, ...extTypes];
+        const suburbOpts = Array.isArray(deliverySuburbOptions) ? deliverySuburbOptions : [];
+        const stateOpts = Array.isArray(deliveryStateRuleOptions) ? deliveryStateRuleOptions : [];
+        const catOpts = Array.isArray(productCategoryOptions) ? productCategoryOptions : [];
+        const prodOpts = Array.isArray(productOptions) ? productOptions : [];
         return {
             conditionTypes,
             /** @deprecated use operatorsForType(type) in condition rows */
-            operators: allOperators,
+            operators: [
+                { value: 'greater_than', label: __('Greater than', 'eux-pickup-delivery') },
+                { value: 'lower_than', label: __('Lower than', 'eux-pickup-delivery') },
+                { value: 'equal', label: __('Equal', 'eux-pickup-delivery') },
+                { value: 'not_equal', label: __('Not equal', 'eux-pickup-delivery') },
+                { value: 'like', label: __('Like (contains text)', 'eux-pickup-delivery') },
+                { value: 'not_like', label: __('Not like (excludes text)', 'eux-pickup-delivery') },
+                { value: 'contain', label: __('Contain', 'eux-pickup-delivery') },
+                { value: 'matches_any_of', label: __('Matches any of', 'eux-pickup-delivery') },
+                { value: 'between', label: __('Between', 'eux-pickup-delivery') },
+            ],
             operatorsForType,
+            allowFreeSuburbInput,
             objectiveOptions: [
                 { value: 'enable_day', label: __('Enable Day', 'eux-pickup-delivery') },
                 { value: 'disable_day', label: __('Disable Day', 'eux-pickup-delivery') },
@@ -452,16 +328,42 @@ function useRuleFormSelectOptions() {
                 { value: 'pickup', label: __('Pickup', 'eux-pickup-delivery') },
             ],
             pickupStoreOptions,
+            deliverySuburbOptions: suburbOpts,
+            deliveryStateRuleOptions: stateOpts,
+            productCategoryOptions: catOpts,
+            productOptions: prodOpts,
             dayOptions: WEEKDAY_NAMES.map((d) => ({ value: d, label: d })),
         };
-    }, []);
+    }, [allowFreeSuburbInput, deliverySuburbOptions, deliveryStateRuleOptions, productCategoryOptions, productOptions]);
+}
+
+/**
+ * Postcode list editor (PAD delivery postcode).
+ *
+ * @param {{ value: string[], onChange: (v: string[]) => void }} props
+ */
+function RulesPostcodeListField({ value, onChange }) {
+    const text = Array.isArray(value)
+        ? value
+              .map((p) => String(p || '').trim())
+              .filter(Boolean)
+              .join(', ')
+        : String(value || '');
+    return (
+        <TextControl
+            value={text}
+            onChange={(v) => onChange(v)}
+            placeholder={__('e.g. 4000, 4001, 4002', 'eux-pickup-delivery')}
+            __nextHasNoMarginBottom
+        />
+    );
 }
 
 /**
  * Default value when fixing operator/type for a condition.
  */
-function defaultConditionValueFor(type, operator) {
-    const wpdAdmin = typeof window !== 'undefined' ? window.wpdAdmin || {} : {};
+function defaultConditionValueFor(type, operator, allowFreeSuburbInput = false) {
+    const wpdAdmin = typeof window !== 'undefined' ? window.euxpideAdmin || {} : {};
     const pickupStores = Array.isArray(wpdAdmin.pickupStores) ? wpdAdmin.pickupStores : [];
     switch (type) {
         case 'days_of_week':
@@ -472,14 +374,30 @@ function defaultConditionValueFor(type, operator) {
             return 'delivery';
         case 'store':
             return pickupStores[0]?.id ? String(pickupStores[0].id) : '';
+        case 'order_value':
+        case 'total_orders':
+            return operator === 'between' ? [0, 0] : 0;
+        case 'suburb':
+            return allowFreeSuburbInput ? '' : [];
+        case 'delivery_state':
+            return [];
+        case 'postcode':
+        case 'product_category':
+        case 'product':
+            return [];
+        case 'lead_time':
+            return 1;
+        case 'cutoff_time':
+            return '14:00';
         default:
             return '';
     }
 }
 
-function normalizeLoadedCondition(cond, operatorsForType) {
+function normalizeLoadedCondition(cond, operatorsForType, allowFreeSuburbInput = false) {
+    const allowedTypes = getEffectiveAllowedConditionTypes();
     let type = cond.type || 'days_of_week';
-    if (!WPD_RULE_ALLOWED_CONDITION_TYPES.includes(type)) {
+    if (!allowedTypes.includes(type)) {
         type = 'days_of_week';
     }
     const allowed = operatorsForType(type).map((o) => o.value);
@@ -494,7 +412,7 @@ function normalizeLoadedCondition(cond, operatorsForType) {
             operator = 'equal';
         } else {
             operator = allowed[0];
-            value = defaultConditionValueFor(type, operator);
+            value = defaultConditionValueFor(type, operator, allowFreeSuburbInput);
         }
     }
 
@@ -507,6 +425,77 @@ function normalizeLoadedCondition(cond, operatorsForType) {
             }
         } else if (!Array.isArray(value)) {
             value = value ? String(value).split(',').map((s) => s.trim()).filter(Boolean) : [];
+        }
+    }
+
+    if (type === 'order_value' || type === 'total_orders') {
+        if (operator === 'between') {
+            if (!Array.isArray(value) || value.length < 2) {
+                value = [0, 0];
+            } else {
+                value = [Number(value[0]) || 0, Number(value[1]) || 0];
+            }
+        } else {
+            const n = typeof value === 'number' ? value : parseFloat(String(value ?? ''));
+            value = Number.isFinite(n) ? n : 0;
+        }
+    }
+
+    if (type === 'suburb') {
+        if (allowFreeSuburbInput) {
+            if (operator !== 'like' && operator !== 'not_like') {
+                operator = 'like';
+            }
+            if (Array.isArray(value)) {
+                value = value.length ? value.map((x) => String(x).trim()).filter(Boolean).join(' ') : '';
+            } else {
+                value = String(value ?? '');
+            }
+        } else if (!Array.isArray(value)) {
+            value = value ? String(value).split(',').map((s) => s.trim()).filter(Boolean) : [];
+        }
+    }
+
+    if (type === 'delivery_state') {
+        if (!Array.isArray(value)) {
+            value = value ? String(value).split(',').map((s) => s.trim()).filter(Boolean) : [];
+        }
+    }
+
+    if (type === 'postcode') {
+        if (Array.isArray(value)) {
+            value = value
+                .map((p) => String(p || '').trim())
+                .filter(Boolean)
+                .join(', ');
+        } else {
+            value = String(value || '');
+        }
+    }
+
+    if (type === 'product_category' || type === 'product') {
+        const raw = Array.isArray(value) ? value : [];
+        value = raw
+            .map((x) => {
+                if (x && typeof x === 'object' && x.id != null) {
+                    return String(x.id);
+                }
+                if (x != null && x !== '') {
+                    return String(x);
+                }
+                return '';
+            })
+            .filter(Boolean);
+    }
+
+    if (type === 'lead_time') {
+        value = Math.max(1, Math.round(Number(value) || 1));
+    }
+
+    if (type === 'cutoff_time') {
+        value = String(value || '').trim();
+        if (!/^\d{1,2}:\d{2}$/.test(value)) {
+            value = '14:00';
         }
     }
 
@@ -628,7 +617,18 @@ function SpecificDatesMultiCalendarField({ value, onChange }) {
     );
 }
 
-function ConditionValueField({ condition, onChange, methodOptions, dayOptions, pickupStoreOptions }) {
+function ConditionValueField({
+    condition,
+    onChange,
+    methodOptions,
+    dayOptions,
+    pickupStoreOptions,
+    deliverySuburbOptions,
+    deliveryStateRuleOptions,
+    allowFreeSuburbInput,
+    productCategoryOptions,
+    productOptions,
+}) {
     const { type, operator, value } = condition;
     const updateValue = (v) => onChange({ ...condition, value: v });
 
@@ -691,7 +691,7 @@ function ConditionValueField({ condition, onChange, methodOptions, dayOptions, p
         );
     }
 
-    // Store – single select (multi-store add-on only; options localized via wpdAdmin.pickupStores)
+    // Store – single select (multi-store add-on only; options localized via euxpideAdmin.pickupStores)
     if (type === 'store') {
         return (
             <RulesCustomSelect
@@ -700,6 +700,202 @@ function ConditionValueField({ condition, onChange, methodOptions, dayOptions, p
                 onChange={updateValue}
                 ariaLabel={__('Store', 'eux-pickup-delivery')}
                 placeholder={__('Select store', 'eux-pickup-delivery')}
+            />
+        );
+    }
+
+    if (type === 'order_value' || type === 'total_orders') {
+        if (operator === 'between') {
+            const pair = Array.isArray(value) && value.length >= 2 ? value : [0, 0];
+            const lo = pair[0] ?? 0;
+            const hi = pair[1] ?? 0;
+            return (
+                <div className="wpd-rules-value-dates wpd-rules-value-dates--between">
+                    <input
+                        type="number"
+                        className="components-text-control__input wpd-rules-input"
+                        value={lo}
+                        min={0}
+                        step="any"
+                        onChange={(e) => updateValue([parseFloat(e.target.value) || 0, Number(hi) || 0])}
+                        aria-label={__('Minimum', 'eux-pickup-delivery')}
+                    />
+                    <span className="wpd-rules-between-sep" aria-hidden="true">
+                        –
+                    </span>
+                    <input
+                        type="number"
+                        className="components-text-control__input wpd-rules-input"
+                        value={hi}
+                        min={0}
+                        step="any"
+                        onChange={(e) => updateValue([Number(lo) || 0, parseFloat(e.target.value) || 0])}
+                        aria-label={__('Maximum', 'eux-pickup-delivery')}
+                    />
+                </div>
+            );
+        }
+        return (
+            <input
+                type="number"
+                className="components-text-control__input wpd-rules-input"
+                value={value ?? 0}
+                min={0}
+                step="any"
+                onChange={(e) => updateValue(parseFloat(e.target.value) || 0)}
+                aria-label={__('Threshold', 'eux-pickup-delivery')}
+            />
+        );
+    }
+
+    if (type === 'suburb') {
+        if (allowFreeSuburbInput) {
+            const str = typeof value === 'string' ? value : (Array.isArray(value) ? value.join(' ') : '');
+            return (
+                <TextControl
+                    value={str}
+                    onChange={(v) => updateValue(v)}
+                    placeholder={__('Text to find in customer suburb (case-insensitive)', 'eux-pickup-delivery')}
+                    __nextHasNoMarginBottom
+                />
+            );
+        }
+        const selected = Array.isArray(value) ? value : (value ? String(value).split(',').map((s) => s.trim()).filter(Boolean) : []);
+        const opts = Array.isArray(deliverySuburbOptions) ? deliverySuburbOptions : [];
+        return (
+            <CheckboxPortalMultiSelect
+                selected={selected}
+                onChange={updateValue}
+                options={opts}
+                triggerPlaceholder={__('Select suburbs…', 'eux-pickup-delivery')}
+                dropdownMaxHeight="240px"
+                searchable
+            />
+        );
+    }
+
+    if (type === 'delivery_state') {
+        const selected = Array.isArray(value) ? value : (value ? String(value).split(',').map((s) => s.trim()).filter(Boolean) : []);
+        const opts = Array.isArray(deliveryStateRuleOptions) ? deliveryStateRuleOptions : [];
+        return (
+            <CheckboxPortalMultiSelect
+                selected={selected}
+                onChange={updateValue}
+                options={opts}
+                triggerPlaceholder={__('Select Delivery States…', 'eux-pickup-delivery')}
+                dropdownMaxHeight="240px"
+                searchable
+                searchPlaceholder={__('Search Delivery States…', 'eux-pickup-delivery')}
+                searchAriaLabel={__('Search Delivery States', 'eux-pickup-delivery')}
+                emptyFilterMessage={__('No matching Delivery States.', 'eux-pickup-delivery')}
+            />
+        );
+    }
+
+    if (type === 'postcode') {
+        return <RulesPostcodeListField value={value} onChange={updateValue} />;
+    }
+
+    if (type === 'product_category') {
+        const selected = Array.isArray(value)
+            ? value.map((x) => (x && typeof x === 'object' && x.id != null ? String(x.id) : String(x))).filter(Boolean)
+            : [];
+        const base = Array.isArray(productCategoryOptions) ? productCategoryOptions : [];
+        const byVal = new Map(base.map((o) => [String(o.value), o.label]));
+        const merged = [...base];
+        selected.forEach((id) => {
+            if (!byVal.has(String(id))) {
+                merged.push({
+                    value: String(id),
+                    label: sprintf(
+                        /* translators: %s: numeric category id */
+                        __('Category #%s', 'eux-pickup-delivery'),
+                        String(id)
+                    ),
+                });
+                byVal.set(String(id), merged[merged.length - 1].label);
+            }
+        });
+        return (
+            <CheckboxPortalMultiSelect
+                selected={selected}
+                onChange={updateValue}
+                options={merged}
+                triggerPlaceholder={__('Select categories…', 'eux-pickup-delivery')}
+                dropdownMaxHeight="280px"
+                searchable
+                searchPlaceholder={__('Search categories…', 'eux-pickup-delivery')}
+                searchAriaLabel={__('Search categories', 'eux-pickup-delivery')}
+                emptyFilterMessage={__('No matching categories.', 'eux-pickup-delivery')}
+            />
+        );
+    }
+
+    if (type === 'product') {
+        const selected = Array.isArray(value)
+            ? value.map((x) => (x && typeof x === 'object' && x.id != null ? String(x.id) : String(x))).filter(Boolean)
+            : [];
+        const base = Array.isArray(productOptions) ? productOptions : [];
+        const byVal = new Map(base.map((o) => [String(o.value), o.label]));
+        const merged = [...base];
+        selected.forEach((id) => {
+            if (!byVal.has(String(id))) {
+                merged.push({
+                    value: String(id),
+                    label: sprintf(
+                        /* translators: %s: numeric product id */
+                        __('Product #%s', 'eux-pickup-delivery'),
+                        String(id)
+                    ),
+                });
+                byVal.set(String(id), merged[merged.length - 1].label);
+            }
+        });
+        return (
+            <CheckboxPortalMultiSelect
+                selected={selected}
+                onChange={updateValue}
+                options={merged}
+                triggerPlaceholder={__('Select products…', 'eux-pickup-delivery')}
+                dropdownMaxHeight="280px"
+                searchable
+                searchPlaceholder={__('Search products…', 'eux-pickup-delivery')}
+                searchAriaLabel={__('Search products', 'eux-pickup-delivery')}
+                emptyFilterMessage={__('No matching products.', 'eux-pickup-delivery')}
+            />
+        );
+    }
+
+    if (type === 'lead_time') {
+        return (
+            <input
+                type="number"
+                className="components-text-control__input wpd-rules-input"
+                value={value ?? 1}
+                min={1}
+                step={1}
+                onChange={(e) => updateValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                aria-label={__('Minimum whole days notice', 'eux-pickup-delivery')}
+            />
+        );
+    }
+
+    if (type === 'cutoff_time') {
+        let v = typeof value === 'string' && /^\d{1,2}:\d{2}$/.test(value.trim()) ? value.trim() : '14:00';
+        const parts = v.split(':');
+        v = `${String(parts[0]).padStart(2, '0')}:${String(parts[1] || '00').padStart(2, '0')}`;
+        return (
+            <input
+                type="time"
+                step={60}
+                className="components-text-control__input wpd-rules-input"
+                value={v}
+                onChange={(e) => {
+                    const raw = (e.target.value || '').trim();
+                    const m = /^(\d{1,2}):(\d{2})/.exec(raw);
+                    updateValue(m ? `${String(m[1]).padStart(2, '0')}:${m[2]}` : '14:00');
+                }}
+                aria-label={__('Cutoff time', 'eux-pickup-delivery')}
             />
         );
     }
@@ -746,7 +942,9 @@ function RuleCard({
     };
 
     const hasMandatoryConditions = ruleMeetsMandatoryConditions(rule);
-    const objectiveOptionsForRule = selectOptions.objectiveOptions;
+    const objectiveOptionsForRule = ruleRequiresDisableObjective(rule)
+        ? selectOptions.objectiveOptions.filter((o) => o.value === 'disable_day')
+        : selectOptions.objectiveOptions;
 
     const onHeaderMainKeyDown = (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -875,7 +1073,7 @@ function RuleCard({
                                         ...cond,
                                         type: v,
                                         operator: op0,
-                                        value: defaultConditionValueFor(v, op0),
+                                        value: defaultConditionValueFor(v, op0, selectOptions.allowFreeSuburbInput),
                                     });
                                 }}
                                 ariaLabel={__('Condition type', 'eux-pickup-delivery')}
@@ -888,6 +1086,14 @@ function RuleCard({
                                     let next = { ...cond, operator: v };
                                     if (cond.type === 'specific_dates') {
                                         next.value = v === 'between' ? ['', ''] : [];
+                                    } else if (cond.type === 'order_value' || cond.type === 'total_orders') {
+                                        next.value = v === 'between' ? [0, 0] : 0;
+                                    } else if (cond.type === 'suburb' && selectOptions.allowFreeSuburbInput) {
+                                        if (v === 'like' || v === 'not_like') {
+                                            next.value = typeof cond.value === 'string' ? cond.value : '';
+                                        } else {
+                                            next.value = '';
+                                        }
                                     }
                                     updateCondition(idx, next);
                                 }}
@@ -900,6 +1106,11 @@ function RuleCard({
                                     methodOptions={selectOptions.methodOptions}
                                     dayOptions={selectOptions.dayOptions}
                                     pickupStoreOptions={selectOptions.pickupStoreOptions}
+                                    deliverySuburbOptions={selectOptions.deliverySuburbOptions}
+                                    deliveryStateRuleOptions={selectOptions.deliveryStateRuleOptions}
+                                    allowFreeSuburbInput={selectOptions.allowFreeSuburbInput}
+                                    productCategoryOptions={selectOptions.productCategoryOptions}
+                                    productOptions={selectOptions.productOptions}
                                 />
                             </div>
                             {idx >= MIN_FIXED_CONDITION_ROWS && (
@@ -928,7 +1139,20 @@ function RuleCard({
 }
 
 export default function RulesPage() {
-    const selectOptions = useRuleFormSelectOptions();
+    const [deliverySuburbOptions, setDeliverySuburbOptions] = useState([]);
+    const [deliveryStateRuleOptions, setDeliveryStateRuleOptions] = useState([]);
+    const [allowFreeSuburbInput, setAllowFreeSuburbInput] = useState(
+        () => !!(typeof window !== 'undefined' && window.euxpideAdmin?.allowFreeSuburbInput)
+    );
+    const [productCategoryOptions, setProductCategoryOptions] = useState([]);
+    const [productOptions, setProductOptions] = useState([]);
+    const selectOptions = useRuleFormSelectOptions(
+        allowFreeSuburbInput,
+        deliverySuburbOptions,
+        deliveryStateRuleOptions,
+        productCategoryOptions,
+        productOptions
+    );
     const { operatorsForType } = selectOptions;
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -966,7 +1190,50 @@ export default function RulesPage() {
         setApiDefaults();
         setLoading(true);
         try {
-            const rulesRes = await apiFetch({ path: '/wpd/v1/settings/rules' });
+            const ext = typeof window !== 'undefined' ? window.euxpideAdmin?.ruleExtensions?.conditionTypes : null;
+            const hasSuburb = Array.isArray(ext) && ext.some((x) => x && x.value === 'suburb');
+            const hasDeliveryState = Array.isArray(ext) && ext.some((x) => x && x.value === 'delivery_state');
+
+            let allowFree =
+                typeof window !== 'undefined' && window.euxpideAdmin?.allowFreeSuburbInput
+                    ? !!window.euxpideAdmin.allowFreeSuburbInput
+                    : false;
+
+            if (hasSuburb || hasDeliveryState) {
+                const dRes = await apiFetch({ path: '/euxpide/v1/settings/delivery' });
+                if (dRes?.success && dRes.data) {
+                    allowFree = !!dRes.data.allow_free_suburb_input;
+                    setAllowFreeSuburbInput(allowFree);
+                    if (hasSuburb) {
+                        const subs = Array.isArray(dRes.data.suburbs) ? dRes.data.suburbs : [];
+                        setDeliverySuburbOptions(subs.map((s) => ({ value: String(s), label: String(s) })));
+                    }
+                    const allStates = Array.isArray(window.euxpideAdmin?.storeCountryStateOptions)
+                        ? window.euxpideAdmin.storeCountryStateOptions
+                        : Array.isArray(window.euxpideAdmin?.australianStateOptions)
+                          ? window.euxpideAdmin.australianStateOptions
+                          : [];
+                    const restrictDel = !!dRes.data.restrict_delivery_states;
+                    const dSt = Array.isArray(dRes.data.delivery_states) ? dRes.data.delivery_states : [];
+                    if (restrictDel && dSt.length) {
+                        setDeliveryStateRuleOptions(
+                            dSt.map((code) => {
+                                const c = String(code);
+                                const hit = allStates.find((o) => String(o.value) === c);
+                                return { value: c, label: hit ? hit.label : c };
+                            })
+                        );
+                    } else {
+                        setDeliveryStateRuleOptions(allStates);
+                    }
+                }
+            } else {
+                setAllowFreeSuburbInput(allowFree);
+            }
+
+            const operatorsForTypeLocal = buildOperatorsForType(allowFree);
+
+            const rulesRes = await apiFetch({ path: '/euxpide/v1/settings/rules' });
             if (rulesRes?.success && Array.isArray(rulesRes?.data)) {
                 const normalized = rulesRes.data.map((r, i) =>
                     normalizeRuleLeadCutoffObjective({
@@ -974,9 +1241,13 @@ export default function RulesPage() {
                         id: r.id || uuid(),
                         order: i,
                         conditions: (r.conditions || [])
-                            .filter((c) => WPD_RULE_ALLOWED_CONDITION_TYPES.includes(c?.type))
+                            .filter((c) => getEffectiveAllowedConditionTypes().includes(c?.type))
                             .map((c, j) =>
-                                normalizeLoadedCondition({ ...c, id: c.id || `c-${i}-${j}` }, operatorsForType)
+                                normalizeLoadedCondition(
+                                    { ...c, id: c.id || `c-${i}-${j}` },
+                                    operatorsForTypeLocal,
+                                    allowFree
+                                )
                             ),
                     })
                 );
@@ -989,11 +1260,76 @@ export default function RulesPage() {
         } finally {
             setLoading(false);
         }
-    }, [operatorsForType]);
+    }, []);
 
     useEffect(() => {
         load();
     }, [load]);
+
+    useEffect(() => {
+        const ext = typeof window !== 'undefined' ? window.euxpideAdmin?.ruleExtensions?.conditionTypes : null;
+        const hasCategory = Array.isArray(ext) && ext.some((x) => x && x.value === 'product_category');
+        const hasProduct = Array.isArray(ext) && ext.some((x) => x && x.value === 'product');
+        if (!hasCategory && !hasProduct) {
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            setApiDefaults();
+            try {
+                const tasks = [];
+                if (hasCategory) {
+                    tasks.push(
+                        apiFetch({ path: '/euxpide/v1/rules/product-categories' }).then((res) => {
+                            const rows = res?.success && Array.isArray(res?.data) ? res.data : [];
+                            return { key: 'cat', rows };
+                        })
+                    );
+                }
+                if (hasProduct) {
+                    tasks.push(
+                        apiFetch({ path: '/euxpide/v1/rules/products-search' }).then((res) => {
+                            const rows = res?.success && Array.isArray(res?.data) ? res.data : [];
+                            return { key: 'prod', rows };
+                        })
+                    );
+                }
+                const results = await Promise.all(tasks);
+                if (cancelled) {
+                    return;
+                }
+                for (const r of results) {
+                    if (r.key === 'cat') {
+                        setProductCategoryOptions(
+                            r.rows.map((row) => ({
+                                value: String(row.id),
+                                label: String(row.name != null && String(row.name).trim() !== '' ? row.name : row.id),
+                            }))
+                        );
+                    } else if (r.key === 'prod') {
+                        setProductOptions(
+                            r.rows.map((row) => ({
+                                value: String(row.id),
+                                label: String(row.name != null && String(row.name).trim() !== '' ? row.name : row.id),
+                            }))
+                        );
+                    }
+                }
+            } catch (e) {
+                if (!cancelled) {
+                    if (hasCategory) {
+                        setProductCategoryOptions([]);
+                    }
+                    if (hasProduct) {
+                        setProductOptions([]);
+                    }
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     useEffect(() => {
         if (!toast) return;
@@ -1132,6 +1468,20 @@ export default function RulesPage() {
             return;
         }
 
+        const invalidLeadCutoffObjective = rules.filter(
+            (r) => isRuleEnabledForValidation(r) && ruleRequiresDisableObjective(r) && r.objective !== 'disable_day'
+        );
+        if (invalidLeadCutoffObjective.length > 0) {
+            setToast({
+                status: 'error',
+                message: __(
+                    'Rules that use Preparation / Lead Time or Cutoff Time must use the objective “Disable Day”.',
+                    'eux-pickup-delivery'
+                ),
+            });
+            return;
+        }
+
         setApiDefaults();
         setSaving(true);
         try {
@@ -1149,7 +1499,7 @@ export default function RulesPage() {
                 })),
             }));
             const res = await apiFetch({
-                path: '/wpd/v1/settings/rules',
+                path: '/euxpide/v1/settings/rules',
                 method: 'POST',
                 data: { rules: payload },
             });
@@ -1161,7 +1511,11 @@ export default function RulesPage() {
                             id: r.id || uuid(),
                             order: i,
                             conditions: (r.conditions || []).map((c, j) =>
-                                normalizeLoadedCondition({ ...c, id: c.id || `c-${i}-${j}` }, operatorsForType)
+                                normalizeLoadedCondition(
+                                    { ...c, id: c.id || `c-${i}-${j}` },
+                                    operatorsForType,
+                                    selectOptions.allowFreeSuburbInput
+                                )
                             ),
                         })
                     )

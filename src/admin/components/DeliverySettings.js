@@ -1,6 +1,7 @@
-import { __ } from '@wordpress/i18n';
-import { useEffect, useState, useRef, useCallback } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
+import { useEffect, useState, useRef, useCallback, useMemo } from '@wordpress/element';
 import { Card, CardBody, Flex, TextControl, ToggleControl } from '@wordpress/components';
+import CheckboxPortalMultiSelect from './CheckboxPortalMultiSelect';
 import AdminPageLayout from './AdminPageLayout';
 import { setApiDefaults } from '../utils/api';
 
@@ -8,6 +9,9 @@ const apiFetch = window.wp?.apiFetch;
 
 const DEFAULTS = {
     suburbs: [],
+    allow_free_suburb_input: false,
+    restrict_delivery_states: false,
+    delivery_states: [],
     tab_enabled: true,
     tab_title: '',
 };
@@ -21,7 +25,16 @@ function hasSuburbCaseInsensitive(list, candidate) {
 /**
  * WooCommerce-style chips: type a name, press comma or Enter to add; × removes.
  */
-function DeliverySuburbChipsField({ suburbs, onChange }) {
+function DeliveryChipsField({
+    items,
+    onChange,
+    fieldLabel,
+    helpText,
+    placeholderEmpty,
+    placeholderMore,
+    groupAriaLabel,
+    chipRemoveAriaLabel,
+}) {
     const [draft, setDraft] = useState('');
     const draftRef = useRef('');
     const inputRef = useRef(null);
@@ -33,15 +46,15 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
             setDraft('');
             return;
         }
-        if (!hasSuburbCaseInsensitive(suburbs, t)) {
-            onChange([...suburbs, t]);
+        if (!hasSuburbCaseInsensitive(items, t)) {
+            onChange([...items, t]);
         }
         draftRef.current = '';
         setDraft('');
-    }, [suburbs, onChange]);
+    }, [items, onChange]);
 
     const removeAt = (index) => {
-        onChange(suburbs.filter((_, i) => i !== index));
+        onChange(items.filter((_, i) => i !== index));
     };
 
     const onKeyDown = (e) => {
@@ -50,9 +63,9 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
             commitDraft();
             return;
         }
-        if (e.key === 'Backspace' && draftRef.current === '' && suburbs.length > 0) {
+        if (e.key === 'Backspace' && draftRef.current === '' && items.length > 0) {
             e.preventDefault();
-            onChange(suburbs.slice(0, -1));
+            onChange(items.slice(0, -1));
         }
     };
 
@@ -66,7 +79,7 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
-        let next = [...suburbs];
+        let next = [...items];
         for (const p of parts) {
             if (!hasSuburbCaseInsensitive(next, p)) {
                 next.push(p);
@@ -79,17 +92,14 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
 
     return (
         <div className="wpd-delivery-suburbs-field">
-            <div className="wpd-delivery-suburbs-field__label">{__('Delivery suburbs', 'eux-pickup-delivery')}</div>
-            <p className="wpd-admin-section__subtitle wpd-delivery-suburbs-field__help">
-                {__(
-                    'Type a suburb name and press comma or Enter to add it. You can also paste a comma-separated list. These names appear in Rules → Suburb conditions.',
-                    'eux-pickup-delivery'
-                )}
-            </p>
+            {fieldLabel ? <div className="wpd-delivery-suburbs-field__label">{fieldLabel}</div> : null}
+            {helpText ? (
+                <p className="wpd-admin-section__subtitle wpd-delivery-suburbs-field__help">{helpText}</p>
+            ) : null}
             <div
                 className="wpd-delivery-suburbs-field__inner"
                 role="group"
-                aria-label={__('Suburb names', 'eux-pickup-delivery')}
+                aria-label={groupAriaLabel}
                 onClick={() => inputRef.current?.focus()}
             >
                 <input
@@ -108,10 +118,10 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
                             commitDraft();
                         }
                     }}
-                    placeholder={suburbs.length ? __('Add another…', 'eux-pickup-delivery') : __('e.g. Richmond', 'eux-pickup-delivery')}
+                    placeholder={items.length ? placeholderMore : placeholderEmpty}
                     autoComplete="off"
                 />
-                {suburbs.map((name, i) => (
+                {items.map((name, i) => (
                     <span key={`${name}-${i}`} className="wpd-delivery-suburb-chip">
                         <span className="wpd-delivery-suburb-chip__label">{name}</span>
                         <button
@@ -121,7 +131,7 @@ function DeliverySuburbChipsField({ suburbs, onChange }) {
                                 ev.stopPropagation();
                                 removeAt(i);
                             }}
-                            aria-label={__('Remove suburb', 'eux-pickup-delivery')}
+                            aria-label={chipRemoveAriaLabel}
                         >
                             ×
                         </button>
@@ -139,11 +149,25 @@ export default function DeliverySettings() {
     const [toast, setToast] = useState(null);
     const [settings, setSettings] = useState(DEFAULTS);
 
+    const storeCountryStateOptions = useMemo(() => {
+        const wpd = typeof window !== 'undefined' ? window.euxpideAdmin || {} : {};
+        const opts = wpd.storeCountryStateOptions || wpd.australianStateOptions;
+        return Array.isArray(opts) ? opts : [];
+    }, []);
+
+    const storeCountryLabel = useMemo(() => {
+        const wpd = typeof window !== 'undefined' ? window.euxpideAdmin || {} : {};
+        const cc = wpd.storeCountry || 'AU';
+        const countries = wpd.wcCountries || {};
+        const name = countries[cc];
+        return name ? `${name} (${cc})` : String(cc);
+    }, []);
+
     const load = async () => {
         setApiDefaults();
         setLoading(true);
         try {
-            const res = await apiFetch({ path: '/wpd/v1/settings/delivery' });
+            const res = await apiFetch({ path: '/euxpide/v1/settings/delivery' });
             if (res?.success && res?.data) {
                 const data = { ...res.data };
                 if (!Array.isArray(data.suburbs)) {
@@ -154,6 +178,15 @@ export default function DeliverySettings() {
                 }
                 if (typeof data.tab_title !== 'string') {
                     data.tab_title = '';
+                }
+                if (typeof data.allow_free_suburb_input !== 'boolean') {
+                    data.allow_free_suburb_input = false;
+                }
+                if (!Array.isArray(data.delivery_states)) {
+                    data.delivery_states = [];
+                }
+                if (typeof data.restrict_delivery_states !== 'boolean') {
+                    data.restrict_delivery_states = false;
                 }
                 setSettings(data);
             }
@@ -183,7 +216,7 @@ export default function DeliverySettings() {
         setSaving(true);
         try {
             const res = await apiFetch({
-                path: '/wpd/v1/settings/delivery',
+                path: '/euxpide/v1/settings/delivery',
                 method: 'POST',
                 data: settings,
             });
@@ -197,6 +230,15 @@ export default function DeliverySettings() {
                 }
                 if (typeof data.tab_title !== 'string') {
                     data.tab_title = '';
+                }
+                if (typeof data.allow_free_suburb_input !== 'boolean') {
+                    data.allow_free_suburb_input = false;
+                }
+                if (!Array.isArray(data.delivery_states)) {
+                    data.delivery_states = [];
+                }
+                if (typeof data.restrict_delivery_states !== 'boolean') {
+                    data.restrict_delivery_states = false;
                 }
                 setSettings(data);
                 setToast({ status: 'success', message: __('Delivery settings saved.', 'eux-pickup-delivery') });
@@ -215,7 +257,7 @@ export default function DeliverySettings() {
         setResetting(true);
         try {
             const res = await apiFetch({
-                path: '/wpd/v1/settings/delivery/reset',
+                path: '/euxpide/v1/settings/delivery/reset',
                 method: 'POST',
             });
             if (res?.success) {
@@ -228,6 +270,15 @@ export default function DeliverySettings() {
                 }
                 if (typeof data.tab_title !== 'string') {
                     data.tab_title = '';
+                }
+                if (typeof data.allow_free_suburb_input !== 'boolean') {
+                    data.allow_free_suburb_input = false;
+                }
+                if (!Array.isArray(data.delivery_states)) {
+                    data.delivery_states = [];
+                }
+                if (typeof data.restrict_delivery_states !== 'boolean') {
+                    data.restrict_delivery_states = false;
                 }
                 setSettings(data);
                 setToast({ status: 'success', message: __('Reset to default.', 'eux-pickup-delivery') });
@@ -301,6 +352,54 @@ export default function DeliverySettings() {
                     <Card>
                         <CardBody>
                             <div className="wpd-admin-section">
+                                <div className="wpd-admin-section__title">{__('Delivery States', 'eux-pickup-delivery')}</div>
+                                <div className="wpd-admin-section__subtitle">
+                                    {sprintf(
+                                        /* translators: %s: store country name and code, e.g. Australia (AU) */
+                                        __('States are loaded from WooCommerce for your store country: %s.', 'eux-pickup-delivery'),
+                                        storeCountryLabel
+                                    )}
+                                </div>
+                                <ToggleControl
+                                    label={__('Restrict Delivery States to the selection below', 'eux-pickup-delivery')}
+                                    help={__(
+                                        'When on, only checked states appear on the storefront delivery form. When off, customers see every state WooCommerce provides for your store country.',
+                                        'eux-pickup-delivery'
+                                    )}
+                                    checked={!!settings.restrict_delivery_states}
+                                    onChange={(val) =>
+                                        setSettings((prev) => ({
+                                            ...prev,
+                                            restrict_delivery_states: !!val,
+                                            delivery_states: val ? prev.delivery_states : [],
+                                        }))
+                                    }
+                                />
+                                {settings.restrict_delivery_states && storeCountryStateOptions.length > 0 ? (
+                                    <div className="wpd-delivery-states-multiselect">
+                                        <CheckboxPortalMultiSelect
+                                            selected={settings.delivery_states || []}
+                                            onChange={(codes) =>
+                                                setSettings((prev) => ({ ...prev, delivery_states: codes }))
+                                            }
+                                            options={storeCountryStateOptions}
+                                            triggerPlaceholder={__('Select Delivery States…', 'eux-pickup-delivery')}
+                                            dropdownMaxHeight="280px"
+                                            searchable
+                                            searchPlaceholder={__('Search Delivery States…', 'eux-pickup-delivery')}
+                                            searchAriaLabel={__('Search Delivery States', 'eux-pickup-delivery')}
+                                            emptyFilterMessage={__('No matching Delivery States.', 'eux-pickup-delivery')}
+                                        />
+                                    </div>
+                                ) : null}
+                            </div>
+                        </CardBody>
+                    </Card>
+                )}
+                {!loading && (
+                    <Card>
+                        <CardBody>
+                            <div className="wpd-admin-section">
                                 <div className="wpd-admin-section__title">{__('Allowed delivery suburbs', 'eux-pickup-delivery')}</div>
                                 <div className="wpd-admin-section__subtitle">
                                     {__(
@@ -308,7 +407,32 @@ export default function DeliverySettings() {
                                         'eux-pickup-delivery'
                                     )}
                                 </div>
-                                <DeliverySuburbChipsField suburbs={settings.suburbs || []} onChange={updateSuburbs} />
+                                <div className="wpd-delivery-allow-suburb-toggle">
+                                    <ToggleControl
+                                        label={__('Allow input of suburbs', 'eux-pickup-delivery')}
+                                        help={__(
+                                            'Turn off to let customers type their suburb. Turn on to show the allowed suburbs list and a pick list on the storefront.',
+                                            'eux-pickup-delivery'
+                                        )}
+                                        checked={!settings.allow_free_suburb_input}
+                                        onChange={(val) =>
+                                            setSettings((prev) => ({ ...prev, allow_free_suburb_input: !val }))
+                                        }
+                                    />
+                                </div>
+                                <DeliveryChipsField
+                                    items={settings.suburbs || []}
+                                    onChange={updateSuburbs}
+                                    fieldLabel={__('Delivery suburbs', 'eux-pickup-delivery')}
+                                    helpText={__(
+                                        'Type a suburb name and press comma or Enter to add it. You can also paste a comma-separated list. These names appear in Rules → Suburb conditions.',
+                                        'eux-pickup-delivery'
+                                    )}
+                                    placeholderEmpty={__('e.g. Richmond', 'eux-pickup-delivery')}
+                                    placeholderMore={__('Add another…', 'eux-pickup-delivery')}
+                                    groupAriaLabel={__('Suburb names', 'eux-pickup-delivery')}
+                                    chipRemoveAriaLabel={__('Remove suburb', 'eux-pickup-delivery')}
+                                />
                             </div>
                         </CardBody>
                     </Card>

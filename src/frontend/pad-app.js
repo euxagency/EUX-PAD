@@ -8,7 +8,7 @@ import PADApp from './components/PADApp';
 import './css/pad-app.css';
 
 document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('wpd-pad-app');
+    const container = document.getElementById('euxpide-pad-app');
     if (container) {
         render(<PADApp />, container);
     }

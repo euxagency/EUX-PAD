@@ -6,7 +6,7 @@
 
 	function onTypeChange(ev) {
 		var t = ev.target;
-		if (!t || t.id !== 'wpd_type') {
+		if (!t || t.id !== 'euxpide_type') {
 			return;
 		}
 		var edit = t.closest('.wpd-pad-order-edit');
