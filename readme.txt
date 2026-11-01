@@ -32,7 +32,7 @@ The complete source code is available on [GitHub](https://github.com/euxagency/E
 * Optional auto-refresh timer (default 5 minutes) prevents the customer from checking out with slots that are no longer current.
 
 **3. Pickup Settings**
-* Store pickup address, contact phone number, and opening hours defined row-by-row per weekday (up to one row per day).
+* Store pickup address, contact phone number, and opening hours set for each weekday.
 * Configurable time-slot interval in minutes.
 * Independent enable/disable toggle and custom label for the Pickup tab.
 
@@ -87,13 +87,13 @@ The complete source code is available on [GitHub](https://github.com/euxagency/E
 This plugin does **not** call EUX Digital Agency servers or include third-party analytics.
 
 **Optional: Google Maps (embed)**  
-If you paste a **Google Maps** HTML embed into Pickup Settings (or a multi-store location’s map field), the customer’s **browser** loads Google’s map resources to display that embed. Google may receive typical web data (for example IP address, referrer, and interaction with the map) as described in their policies. This only happens when you choose to add an embed; you can leave map fields empty.
+If you paste a **Google Maps** HTML embed into Pickup Settings (or a multi-store location’s map field), the customer's **browser** loads Google's map resources to display that embed. Google may receive typical web data (for example IP address, referrer, and interaction with the map) as described in their policies. This only happens when you choose to add an embed; you can leave map fields empty.
 
 * [Google Terms of Service](https://policies.google.com/terms)  
 * [Google Privacy Policy](https://policies.google.com/privacy)  
 
 **Other map or iframe providers**  
-If you embed another provider’s map via HTML iframe, the visitor’s browser loads that third party under that provider’s terms — the plugin only outputs the HTML you save; it does not send your WooCommerce order data to those services by itself.
+If you embed another provider’s map via HTML iframe, the visitor's browser loads that third party under that provider's terms — the plugin only outputs the HTML you save; it does not send your WooCommerce order data to those services by itself.
 
 == Installation ==
 
@@ -130,7 +130,7 @@ From the opening hours you define per weekday and the interval (in minutes) set 
 A rule has an objective (Enable Day or Disable Day) and one or more conditions that must all match (AND logic). When multiple rules could affect the same date, the one with the lowest `order` value wins. A rule needs at minimum a date-scope condition (Days of Week or Specific Dates) plus a Method condition.
 
 = Does the plugin send any data to an external service? =
-The plugin itself does not phone home. Optional map embeds (see **External services** in this readme) load in the visitor’s browser only if you add them in settings.
+The plugin itself does not phone home. Optional map embeds (see **External services** in this readme) load in the visitor's browser only if you add them in settings.
 
 = Can I customize the look of the PAD page? =
 Yes. Tab colours, day and time selector backgrounds and text colours, and continue-button hover states are all exposed under **Global Settings**. You can also upload custom icons and change tab labels.
@@ -155,6 +155,10 @@ The uninstall script removes the auto-created PAD page and deletes the four sett
 * Initial release.
 
 == Upgrade Notice ==
+
+
+= 1.0.3 =
+Nomenclature updates.
 
 = 1.0.1 =
 Maintenance and compatibility updates.
